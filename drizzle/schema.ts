@@ -1,4 +1,4 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, primaryKey, unique, int, varchar, index, foreignKey, text, date, datetime, decimal, check } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, primaryKey, unique, int, varchar, index, foreignKey, text, date, datetime, decimal, check, tinyint } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 export const admin = mysqlTable("admin", {
@@ -7,10 +7,10 @@ export const admin = mysqlTable("admin", {
 	email: varchar({ length: 100 }),
 	password: varchar({ length: 255 }),
 },
-(table) => [
-	primaryKey({ columns: [table.adminId], name: "admin_admin_id"}),
-	unique("email").on(table.email),
-]);
+	(table) => [
+		primaryKey({ columns: [table.adminId], name: "admin_admin_id" }),
+		unique("email").on(table.email),
+	]);
 
 export const agreement = mysqlTable("agreement", {
 	agreementId: int("agreement_id").autoincrement().notNull(),
@@ -21,10 +21,10 @@ export const agreement = mysqlTable("agreement", {
 	approvalStatus: varchar("approval_status", { length: 30 }),
 	termsAccepted: tinyint("terms_accepted"),
 },
-(table) => [
-	index("reservation_id").on(table.reservationId),
-	primaryKey({ columns: [table.agreementId], name: "agreement_agreement_id"}),
-]);
+	(table) => [
+		index("reservation_id").on(table.reservationId),
+		primaryKey({ columns: [table.agreementId], name: "agreement_agreement_id" }),
+	]);
 
 export const checklist = mysqlTable("checklist", {
 	checklistId: int("checklist_id").autoincrement().notNull(),
@@ -34,10 +34,10 @@ export const checklist = mysqlTable("checklist", {
 	inspectionType: varchar("inspection_type", { length: 50 }),
 	remarks: text(),
 },
-(table) => [
-	index("reservation_id").on(table.reservationId),
-	primaryKey({ columns: [table.checklistId], name: "checklist_checklist_id"}),
-]);
+	(table) => [
+		index("reservation_id").on(table.reservationId),
+		primaryKey({ columns: [table.checklistId], name: "checklist_checklist_id" }),
+	]);
 
 export const customer = mysqlTable("customer", {
 	customerId: int("customer_id").autoincrement().notNull(),
@@ -53,12 +53,12 @@ export const customer = mysqlTable("customer", {
 	registrationDate: date("registration_date", { mode: 'string' }),
 	termsAccepted: tinyint("terms_accepted"),
 },
-(table) => [
-	primaryKey({ columns: [table.customerId], name: "customer_customer_id"}),
-	unique("nic").on(table.nic),
-	unique("email").on(table.email),
-	unique("username").on(table.username),
-]);
+	(table) => [
+		primaryKey({ columns: [table.customerId], name: "customer_customer_id" }),
+		unique("nic").on(table.nic),
+		unique("email").on(table.email),
+		unique("username").on(table.username),
+	]);
 
 export const driver = mysqlTable("driver", {
 	driverId: int("driver_id").autoincrement().notNull(),
@@ -68,9 +68,9 @@ export const driver = mysqlTable("driver", {
 	experienceYears: int("experience_years"),
 	availabilityStatus: varchar("availability_status", { length: 20 }),
 },
-(table) => [
-	primaryKey({ columns: [table.driverId], name: "driver_driver_id"}),
-]);
+	(table) => [
+		primaryKey({ columns: [table.driverId], name: "driver_driver_id" }),
+	]);
 
 export const employee = mysqlTable("employee", {
 	employeeId: int("employee_id").autoincrement().notNull(),
@@ -79,10 +79,10 @@ export const employee = mysqlTable("employee", {
 	phone: varchar({ length: 15 }),
 	password: varchar({ length: 255 }),
 },
-(table) => [
-	primaryKey({ columns: [table.employeeId], name: "employee_employee_id"}),
-	unique("email").on(table.email),
-]);
+	(table) => [
+		primaryKey({ columns: [table.employeeId], name: "employee_employee_id" }),
+		unique("email").on(table.email),
+	]);
 
 export const guarantor = mysqlTable("guarantor", {
 	guarantorId: int("guarantor_id").autoincrement().notNull(),
@@ -94,10 +94,10 @@ export const guarantor = mysqlTable("guarantor", {
 	relationshipToCustomer: varchar("relationship_to_customer", { length: 50 }),
 	customerId: int("customer_id").references(() => customer.customerId),
 },
-(table) => [
-	index("customer_id").on(table.customerId),
-	primaryKey({ columns: [table.guarantorId], name: "guarantor_guarantor_id"}),
-]);
+	(table) => [
+		index("customer_id").on(table.customerId),
+		primaryKey({ columns: [table.guarantorId], name: "guarantor_guarantor_id" }),
+	]);
 
 export const item = mysqlTable("item", {
 	itemId: int("item_id").autoincrement().notNull(),
@@ -105,9 +105,9 @@ export const item = mysqlTable("item", {
 	description: text(),
 	status: varchar({ length: 30 }),
 },
-(table) => [
-	primaryKey({ columns: [table.itemId], name: "item_item_id"}),
-]);
+	(table) => [
+		primaryKey({ columns: [table.itemId], name: "item_item_id" }),
+	]);
 
 export const manager = mysqlTable("manager", {
 	managerId: int("manager_id").autoincrement().notNull(),
@@ -116,36 +116,36 @@ export const manager = mysqlTable("manager", {
 	phone: varchar({ length: 15 }),
 	password: varchar({ length: 255 }),
 },
-(table) => [
-	primaryKey({ columns: [table.managerId], name: "manager_manager_id"}),
-	unique("email").on(table.email),
-]);
+	(table) => [
+		primaryKey({ columns: [table.managerId], name: "manager_manager_id" }),
+		unique("email").on(table.email),
+	]);
 
 export const notification = mysqlTable("notification", {
 	notificationId: int("notification_id").autoincrement().notNull(),
 	customerId: int("customer_id").references(() => customer.customerId),
 	message: text(),
-	notificationDate: datetime("notification_date", { mode: 'string'}),
+	notificationDate: datetime("notification_date", { mode: 'string' }),
 	status: varchar({ length: 20 }),
 },
-(table) => [
-	index("customer_id").on(table.customerId),
-	primaryKey({ columns: [table.notificationId], name: "notification_notification_id"}),
-]);
+	(table) => [
+		index("customer_id").on(table.customerId),
+		primaryKey({ columns: [table.notificationId], name: "notification_notification_id" }),
+	]);
 
 export const payment = mysqlTable("payment", {
 	paymentId: int("payment_id").autoincrement().notNull(),
 	reservationId: int("reservation_id").references(() => reservation.reservationId),
 	amount: decimal({ precision: 10, scale: 2 }),
 	paymentMethod: varchar("payment_method", { length: 30 }),
-	paymentDate: datetime("payment_date", { mode: 'string'}),
+	paymentDate: datetime("payment_date", { mode: 'string' }),
 	paymentStatus: varchar("payment_status", { length: 30 }),
 	invoiceNumber: varchar("invoice_number", { length: 50 }),
 },
-(table) => [
-	index("reservation_id").on(table.reservationId),
-	primaryKey({ columns: [table.paymentId], name: "payment_payment_id"}),
-]);
+	(table) => [
+		index("reservation_id").on(table.reservationId),
+		primaryKey({ columns: [table.paymentId], name: "payment_payment_id" }),
+	]);
 
 export const report = mysqlTable("report", {
 	reportId: int("report_id").autoincrement().notNull(),
@@ -157,28 +157,28 @@ export const report = mysqlTable("report", {
 	overdueVehicles: int("overdue_vehicles"),
 	managerId: int("manager_id").references(() => manager.managerId),
 },
-(table) => [
-	index("manager_id").on(table.managerId),
-	primaryKey({ columns: [table.reportId], name: "report_report_id"}),
-]);
+	(table) => [
+		index("manager_id").on(table.managerId),
+		primaryKey({ columns: [table.reportId], name: "report_report_id" }),
+	]);
 
 export const reservation = mysqlTable("reservation", {
 	reservationId: int("reservation_id").autoincrement().notNull(),
 	customerId: int("customer_id").references(() => customer.customerId),
 	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId),
-	startDatetime: datetime("start_datetime", { mode: 'string'}),
-	endDatetime: datetime("end_datetime", { mode: 'string'}),
+	startDatetime: datetime("start_datetime", { mode: 'string' }),
+	endDatetime: datetime("end_datetime", { mode: 'string' }),
 	pickupLocation: varchar("pickup_location", { length: 255 }),
 	dropoffLocation: varchar("dropoff_location", { length: 255 }),
 	distance: decimal({ precision: 10, scale: 2 }),
 	totalFare: decimal("total_fare", { precision: 10, scale: 2 }),
 	reservationStatus: varchar("reservation_status", { length: 30 }),
 },
-(table) => [
-	index("customer_id").on(table.customerId),
-	index("vehicle_id").on(table.vehicleId),
-	primaryKey({ columns: [table.reservationId], name: "reservation_reservation_id"}),
-]);
+	(table) => [
+		index("customer_id").on(table.customerId),
+		index("vehicle_id").on(table.vehicleId),
+		primaryKey({ columns: [table.reservationId], name: "reservation_reservation_id" }),
+	]);
 
 export const review = mysqlTable("review", {
 	reviewId: int("review_id").autoincrement().notNull(),
@@ -189,12 +189,12 @@ export const review = mysqlTable("review", {
 	// you can use { mode: 'date' }, if you want to have Date as type for this column
 	reviewDate: date("review_date", { mode: 'string' }),
 },
-(table) => [
-	index("customer_id").on(table.customerId),
-	index("vehicle_id").on(table.vehicleId),
-	primaryKey({ columns: [table.reviewId], name: "review_review_id"}),
-	check("review_chk_1", sql`(\`rating\` between 1 and 5)`),
-]);
+	(table) => [
+		index("customer_id").on(table.customerId),
+		index("vehicle_id").on(table.vehicleId),
+		primaryKey({ columns: [table.reviewId], name: "review_review_id" }),
+		check("review_chk_1", sql`(\`rating\` between 1 and 5)`),
+	]);
 
 export const serviceCategory = mysqlTable("service_category", {
 	categoryId: int("category_id").autoincrement().notNull(),
@@ -203,9 +203,9 @@ export const serviceCategory = mysqlTable("service_category", {
 	additionalRate: decimal("additional_rate", { precision: 10, scale: 2 }),
 	description: text(),
 },
-(table) => [
-	primaryKey({ columns: [table.categoryId], name: "service_category_category_id"}),
-]);
+	(table) => [
+		primaryKey({ columns: [table.categoryId], name: "service_category_category_id" }),
+	]);
 
 export const vehicle = mysqlTable("vehicle", {
 	vehicleId: int("vehicle_id").autoincrement().notNull(),
@@ -222,7 +222,14 @@ export const vehicle = mysqlTable("vehicle", {
 	imageUrl: text("image_url"),
 	description: text(),
 },
-(table) => [
-	primaryKey({ columns: [table.vehicleId], name: "vehicle_vehicle_id"}),
-	unique("plate_number").on(table.plateNumber),
-]);
+	(table) => [
+		primaryKey({ columns: [table.vehicleId], name: "vehicle_vehicle_id" }),
+		unique("plate_number").on(table.plateNumber),
+	]);
+
+export const session = mysqlTable("session", {
+	id: varchar("id", { length: 64 }).primaryKey(),
+	userId: int("user_id").notNull(),
+	role: varchar("role", { length: 20 }).notNull(),
+	expiresAt: datetime("expires_at").notNull(),
+});

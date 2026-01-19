@@ -3,10 +3,49 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Eye, EyeOff, Check, Chrome } from "lucide-react"; // Chrome icon as placeholder for Google if needed, or just text/svg
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff, Check, Chrome, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
+    const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError("");
+        setLoading(true);
+
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Login failed");
+            }
+
+            // Redirect based on role
+            switch (data.role) {
+                case "admin": router.push("/admin/dashboard"); break;
+                case "manager": router.push("/manager/dashboard"); break;
+                case "employee": router.push("/employee/dashboard"); break;
+                case "customer": router.push("/customer/dashboard"); break;
+                default: throw new Error("Unknown role");
+            }
+        } catch (err: any) {
+            setError(err.message);
+            setLoading(false); // Only stop loading on error, on success we redirect so keep loading state to prevent double submit
+        }
+        // Note: We don't set loading(false) on success to prevent flashes before redirect
+    };
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
@@ -33,8 +72,16 @@ export default function LoginPage() {
                     </p>
                 </div>
 
+                {/* Error Message */}
+                {error && (
+                    <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-500">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>{error}</span>
+                    </div>
+                )}
+
                 {/* Form */}
-                <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                <form className="space-y-6" onSubmit={handleSubmit}>
                     <div className="space-y-4">
                         {/* Email Field */}
                         <div>
@@ -51,7 +98,10 @@ export default function LoginPage() {
                                     type="email"
                                     autoComplete="email"
                                     required
-                                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400 sm:text-sm"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    disabled={loading}
+                                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400 sm:text-sm disabled:opacity-50"
                                     placeholder="you@example.com"
                                 />
                             </div>
@@ -72,12 +122,16 @@ export default function LoginPage() {
                                     type={showPassword ? "text" : "password"}
                                     autoComplete="current-password"
                                     required
-                                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 shadow-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400 sm:text-sm"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    disabled={loading}
+                                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 shadow-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400 sm:text-sm disabled:opacity-50"
                                     placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
+                                    disabled={loading}
                                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                                 >
                                     {showPassword ? (
@@ -97,6 +151,7 @@ export default function LoginPage() {
                                 id="remember-me"
                                 name="remember-me"
                                 type="checkbox"
+                                disabled={loading}
                                 className="h-4 w-4 rounded border-gray-300 text-yellow-400 focus:ring-yellow-400"
                             />
                             <label
@@ -120,9 +175,10 @@ export default function LoginPage() {
                     {/* Sign In Button */}
                     <button
                         type="submit"
-                        className="flex w-full justify-center rounded-lg bg-yellow-400 px-4 py-2 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2"
+                        disabled={loading}
+                        className="flex w-full justify-center rounded-lg bg-yellow-400 px-4 py-2 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Sign In
+                        {loading ? "Signing in..." : "Sign In"}
                     </button>
                 </form>
 
@@ -142,7 +198,8 @@ export default function LoginPage() {
                 <div>
                     <button
                         type="button"
-                        className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2"
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 disabled:opacity-50"
                     >
                         {/* Google Icon SVG */}
                         <svg className="h-5 w-5" viewBox="0 0 24 24">

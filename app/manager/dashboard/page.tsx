@@ -1,0 +1,53 @@
+"use client";
+
+import { Car, CreditCard, Users, AlertCircle } from "lucide-react";
+import TopNav from "../../admin/dashboard/components/TopNav";
+import StatsCard from "../../admin/dashboard/components/StatsCard";
+import Charts from "../../admin/dashboard/components/Charts";
+
+export default function ManagerDashboard() {
+    const navItems = [
+        { name: "Dashboard", href: "/manager/dashboard", active: true },
+    ];
+
+    return (
+        <div className="min-h-screen bg-gray-50 pb-8">
+            <TopNav title="Manager" items={navItems} />
+
+            <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+                <h1 className="mb-8 text-2xl font-bold text-gray-900">Dashboard Overview</h1>
+
+                {/* Stats Grid */}
+                <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    <StatsCard
+                        label="Total Customers Today"
+                        value="128"
+                        icon={Users}
+                        trend="+12%"
+                    />
+                    <StatsCard
+                        label="Vehicles on Rent"
+                        value="45"
+                        icon={Car}
+                        trend="+5%"
+                    />
+                    <StatsCard
+                        label="Overdue Vehicles"
+                        value="3"
+                        icon={AlertCircle}
+                        trend="-2%"
+                    />
+                    <StatsCard
+                        label="Today's Income"
+                        value="$2,450"
+                        icon={CreditCard}
+                        trend="+18%"
+                    />
+                </div>
+
+                {/* Charts Section */}
+                <Charts />
+            </main>
+        </div>
+    );
+}

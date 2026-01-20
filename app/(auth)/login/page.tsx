@@ -13,6 +13,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -20,7 +21,8 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const res = await fetch("/api/auth/login", {
+            const endpoint = isAdmin ? "/api/auth/admin/login" : "/api/auth/login";
+            const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
@@ -65,7 +67,7 @@ export default function LoginPage() {
                 {/* Header */}
                 <div className="space-y-2">
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                        Welcome Back
+                        {isAdmin ? "Admin Login" : "Welcome Back"}
                     </h1>
                     <p className="text-sm text-gray-500">
                         Enter your credentials to access your account
@@ -143,6 +145,9 @@ export default function LoginPage() {
                             </div>
                         </div>
                     </div>
+
+
+
 
                     {/* Remember me & Forgot password */}
                     <div className="flex items-center justify-between">
@@ -234,7 +239,7 @@ export default function LoginPage() {
                         Sign up
                     </Link>
                 </p>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

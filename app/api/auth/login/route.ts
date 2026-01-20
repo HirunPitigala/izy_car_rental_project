@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { admin, manager, employee, customer, session } from "@/drizzle/schema";
+import { admin, manager, employee, customer, session } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";

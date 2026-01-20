@@ -1,14 +1,14 @@
 "use client";
 
 import { Car, CreditCard, Users, AlertCircle } from "lucide-react";
-import TopNav from "./components/TopNav";
 import StatsCard from "./components/StatsCard";
 import Charts from "./components/Charts";
 
 export default function AdminDashboard() {
     return (
         <div className="min-h-screen bg-gray-50 pb-8">
-            <TopNav />
+            {/* Using global Navbar from layout */}
+
 
             <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
                 <h1 className="mb-8 text-2xl font-bold text-gray-900">Dashboard Overview</h1>
@@ -44,6 +44,6 @@ export default function AdminDashboard() {
                 {/* Charts Section */}
                 <Charts />
             </main>
-        </div>
+        </div >
     );
 }

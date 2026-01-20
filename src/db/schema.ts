@@ -226,3 +226,10 @@ export const vehicle = mysqlTable("vehicle", {
 		primaryKey({ columns: [table.vehicleId], name: "vehicle_vehicle_id" }),
 		unique("plate_number").on(table.plateNumber),
 	]);
+
+export const session = mysqlTable("session", {
+	id: varchar("id", { length: 64 }).primaryKey(),
+	userId: int("user_id").notNull(),
+	role: varchar("role", { length: 20 }).notNull(),
+	expiresAt: datetime("expires_at").notNull(),
+});

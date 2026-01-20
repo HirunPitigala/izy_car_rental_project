@@ -1,13 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import Navbar from "@/components/layout/Navbar";
+
 import { DollarSign, MapPin, Shield } from "lucide-react";
 
 
 export default function Home() {
   return (
     <>
-      <Navbar />
+
 
       {/* Hero Section */}
       <section className="relative h-[600px] w-full">

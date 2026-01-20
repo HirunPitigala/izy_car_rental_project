@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { UserSession } from '@/lib/auth';
 import UserProfile from './UserProfile';
+import { Bell, ClipboardList } from 'lucide-react';
 
 interface NavItem {
     label: string;
@@ -22,6 +23,7 @@ const guestNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
     { label: 'Dashboard', href: '/admin/dashboard' },
+    { label: 'Requested Bookings', href: '/admin/bookings/requested' },
     { label: 'Vehicles', href: '/admin/vehicles' },
     { label: 'Reservations', href: '/admin/reservations' },
     { label: 'Reports', href: '/admin/reports' },
@@ -95,11 +97,12 @@ export default function Navbar({ session }: NavbarProps) {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200 ${isActive(item.href)
+                                className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200 ${isActive(item.href)
                                     ? 'bg-gray-900 text-white shadow-lg'
                                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                                     }`}
                             >
+                                {item.label === 'Requested Bookings' && <ClipboardList className="h-4 w-4" />}
                                 {item.label}
                             </Link>
                         ))}
@@ -109,6 +112,15 @@ export default function Navbar({ session }: NavbarProps) {
                     <div className="hidden items-center gap-3 md:flex">
                         {session ? (
                             <div className="flex items-center gap-4">
+                                {session.role === 'admin' && (
+                                    <button className="relative rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900">
+                                        <Bell className="h-6 w-6" />
+                                        <span className="absolute right-2 top-2 flex h-2.5 w-2.5">
+                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                                            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500"></span>
+                                        </span>
+                                    </button>
+                                )}
                                 {session.role === 'admin' && (
                                     <div className="relative group">
                                         <button className="rounded-lg bg-[#fbbf24] px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:bg-[#f59e0b] hover:shadow-lg">

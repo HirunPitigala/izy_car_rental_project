@@ -22,7 +22,7 @@ export default function PublicCustomerRegistrationPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                fullName,
+                name: fullName,
                 email,
                 phone,
                 password,
@@ -63,7 +63,7 @@ export default function PublicCustomerRegistrationPage() {
                 {/* Header */}
                 <div className="text-center">
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                        Customer Registration
+                        Employee Registration
                     </h1>
                     <p className="mt-2 text-sm text-gray-500">
                         Create an account to book vehicles

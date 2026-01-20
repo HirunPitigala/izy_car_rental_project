@@ -19,25 +19,25 @@ export default function AdminDashboard() {
                         label="Total Customers Today"
                         value="128"
                         icon={Users}
-                        trend="+12%"
+
                     />
                     <StatsCard
                         label="Vehicles on Rent"
                         value="45"
                         icon={Car}
-                        trend="+5%"
+
                     />
                     <StatsCard
                         label="Overdue Vehicles"
                         value="3"
                         icon={AlertCircle}
-                        trend="-2%"
+
                     />
                     <StatsCard
                         label="Today's Income"
-                        value="$2,450"
+                        value="2,450LKR"
                         icon={CreditCard}
-                        trend="+18%"
+
                     />
                 </div>
 

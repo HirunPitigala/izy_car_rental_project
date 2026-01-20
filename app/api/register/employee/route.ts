@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { db } from "@/lib/db";
-import { employee } from "@/drizzle/schema";
+import { employee } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
@@ -12,6 +12,7 @@ export async function POST(req: Request) {
 
         // 1️⃣ Basic validation
         if (!name || !email || !phone || !password || !confirmPassword) {
+            console.error("Missing fields:", { name: !!name, email: !!email, phone: !!phone, password: !!password, confirmPassword: !!confirmPassword });
             return NextResponse.json(
                 { error: "All fields are required" },
                 { status: 400 }

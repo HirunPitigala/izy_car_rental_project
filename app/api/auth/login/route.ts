@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { admin, manager, employee, customer, session } from "@/src/db/schema";
+import { users } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
-import { v4 as uuidv4 } from "uuid";
+import { encrypt } from "@/lib/auth";
 import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
@@ -18,105 +18,32 @@ export async function POST(request: Request) {
             );
         }
 
-        let user = null;
-        let role = "";
-        let userId: number | undefined;
+        // Authenticate ONLY against the public.users table
+        const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
-        // 1. Check Admin
-        if (!user) {
-            try {
-                const [adminUser] = await db.select().from(admin).where(eq(admin.email, email)).limit(1);
-                if (adminUser && adminUser.password) {
-                    const passwordMatch = await bcrypt.compare(password, adminUser.password);
-                    if (passwordMatch) {
-                        user = adminUser;
-                        role = "admin";
-                        userId = adminUser.adminId;
-                    } else {
-                        // Found user but wrong password - strict security
-                        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-                    }
-                }
-            } catch (e) {
-                console.error("Error querying admin:", e);
-            }
-        }
-
-        // 2. Check Manager
-        if (!user) {
-            try {
-                const [managerUser] = await db.select().from(manager).where(eq(manager.email, email)).limit(1);
-                if (managerUser && managerUser.password) {
-                    const passwordMatch = await bcrypt.compare(password, managerUser.password);
-                    if (passwordMatch) {
-                        user = managerUser;
-                        role = "manager";
-                        userId = managerUser.managerId;
-                    } else {
-                        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-                    }
-                }
-            } catch (e) {
-                console.error("Error querying manager:", e);
-            }
-        }
-
-        // 3. Check Employee
-        if (!user) {
-            try {
-                const [employeeUser] = await db.select().from(employee).where(eq(employee.email, email)).limit(1);
-                if (employeeUser && employeeUser.password) {
-                    const passwordMatch = await bcrypt.compare(password, employeeUser.password);
-                    if (passwordMatch) {
-                        user = employeeUser;
-                        role = "employee";
-                        userId = employeeUser.employeeId;
-                    } else {
-                        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-                    }
-                }
-            } catch (e) {
-                console.error("Error querying employee:", e);
-            }
-        }
-
-        // 4. Check Customer
-        if (!user) {
-            try {
-                const [customerUser] = await db.select().from(customer).where(eq(customer.email, email)).limit(1);
-                if (customerUser && customerUser.password) {
-                    const passwordMatch = await bcrypt.compare(password, customerUser.password);
-                    if (passwordMatch) {
-                        user = customerUser;
-                        role = "customer";
-                        userId = customerUser.customerId;
-                    } else {
-                        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-                    }
-                }
-            } catch (e) {
-                console.error("Error querying customer:", e);
-            }
-        }
-
-        if (!user || !role || !userId) {
+        if (!user || !user.passwordHash) {
             return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
         }
 
-        // --- Session Creation ---
-        const sessionId = uuidv4();
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiration
+        const passwordMatch = await bcrypt.compare(password, user.passwordHash);
+        if (!passwordMatch) {
+            return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+        }
 
-        await db.insert(session).values({
-            id: sessionId,
-            userId: userId,
-            role: role,
-            expiresAt: expiresAt,
-        });
+        if (user.status !== "active") {
+            return NextResponse.json({ error: "Account is disabled" }, { status: 403 });
+        }
+
+        // --- JWT Session Creation ---
+        const role = user.role as "admin" | "manager" | "employee" | "customer";
+        const userId = user.id;
+        const relatedId = user.relatedId || undefined;
+
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+        const sessionToken = await encrypt({ userId, role, relatedId, expiresAt });
 
         const cookieStore = await cookies();
-        cookieStore.set("session_id", sessionId, {
+        cookieStore.set("session", sessionToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
@@ -124,7 +51,41 @@ export async function POST(request: Request) {
             expires: expiresAt,
         });
 
-        return NextResponse.json({ role });
+        // Fetch user's real name from related tables
+        let name = "User";
+        try {
+            if (role === "admin" && relatedId) {
+                const { admin } = await import("@/src/db/schema");
+                const [u] = await db.select({ name: admin.name }).from(admin).where(eq(admin.adminId, relatedId));
+                if (u?.name) name = u.name;
+            } else if (role === "manager" && relatedId) {
+                const { manager } = await import("@/src/db/schema");
+                const [u] = await db.select({ name: manager.name }).from(manager).where(eq(manager.managerId, relatedId));
+                if (u?.name) name = u.name;
+            } else if (role === "employee" && relatedId) {
+                const { employee } = await import("@/src/db/schema");
+                const [u] = await db.select({ name: employee.name }).from(employee).where(eq(employee.employeeId, relatedId));
+                if (u?.name) name = u.name;
+            } else if (role === "customer" && relatedId) {
+                const { customer } = await import("@/src/db/schema");
+                const [u] = await db.select({ name: customer.fullName }).from(customer).where(eq(customer.customerId, relatedId));
+                if (u?.name) name = u.name;
+            }
+        } catch (e) {
+            console.error("Error fetching name for login:", e);
+        }
+
+        // Return token and user info in body for mobile apps
+        return NextResponse.json({
+            token: sessionToken,
+            role, // Added at top level for frontend redirection
+            user: {
+                id: userId,
+                role,
+                email: user.email,
+                name
+            }
+        });
 
     } catch (error) {
         console.error("Login error:", error);

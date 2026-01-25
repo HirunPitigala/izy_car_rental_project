@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { admin, session } from "@/src/db/schema";
+import { admin } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
-import { v4 as uuidv4 } from "uuid";
+import { encrypt } from "@/lib/auth";
 import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
@@ -39,20 +39,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
         }
 
-        // Create secure session
-        const sessionId = uuidv4();
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 1); // 1 day session for security
-
-        await db.insert(session).values({
-            id: sessionId,
-            userId: adminUser.adminId,
-            role: "admin",
-            expiresAt: expiresAt,
-        });
+        // --- JWT Session Creation ---
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day session for security
+        const sessionToken = await encrypt({ userId: adminUser.adminId, role: "admin", expiresAt });
 
         const cookieStore = await cookies();
-        cookieStore.set("session_id", sessionId, {
+        cookieStore.set("session", sessionToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",

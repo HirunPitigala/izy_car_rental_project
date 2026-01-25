@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { db } from "@/lib/db";
-import { employee } from "@/src/db/schema";
+import { employee, users } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        const { name, email, phone, password, confirmPassword } = body;
+        const { email, password, confirmPassword } = body;
 
         // 1️⃣ Basic validation
-        if (!name || !email || !phone || !password || !confirmPassword) {
-            console.error("Missing fields:", { name: !!name, email: !!email, phone: !!phone, password: !!password, confirmPassword: !!confirmPassword });
+        if (!email || !password || !confirmPassword) {
             return NextResponse.json(
                 { error: "All fields are required" },
                 { status: 400 }
@@ -33,13 +32,13 @@ export async function POST(req: Request) {
             );
         }
 
-        // 2️⃣ Check if email already exists
-        const existing = await db
+        // 2️⃣ Check if email already exists in users table (central auth)
+        const existingInUsers = await db
             .select()
-            .from(employee)
-            .where(eq(employee.email, email));
+            .from(users)
+            .where(eq(users.email, email));
 
-        if (existing.length > 0) {
+        if (existingInUsers.length > 0) {
             return NextResponse.json(
                 { error: "Email already exists" },
                 { status: 409 }
@@ -49,15 +48,26 @@ export async function POST(req: Request) {
         // 3️⃣ Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 4️⃣ Insert into database
-        await db.insert(employee).values({
-            name: name,
+        // 4️⃣ Insert into employee table
+        const [result] = await db.insert(employee).values({
+            name: "New Employee", // Default name
             email: email,
-            phone: phone,
+            phone: "", // Default phone
             password: hashedPassword,
         });
 
-        // 5️⃣ Success response
+        const employeeId = (result as any).insertId;
+
+        // 5️⃣ Insert into central users table for authentication
+        await db.insert(users).values({
+            email: email,
+            passwordHash: hashedPassword,
+            role: "employee",
+            relatedId: employeeId,
+            status: "active"
+        });
+
+        // 6️⃣ Success response
         return NextResponse.json(
             { success: true, message: "Employee registered successfully" },
             { status: 201 }

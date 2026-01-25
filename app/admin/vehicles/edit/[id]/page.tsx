@@ -1,30 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { use } from "react";
-import { ChevronRight, ArrowLeft } from "lucide-react";
+import { use, useState, useEffect } from "react";
+import { ChevronRight, ArrowLeft, Loader2 } from "lucide-react";
 import VehicleForm from "@/components/admin/VehicleForm";
-
-// Mock data fetching (simulated)
-const getMockVehicle = (id: string) => {
-    return {
-        id,
-        name: "Toyota Axio",
-        brand: "Toyota",
-        model: "Axio",
-        year: 2018,
-        type: "Sedan",
-        transmission: "Auto",
-        fuelType: "Hybrid",
-        pricePerDay: 8500,
-        description: "A very fuel-efficient and comfortable sedan for daily travel.",
-        status: "Available",
-    };
-};
 
 export default function EditVehiclePage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
-    const vehicle = getMockVehicle(resolvedParams.id);
+    const [vehicle, setVehicle] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchVehicle = async () => {
+            try {
+                const res = await fetch(`/api/admin/vehicles/${resolvedParams.id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setVehicle(data);
+                }
+            } catch (error) {
+                console.error("Error fetching vehicle:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchVehicle();
+    }, [resolvedParams.id]);
 
     return (
         <div className="min-h-screen bg-gray-50 pb-12">
@@ -54,7 +56,19 @@ export default function EditVehiclePage({ params }: { params: Promise<{ id: stri
                 </div>
 
                 {/* Form */}
-                <VehicleForm mode="edit" defaultValues={vehicle} />
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
+                        <Loader2 className="h-10 w-10 animate-spin text-yellow-500" />
+                        <p className="mt-4 text-gray-500 font-medium">Loading vehicle details...</p>
+                    </div>
+                ) : vehicle ? (
+                    <VehicleForm mode="edit" defaultValues={vehicle} />
+                ) : (
+                    <div className="text-center py-20 bg-white rounded-xl border border-gray-300">
+                        <p className="text-gray-500">Vehicle not found.</p>
+                        <Link href="/admin/vehicles" className="mt-4 inline-block text-yellow-600 font-semibold underline">Back to list</Link>
+                    </div>
+                )}
             </main>
         </div>
     );

@@ -27,10 +27,9 @@ export default async function RootLayout({
   const session = await getSession();
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
-        suppressHydrationWarning
       >
         <Navbar session={session} />
         <main>{children}</main>

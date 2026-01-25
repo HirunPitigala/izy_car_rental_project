@@ -5,9 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 
 export default function PublicCustomerRegistrationPage() {
-    const [fullName, setFullName] = useState("");
     const [email, setEmail] = useState("");
-    const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
@@ -22,9 +20,7 @@ export default function PublicCustomerRegistrationPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                fullName,
                 email,
-                phone,
                 password,
                 confirmPassword,
             }),
@@ -81,33 +77,13 @@ export default function PublicCustomerRegistrationPage() {
                 <form className="space-y-6" onSubmit={handleSubmit}>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                        <input
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            required
-                            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2"
-                        />
-                    </div>
-
-                    <div>
                         <label className="block text-sm font-medium text-gray-700">Email</label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Phone</label>
-                        <input
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            required
-                            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2"
+                            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-1 focus:ring-yellow-400"
                         />
                     </div>
 
@@ -118,7 +94,7 @@ export default function PublicCustomerRegistrationPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2"
+                            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-1 focus:ring-yellow-400"
                         />
                     </div>
 
@@ -129,14 +105,14 @@ export default function PublicCustomerRegistrationPage() {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
-                            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2"
+                            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-1 focus:ring-yellow-400"
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="flex w-full justify-center rounded-lg bg-yellow-400 px-4 py-2 font-semibold text-black hover:bg-yellow-500 disabled:opacity-50"
+                        className="flex w-full justify-center rounded-lg bg-yellow-400 px-4 py-2 font-semibold text-black hover:bg-yellow-500 disabled:opacity-50 transition-colors"
                     >
                         {loading ? "Creating..." : "Create Account"}
                     </button>

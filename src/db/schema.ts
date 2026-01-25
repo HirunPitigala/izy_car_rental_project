@@ -213,23 +213,36 @@ export const vehicle = mysqlTable("vehicle", {
 	model: varchar({ length: 50 }),
 	plateNumber: varchar("plate_number", { length: 20 }),
 	capacity: int(),
+	seatingCapacity: int("seating_capacity"),
 	transmissionType: varchar("transmission_type", { length: 20 }),
 	fuelType: varchar("fuel_type", { length: 20 }),
 	luggageCapacity: int("luggage_capacity"),
-	ratePerHour: decimal("rate_per_hour", { precision: 10, scale: 2 }),
-	ratePerDay: decimal("rate_per_day", { precision: 10, scale: 2 }),
 	availabilityStatus: varchar("availability_status", { length: 20 }),
-	imageUrl: text("image_url"),
+	status: varchar("status", { length: 20 }), // AVAILABLE / UNAVAILABLE / MAINTENANCE
+	serviceCategory: varchar("service_category", { length: 50 }), // PICKME / WEDDING / AIRPORT / NORMAL
+	ratePerDay: decimal("rate_per_day", { precision: 10, scale: 2 }),
+	ratePerMonth: decimal("rate_per_month", { precision: 10, scale: 2 }),
+	image: text("image"), // Store Base64
+	imageUrl: text("image_url"), // Deprecating but keeping for safety
 	description: text(),
+	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 },
 	(table) => [
 		primaryKey({ columns: [table.vehicleId], name: "vehicle_vehicle_id" }),
 		unique("plate_number").on(table.plateNumber),
 	]);
 
-export const session = mysqlTable("session", {
-	id: varchar("id", { length: 64 }).primaryKey(),
-	userId: int("user_id").notNull(),
-	role: varchar("role", { length: 20 }).notNull(),
-	expiresAt: datetime("expires_at").notNull(),
-});
+export const users = mysqlTable("users", {
+	id: int("id").autoincrement().notNull(),
+	email: varchar({ length: 100 }),
+	passwordHash: varchar("password_hash", { length: 255 }),
+	role: varchar({ length: 20 }), // ADMIN | MANAGER | EMPLOYEE | CUSTOMER
+	relatedId: int("related_id"), // points to admin.id / customer.id / etc
+	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+	status: varchar({ length: 20 }).default("active"),
+},
+	(table) => [
+		primaryKey({ columns: [table.id], name: "users_id" }),
+		unique("email").on(table.email),
+	]);
+

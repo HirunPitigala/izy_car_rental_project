@@ -1,23 +1,17 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { db } from "@/lib/db"; // adjust path if your db file is elsewhere
-import { customer } from "@/drizzle/schema"; // adjust path if schema file is elsewhere
+import { customer, users } from "@/src/db/schema"; // adjust path if schema file is elsewhere
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        const {
-            fullName,
-            email,
-            phone,
-            password,
-            confirmPassword,
-        } = body;
+        const { email, password, confirmPassword } = body;
 
-        // 1️⃣ Basic validation
-        if (!fullName || !email || !phone || !password || !confirmPassword) {
+        //  Basic validation
+        if (!email || !password || !confirmPassword) {
             return NextResponse.json(
                 { error: "All fields are required" },
                 { status: 400 }
@@ -38,27 +32,27 @@ export async function POST(req: Request) {
             );
         }
 
-        // 2️⃣ Check if email already exists
-        const existing = await db
+        //  Check if email already exists in users table (central auth)
+        const existingInUsers = await db
             .select()
-            .from(customer)
-            .where(eq(customer.email, email));
+            .from(users)
+            .where(eq(users.email, email));
 
-        if (existing.length > 0) {
+        if (existingInUsers.length > 0) {
             return NextResponse.json(
                 { error: "Email already exists" },
                 { status: 409 }
             );
         }
 
-        // 3️⃣ Hash password
+        //  Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 4️⃣ Insert into database
-        await db.insert(customer).values({
-            fullName: fullName,
+        // Insert into customer table
+        const [result] = await db.insert(customer).values({
+            fullName: "New Customer",
             email: email,
-            phone: phone,
+            phone: "",
             password: hashedPassword,
 
             // Optional fields (can be null for now)
@@ -71,7 +65,18 @@ export async function POST(req: Request) {
             termsAccepted: 1, // true
         });
 
-        // 5️⃣ Success response
+        const customerId = (result as any).insertId;
+
+        // Insert into central users table for authentication
+        await db.insert(users).values({
+            email: email,
+            passwordHash: hashedPassword,
+            role: "customer",
+            relatedId: customerId,
+            status: "active"
+        });
+
+        //  Success response
         return NextResponse.json(
             { success: true, message: "Customer registered successfully" },
             { status: 201 }

@@ -18,7 +18,7 @@ const guestNavItems: NavItem[] = [
     { label: 'Rent a Car', href: '/rent' },
     { label: 'Wedding Car Rental', href: '/wedding' },
     { label: 'Airport Rental', href: '/airport' },
-    { label: 'Pick Me', href: '/pickme' },
+    { label: 'Pick Me', href: '/pick-me' },
 ];
 
 const adminNavItems: NavItem[] = [
@@ -39,6 +39,8 @@ const managerNavItems: NavItem[] = [
 
 const customerNavItems: NavItem[] = [
     { label: 'Rent a Car', href: '/rent' },
+    { label: 'Wedding Car Rental', href: '/wedding' },
+    { label: 'Airport Rental', href: '/airport' },
     { label: 'My Bookings', href: '/customer/bookings' },
     { label: 'Profile', href: '/customer/profile' },
 ];
@@ -83,7 +85,7 @@ export default function Navbar({ session }: NavbarProps) {
                     <Link href="/" className="flex-shrink-0 transition-opacity hover:opacity-80">
                         <Image
                             src="/logo.png"
-                            alt="Car Rental Logo"
+                            alt="IZY Logo"
                             width={120}
                             height={40}
                             className="h-10 w-auto"

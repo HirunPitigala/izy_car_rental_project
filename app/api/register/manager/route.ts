@@ -1,22 +1,17 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { db } from "@/lib/db";
-import { manager } from "@/drizzle/schema";
+import { manager, users } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        const {
-            fullName, // Frontend sends 'fullName', mapping to 'name' in DB
-            email,
-            phone,
-            password,
-        } = body;
+        const { email, password, confirmPassword } = body;
 
         // 1️⃣ Basic validation
-        if (!fullName || !email || !phone || !password) {
+        if (!email || !password || !confirmPassword) {
             return NextResponse.json(
                 { error: "All fields are required" },
                 { status: 400 }
@@ -30,13 +25,20 @@ export async function POST(req: Request) {
             );
         }
 
-        // 2️⃣ Check if email already exists
-        const existing = await db
-            .select()
-            .from(manager)
-            .where(eq(manager.email, email));
+        if (password !== confirmPassword) {
+            return NextResponse.json(
+                { error: "Passwords do not match" },
+                { status: 400 }
+            );
+        }
 
-        if (existing.length > 0) {
+        // 2️⃣ Check if email already exists in users table (central auth)
+        const existingInUsers = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, email));
+
+        if (existingInUsers.length > 0) {
             return NextResponse.json(
                 { error: "Email already exists" },
                 { status: 409 }
@@ -46,15 +48,26 @@ export async function POST(req: Request) {
         // 3️⃣ Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 4️⃣ Insert into database
-        await db.insert(manager).values({
-            name: fullName,
+        // 4️⃣ Insert into manager table
+        const [result] = await db.insert(manager).values({
+            name: "New Manager", // Default name
             email: email,
-            phone: phone,
+            phone: "", // Default phone
             password: hashedPassword,
         });
 
-        // 5️⃣ Success response
+        const managerId = (result as any).insertId;
+
+        // 5️⃣ Insert into central users table for authentication
+        await db.insert(users).values({
+            email: email,
+            passwordHash: hashedPassword,
+            role: "manager",
+            relatedId: managerId,
+            status: "active"
+        });
+
+        // 6️⃣ Success response
         return NextResponse.json(
             { success: true, message: "Manager registered successfully" },
             { status: 201 }

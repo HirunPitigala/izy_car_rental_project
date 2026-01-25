@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --ek-border-radius: 9.6px;
+  --ek-shadow: 0px 8px 16px rgba(0, 0, 0, 0.15);
+  --ek-input-text: 18.75px;
 }
 
 @theme inline {
@@ -22,5 +25,27 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Roboto', Arial, Helvetica, sans-serif;
+}
+
+/* Base structural styles inspired by e-kelaniya */
+.ek-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: var(--ek-shadow);
+  padding: 32px;
+}
+
+.ek-input {
+  border-radius: var(--ek-border-radius) !important;
+  font-size: var(--ek-input-text) !important;
+  padding: 8px 16px !important;
+  border: 0.8px solid #d1d5db !important;
+}
+
+.ek-button {
+  border-radius: var(--ek-border-radius) !important;
+  font-size: var(--ek-input-text) !important;
+  padding: 8px 16px !important;
+  font-weight: 700 !important;
 }

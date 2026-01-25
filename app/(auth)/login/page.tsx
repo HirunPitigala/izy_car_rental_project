@@ -21,7 +21,7 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const endpoint = isAdmin ? "/api/auth/admin/login" : "/api/auth/login";
+            const endpoint = "/api/auth/login";
             const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -33,6 +33,9 @@ export default function LoginPage() {
             if (!res.ok) {
                 throw new Error(data.error || "Login failed");
             }
+
+            // Force refresh to update the server-rendered Navbar with the new session
+            router.refresh();
 
             // Redirect based on role
             switch (data.role) {

@@ -77,8 +77,9 @@ export async function POST(request: Request) {
 
         // Return token and user info in body for mobile apps
         return NextResponse.json({
+            success: true,
             token: sessionToken,
-            role, // Added at top level for frontend redirection
+            role,
             user: {
                 id: userId,
                 role,
@@ -86,6 +87,7 @@ export async function POST(request: Request) {
                 name
             }
         });
+
 
     } catch (error) {
         console.error("Login error:", error);

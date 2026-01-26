@@ -65,7 +65,7 @@ export async function POST(req: Request) {
             termsAccepted: 1, // true
         });
 
-        const customerId = (result as any).insertId;
+        const customerId = (result as { insertId: number }).insertId;
 
         // Insert into central users table for authentication
         await db.insert(users).values({

@@ -12,17 +12,20 @@ const MapModal = dynamic(() => import("@/components/rent/MapModal"), {
 
 export default function PickMeSearchPage() {
     const router = useRouter();
-    const [pickup, setPickup] = useState("");
-    const [destination, setDestination] = useState("");
+    const [formData, setFormData] = useState({
+        pickup_location: "",
+        dropoff_location: "",
+        pickup_date: "",
+        pickup_time: ""
+    });
     const [tripType, setTripType] = useState("one-way");
     const [isMapOpen, setIsMapOpen] = useState(false);
     const [activeField, setActiveField] = useState<"pickup" | "destination" | null>(null);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        if (pickup && destination) {
-            router.push("/pick-me/available-vehicles");
-        }
+        const params = new URLSearchParams(formData);
+        router.push(`/pick-me/summary?${params.toString()}`);
     };
 
     const openMap = (field: "pickup" | "destination") => {
@@ -32,9 +35,9 @@ export default function PickMeSearchPage() {
 
     const handleLocationSelect = (location: string) => {
         if (activeField === "pickup") {
-            setPickup(location);
+            setFormData({ ...formData, pickup_location: location });
         } else {
-            setDestination(location);
+            setFormData({ ...formData, dropoff_location: location });
         }
     };
 
@@ -71,27 +74,27 @@ export default function PickMeSearchPage() {
 
                     <form onSubmit={handleSearch} className="space-y-8">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {/* Pickup */}
+                            {/* Pickup Location */}
                             <div className="relative">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 block">Pickup Location</label>
                                 <div className="relative">
                                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-500" />
                                     <input
                                         type="text"
-                                        placeholder="Select pickup point on map"
+                                        placeholder="Select pickup point"
                                         readOnly
                                         onClick={() => openMap("pickup")}
                                         className="w-full h-16 bg-gray-50 border-2 border-transparent focus:border-yellow-400 rounded-2xl pl-12 pr-12 font-bold text-gray-700 outline-none transition-all cursor-pointer"
-                                        value={pickup}
+                                        value={formData.pickup_location}
                                         required
                                     />
                                     <MapIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
                                 </div>
                             </div>
 
-                            {/* Destination */}
+                            {/* Dropoff Location */}
                             <div className="relative">
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 block">Destination</label>
+                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 block">Dropoff Location</label>
                                 <div className="relative">
                                     <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-500" />
                                     <input
@@ -100,41 +103,49 @@ export default function PickMeSearchPage() {
                                         readOnly
                                         onClick={() => openMap("destination")}
                                         className="w-full h-16 bg-gray-50 border-2 border-transparent focus:border-yellow-400 rounded-2xl pl-12 pr-12 font-bold text-gray-700 outline-none transition-all cursor-pointer"
-                                        value={destination}
+                                        value={formData.dropoff_location}
                                         required
                                     />
                                     <MapIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300" />
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Trip Type */}
-                        <div className="space-y-4">
-                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2 block">Trip Type</label>
-                            <div className="flex gap-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setTripType("one-way")}
-                                    className={`flex-1 h-14 rounded-2xl font-bold transition-all border-2 ${tripType === "one-way" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-500 border-gray-100 hover:border-yellow-400"}`}
-                                >
-                                    One Way
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setTripType("round-trip")}
-                                    className={`flex-1 h-14 rounded-2xl font-bold transition-all border-2 ${tripType === "round-trip" ? "bg-gray-900 text-white border-gray-900" : "bg-white text-gray-500 border-gray-100 hover:border-yellow-400"}`}
-                                >
-                                    Round Trip
-                                </button>
+                            {/* Pickup Date */}
+                            <div className="relative">
+                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 block">Pickup Date</label>
+                                <div className="relative">
+                                    <input
+                                        type="date"
+                                        className="w-full h-16 bg-gray-50 border-2 border-transparent focus:border-yellow-400 rounded-2xl px-6 font-bold text-gray-700 outline-none transition-all"
+                                        value={formData.pickup_date}
+                                        onChange={(e) => setFormData({ ...formData, pickup_date: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Pickup Time */}
+                            <div className="relative">
+                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 block">Pickup Time</label>
+                                <div className="relative">
+                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-yellow-500" />
+                                    <input
+                                        type="time"
+                                        className="w-full h-16 bg-gray-50 border-2 border-transparent focus:border-yellow-400 rounded-2xl pl-12 pr-6 font-bold text-gray-700 outline-none transition-all"
+                                        value={formData.pickup_time}
+                                        onChange={(e) => setFormData({ ...formData, pickup_time: e.target.value })}
+                                        required
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        {/* Search Button */}
+                        {/* Calculate Fare Button */}
                         <button
                             type="submit"
                             className="w-full h-16 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-black rounded-2xl shadow-xl shadow-yellow-100 transition-all flex items-center justify-center gap-3 text-xl active:scale-95 group"
                         >
-                            Search Available Vehicles
+                            Calculate Fare
                             <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
                         </button>
                     </form>

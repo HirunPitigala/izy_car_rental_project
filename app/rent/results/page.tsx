@@ -28,22 +28,24 @@ function ResultsContent() {
                 } else {
                     // Fallback to mock data for demonstration if API is restricted (401)
                     console.warn("API restricted or unavailable, falling back to mock data.");
-                    const mockData: Vehicle[] = mockVehicles.map(v => ({
-                        vehicleId: parseInt(v.id),
-                        brand: v.brand,
-                        model: v.model,
-                        plateNumber: v.plateNumber,
-                        capacity: v.capacity,
-                        transmissionType: v.transmissionType,
-                        fuelType: v.fuelType,
-                        luggageCapacity: v.luggageCapacity,
-                        ratePerDay: v.ratePerDay,
-                        ratePerHour: v.ratePerHour,
-                        availabilityStatus: v.availabilityStatus,
-                        image: v.image,
-                        description: v.description,
-                        rating: 4.8 // Default rating for UI
-                    }));
+                    const mockData: Vehicle[] = mockVehicles
+                        .filter(v => !(v.brand === "Honda" && v.model === "Civic") && !(v.brand === "Suzuki" && v.model === "Alto"))
+                        .map(v => ({
+                            vehicleId: parseInt(v.id),
+                            brand: v.brand,
+                            model: v.model,
+                            plateNumber: v.plateNumber,
+                            capacity: v.capacity,
+                            transmissionType: v.transmissionType,
+                            fuelType: v.fuelType,
+                            luggageCapacity: v.luggageCapacity,
+                            ratePerDay: v.ratePerDay,
+                            ratePerHour: v.ratePerHour,
+                            availabilityStatus: v.availabilityStatus,
+                            image: v.image,
+                            description: v.description,
+                            rating: 4.8 // Default rating for UI
+                        }));
                     setVehicles(mockData);
                 }
             } catch (err) {

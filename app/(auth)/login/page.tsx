@@ -42,7 +42,7 @@ export default function LoginPage() {
                 case "admin": router.push("/admin/dashboard"); break;
                 case "manager": router.push("/manager/dashboard"); break;
                 case "employee": router.push("/employee/dashboard"); break;
-                case "customer": router.push("/customer/dashboard"); break;
+                case "customer": router.push("/"); break;
                 default: throw new Error("Unknown role");
             }
         } catch (err: any) {

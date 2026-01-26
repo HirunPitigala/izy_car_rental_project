@@ -41,8 +41,7 @@ const customerNavItems: NavItem[] = [
     { label: 'Rent a Car', href: '/rent' },
     { label: 'Wedding Car Rental', href: '/wedding' },
     { label: 'Airport Rental', href: '/airport' },
-    { label: 'My Bookings', href: '/customer/bookings' },
-    { label: 'Profile', href: '/customer/profile' },
+    { label: 'Pick Me', href: '/pick-me' },
 ];
 
 interface NavbarProps {

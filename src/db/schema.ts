@@ -1,4 +1,4 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, primaryKey, unique, int, varchar, index, foreignKey, text, date, datetime, decimal, check, tinyint } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, primaryKey, unique, int, varchar, index, foreignKey, text, date, datetime, decimal, check, tinyint, boolean } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 export const admin = mysqlTable("admin", {
@@ -240,9 +240,21 @@ export const users = mysqlTable("users", {
 	relatedId: int("related_id"), // points to admin.id / customer.id / etc
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 	status: varchar({ length: 20 }).default("active"),
+	emailVerified: boolean("email_verified").default(false),
+	emailVerifiedAt: datetime("email_verified_at"),
 },
 	(table) => [
 		primaryKey({ columns: [table.id], name: "users_id" }),
 		unique("email").on(table.email),
 	]);
 
+export const emailVerificationTokens = mysqlTable("email_verification_tokens", {
+	id: int("id").autoincrement().notNull(),
+	userId: int("user_id").references(() => users.id).notNull(),
+	token: varchar("token", { length: 255 }).notNull(),
+	expiresAt: datetime("expires_at").notNull(),
+},
+	(table) => [
+		primaryKey({ columns: [table.id], name: "email_verification_tokens_id" }),
+		unique("token").on(table.token),
+	]);

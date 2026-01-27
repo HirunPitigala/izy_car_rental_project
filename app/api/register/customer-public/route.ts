@@ -49,8 +49,10 @@ export async function POST(req: Request) {
 
         // 3️⃣ Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
+        console.log(`Password hashed for: ${email}`);
 
         // 4️⃣ Insert into database
+        console.log(`Inserting into customer table...`);
         const [result] = await db.insert(customer).values({
             fullName: "New Customer",
             email: email,
@@ -68,29 +70,36 @@ export async function POST(req: Request) {
         });
 
         const customerId = (result as any).insertId;
+        console.log(`Customer inserted with ID: ${customerId}`);
 
         // 5️⃣ Insert into central users table for authentication
+        console.log(`Inserting into users table...`);
         const [userResult] = await db.insert(users).values({
             email: email,
             passwordHash: hashedPassword,
             role: "customer",
             relatedId: customerId,
+            name: "New Customer",
+            phone: "",
             status: "active",
             emailVerified: false,
         });
 
         const userId = (userResult as any).insertId;
+        console.log(`User inserted with ID: ${userId}`);
 
         // 6️⃣ Generate and send verification token
         const token = generateToken();
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+        console.log(`Inserting verification token...`);
         await db.insert(emailVerificationTokens).values({
             userId: userId,
             token: token,
             expiresAt: expiresAt,
         });
 
+        console.log(`Sending verification email...`);
         await sendVerificationEmail(email, token);
 
         // 7️⃣ Success response
@@ -99,7 +108,7 @@ export async function POST(req: Request) {
             { status: 201 }
         );
     } catch (error) {
-        console.error("Registration error:", error);
+        console.error("Registration error details:", error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

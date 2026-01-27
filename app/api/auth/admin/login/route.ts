@@ -1,8 +1,4 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { admin } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
-import bcrypt from "bcrypt";
 import { encrypt } from "@/lib/auth";
 import { cookies } from "next/headers";
 
@@ -18,30 +14,17 @@ export async function POST(request: Request) {
             );
         }
 
-        // Find admin by email
-        const [adminUser] = await db.select().from(admin).where(eq(admin.email, email)).limit(1);
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const adminPassword = process.env.ADMIN_PASSWORD;
 
-        if (!adminUser) {
-            console.log(`Admin login failure: user ${email} not found`);
-            return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-        }
-
-        if (!adminUser.password) {
-            console.log(`Admin login failure: user ${email} has no password set`);
-            return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-        }
-
-        // Validate password
-        const passwordMatch = await bcrypt.compare(password, adminUser.password);
-
-        if (!passwordMatch) {
-            console.log(`Admin login failure: password mismatch for ${email}`);
+        if (email !== adminEmail || password !== adminPassword) {
+            console.log(`Admin login failure: invalid credentials for ${email}`);
             return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
         }
 
         // --- JWT Session Creation ---
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day session for security
-        const sessionToken = await encrypt({ userId: adminUser.adminId, role: "admin", expiresAt });
+        const sessionToken = await encrypt({ userId: 0, role: "admin", expiresAt });
 
         const cookieStore = await cookies();
         cookieStore.set("session", sessionToken, {

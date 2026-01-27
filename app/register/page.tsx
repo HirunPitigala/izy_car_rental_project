@@ -43,12 +43,6 @@ export default function RegisterSelectionPage() {
                     >
                         Manager Registration
                     </Link>
-                    <Link
-                        href="/register/employee"
-                        className="block w-full rounded-lg bg-yellow-400 py-3 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2"
-                    >
-                        Employee Registration
-                    </Link>
                 </div>
 
                 {/* Login Link */}

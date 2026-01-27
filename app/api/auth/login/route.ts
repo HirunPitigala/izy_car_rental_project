@@ -18,6 +18,38 @@ export async function POST(request: Request) {
             );
         }
 
+        // --- Admin Env-Based Auth Bypass ---
+        const adminEmail = process.env.ADMIN_EMAIL;
+        const adminPassword = process.env.ADMIN_PASSWORD;
+
+        if (email === adminEmail && password === adminPassword) {
+            const role = "admin";
+            const userId = 0; // Placeholder for env-based admin
+            const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+            const sessionToken = await encrypt({ userId, role, expiresAt });
+
+            const cookieStore = await cookies();
+            cookieStore.set("session", sessionToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                path: "/",
+                expires: expiresAt,
+            });
+
+            return NextResponse.json({
+                success: true,
+                token: sessionToken,
+                role,
+                user: {
+                    id: userId,
+                    role,
+                    email: adminEmail,
+                    name: "System Admin"
+                }
+            });
+        }
+
         // Authenticate ONLY against the public.users table
         const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
@@ -32,6 +64,10 @@ export async function POST(request: Request) {
 
         if (user.status !== "active") {
             return NextResponse.json({ error: "Account is disabled" }, { status: 403 });
+        }
+
+        if (!user.emailVerified) {
+            return NextResponse.json({ error: "Please verify your email address before logging in." }, { status: 403 });
         }
 
         // --- JWT Session Creation ---
@@ -51,29 +87,8 @@ export async function POST(request: Request) {
             expires: expiresAt,
         });
 
-        // Fetch user's real name from related tables
-        let name = "User";
-        try {
-            if (role === "admin" && relatedId) {
-                const { admin } = await import("@/src/db/schema");
-                const [u] = await db.select({ name: admin.name }).from(admin).where(eq(admin.adminId, relatedId));
-                if (u?.name) name = u.name;
-            } else if (role === "manager" && relatedId) {
-                const { manager } = await import("@/src/db/schema");
-                const [u] = await db.select({ name: manager.name }).from(manager).where(eq(manager.managerId, relatedId));
-                if (u?.name) name = u.name;
-            } else if (role === "employee" && relatedId) {
-                const { employee } = await import("@/src/db/schema");
-                const [u] = await db.select({ name: employee.name }).from(employee).where(eq(employee.employeeId, relatedId));
-                if (u?.name) name = u.name;
-            } else if (role === "customer" && relatedId) {
-                const { customer } = await import("@/src/db/schema");
-                const [u] = await db.select({ name: customer.fullName }).from(customer).where(eq(customer.customerId, relatedId));
-                if (u?.name) name = u.name;
-            }
-        } catch (e) {
-            console.error("Error fetching name for login:", e);
-        }
+        // Fetch user's real name from consolidated users table
+        const name = user.name || "User";
 
         // Return token and user info in body for mobile apps
         return NextResponse.json({

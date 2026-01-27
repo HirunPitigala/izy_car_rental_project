@@ -207,10 +207,31 @@ export const serviceCategory = mysqlTable("service_category", {
 		primaryKey({ columns: [table.categoryId], name: "service_category_category_id" }),
 	]);
 
+export const vehicleBrand = mysqlTable("vehicle_brand", {
+	brandId: int("brand_id").autoincrement().notNull(),
+	brandName: varchar("brand_name", { length: 50 }),
+},
+	(table) => [
+		primaryKey({ columns: [table.brandId], name: "vehicle_brand_brand_id" }),
+		unique("brand_name").on(table.brandName),
+	]);
+
+export const vehicleModel = mysqlTable("vehicle_model", {
+	modelId: int("model_id").autoincrement().notNull(),
+	brandId: int("brand_id").references(() => vehicleBrand.brandId),
+	modelName: varchar("model_name", { length: 50 }),
+},
+	(table) => [
+		primaryKey({ columns: [table.modelId], name: "vehicle_model_model_id" }),
+		unique("brand_model").on(table.brandId, table.modelName),
+	]);
+
 export const vehicle = mysqlTable("vehicle", {
 	vehicleId: int("vehicle_id").autoincrement().notNull(),
-	brand: varchar({ length: 50 }),
-	model: varchar({ length: 50 }),
+	brand: varchar({ length: 50 }), // Keep for compatibility
+	brandId: int("brand_id").references(() => vehicleBrand.brandId),
+	model: varchar({ length: 50 }), // Keep for compatibility
+	modelId: int("model_id").references(() => vehicleModel.modelId),
 	plateNumber: varchar("plate_number", { length: 20 }),
 	capacity: int(),
 	seatingCapacity: int("seating_capacity"),
@@ -219,7 +240,8 @@ export const vehicle = mysqlTable("vehicle", {
 	luggageCapacity: int("luggage_capacity"),
 	availabilityStatus: varchar("availability_status", { length: 20 }),
 	status: varchar("status", { length: 20 }), // AVAILABLE / UNAVAILABLE / MAINTENANCE
-	serviceCategory: varchar("service_category", { length: 50 }), // PICKME / WEDDING / AIRPORT / NORMAL
+	serviceCategory: varchar("service_category", { length: 50 }), // Keep for compatibility
+	categoryId: int("category_id").references(() => serviceCategory.categoryId),
 	ratePerDay: decimal("rate_per_day", { precision: 10, scale: 2 }),
 	ratePerMonth: decimal("rate_per_month", { precision: 10, scale: 2 }),
 	image: text("image"), // Store Base64
@@ -228,7 +250,7 @@ export const vehicle = mysqlTable("vehicle", {
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 },
 	(table) => [
-		primaryKey({ columns: [table.plateNumber], name: "vehicle_plate_number" }),
+		primaryKey({ columns: [table.vehicleId], name: "vehicle_vehicle_id" }),
 		unique("plate_number").on(table.plateNumber),
 	]);
 
@@ -240,6 +262,8 @@ export const users = mysqlTable("users", {
 	relatedId: int("related_id"), // points to admin.id / customer.id / etc
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 	status: varchar({ length: 20 }).default("active"),
+	name: varchar({ length: 100 }),
+	phone: varchar({ length: 15 }),
 },
 	(table) => [
 		primaryKey({ columns: [table.id], name: "users_id" }),

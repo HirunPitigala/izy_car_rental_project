@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { db } from "@/lib/db"; // adjust path if your db file is elsewhere
-import { customer, users } from "@/src/db/schema"; // adjust path if schema file is elsewhere
+import { customer, users, emailVerificationTokens } from "@/src/db/schema"; // adjust path if schema file is elsewhere
 import { eq } from "drizzle-orm";
+import { generateToken } from "@/lib/token";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
     try {
@@ -68,17 +70,34 @@ export async function POST(req: Request) {
         const customerId = (result as { insertId: number }).insertId;
 
         // Insert into central users table for authentication
-        await db.insert(users).values({
+        const [userResult] = await db.insert(users).values({
             email: email,
             passwordHash: hashedPassword,
             role: "customer",
             relatedId: customerId,
-            status: "active"
+            name: "New Customer",
+            phone: "",
+            status: "active",
+            emailVerified: false,
         });
+
+        const userId = (userResult as any).insertId;
+
+        // 6️⃣ Generate and send verification token
+        const token = generateToken();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        await db.insert(emailVerificationTokens).values({
+            userId: userId,
+            token: token,
+            expiresAt: expiresAt,
+        });
+
+        await sendVerificationEmail(email, token);
 
         //  Success response
         return NextResponse.json(
-            { success: true, message: "Customer registered successfully" },
+            { success: true, message: "Customer registered successfully. Please check your email to verify your account." },
             { status: 201 }
         );
     } catch (error) {

@@ -1,6 +1,6 @@
 
 import { db } from "@/lib/db";
-import { admin, manager, customer, employee } from "@/src/db/schema";
+import { users } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
@@ -61,17 +61,15 @@ export async function getSession(): Promise<UserSession | null> {
         const idToUse = relatedId || userId;
 
         if (role === 'admin') {
-            const [u] = await db.select({ name: admin.name, email: admin.email }).from(admin).where(eq(admin.adminId, idToUse));
-            userData = u;
-        } else if (role === 'manager') {
-            const [u] = await db.select({ name: manager.name, email: manager.email }).from(manager).where(eq(manager.managerId, idToUse));
-            userData = u;
-        } else if (role === 'customer') {
-            const [u] = await db.select({ name: customer.fullName, email: customer.email }).from(customer).where(eq(customer.customerId, idToUse));
-            if (u) userData = { name: u.name, email: u.email };
-        } else if (role === 'employee') {
-            const [u] = await db.select({ name: employee.name, email: employee.email }).from(employee).where(eq(employee.employeeId, idToUse));
-            userData = u;
+            userData = {
+                name: "System Admin",
+                email: process.env.ADMIN_EMAIL || null
+            };
+        } else {
+            const [u] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, userId));
+            if (u) {
+                userData = { name: u.name, email: u.email };
+            }
         }
 
         return {

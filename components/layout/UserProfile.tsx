@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { UserSession } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import { LogOut, User, ChevronDown } from "lucide-react";
+import { LogOut, User, ChevronDown, Settings, CreditCard } from "lucide-react";
 
 interface UserProfileProps {
     session: UserSession;
@@ -19,9 +19,8 @@ export default function UserProfile({ session }: UserProfileProps) {
     const handleLogout = async () => {
         try {
             await fetch("/api/auth/logout", { method: "POST" });
-            alert("You have been logged out");
-            router.push("/"); // Redirect home first
-            router.refresh(); // Then refresh to update server components
+            router.push("/");
+            router.refresh();
         } catch (error) {
             console.error("Logout failed", error);
         }
@@ -31,16 +30,16 @@ export default function UserProfile({ session }: UserProfileProps) {
         <div className="relative">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#fbbf24] focus:ring-offset-2"
+                className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-3 py-1.5 transition-all hover:bg-gray-50 hover:border-gray-200 active:scale-[0.98] focus:outline-none"
             >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600">
-                    <User className="h-5 w-5" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0f0f0f] text-white font-bold text-xs">
+                    {session.user?.name?.[0].toUpperCase() || "U"}
                 </div>
                 <div className="hidden text-left md:block">
-                    <p className="text-xs font-medium text-gray-700">{session.user?.name || "User"}</p>
-                    <p className="text-[10px] text-gray-500 capitalize">{session.role}</p>
+                    <p className="text-[13px] font-bold text-[#0f0f0f] leading-tight">{session.user?.name || "User"}</p>
+                    <p className="text-[11px] text-gray-500 capitalize leading-tight">{session.role}</p>
                 </div>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
+                <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {isOpen && (
@@ -49,21 +48,38 @@ export default function UserProfile({ session }: UserProfileProps) {
                         className="fixed inset-0 z-30 cursor-default"
                         onClick={() => setIsOpen(false)}
                     />
-                    <div className="absolute right-0 z-40 mt-2 w-56 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                        <div className="border-b border-gray-100 px-4 py-3">
-                            <p className="text-sm font-medium text-gray-900">{session.user?.name || "User"}</p>
-                            <p className="truncate text-xs text-gray-500">{session.user?.email || "No email"}</p>
-                            <span className="mt-1 inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 capitalize">
-                                {session.role}
-                            </span>
+                    <div className="absolute right-0 z-40 mt-2 w-64 origin-top-right rounded-2xl bg-white p-1.5 shadow-premium border border-gray-100 focus:outline-none animate-in fade-in zoom-in duration-200">
+                        <div className="px-4 py-4 mb-1 border-b border-gray-50">
+                            <p className="text-[14px] font-bold text-[#0f0f0f]">{session.user?.name || "User"}</p>
+                            <p className="truncate text-[12px] text-gray-500">{session.user?.email || "No email"}</p>
+                            <div className="mt-2.5">
+                                <span className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-[11px] font-bold text-[#dc2626] capitalize">
+                                    {session.role}
+                                </span>
+                            </div>
                         </div>
 
-                        <div className="py-1">
+                        <div className="py-1 space-y-0.5">
+                            <Link href="/customer/profile" className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-600 rounded-lg hover:bg-gray-50 hover:text-[#0f0f0f] transition-colors">
+                                <User className="h-4 w-4" />
+                                My Profile
+                            </Link>
+                            <Link href="/customer/bookings" className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-600 rounded-lg hover:bg-gray-50 hover:text-[#0f0f0f] transition-colors">
+                                <CreditCard className="h-4 w-4" />
+                                My Bookings
+                            </Link>
+                            <Link href="/settings" className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-600 rounded-lg hover:bg-gray-50 hover:text-[#0f0f0f] transition-colors">
+                                <Settings className="h-4 w-4" />
+                                Settings
+                            </Link>
+                        </div>
+
+                        <div className="mt-1 pt-1 border-t border-gray-50">
                             <button
                                 onClick={handleLogout}
-                                className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                             >
-                                <LogOut className="mr-2 h-4 w-4" />
+                                <LogOut className="h-4 w-4" />
                                 Sign out
                             </button>
                         </div>

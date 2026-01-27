@@ -282,3 +282,15 @@ export const emailVerificationTokens = mysqlTable("email_verification_tokens", {
 		primaryKey({ columns: [table.id], name: "email_verification_tokens_id" }),
 		unique("token").on(table.token),
 	]);
+
+export const passwordResetTokens = mysqlTable("password_reset_tokens", {
+	id: int("id").autoincrement().notNull(),
+	userId: int("user_id").references(() => users.id).notNull(),
+	token: varchar("token", { length: 255 }).notNull(),
+	expiresAt: datetime("expires_at").notNull(),
+	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+},
+	(table) => [
+		primaryKey({ columns: [table.id], name: "password_reset_tokens_id" }),
+		unique("token").on(table.token),
+	]);

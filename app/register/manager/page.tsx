@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { ArrowLeft, ShieldCheck, AlertCircle } from "lucide-react";
 
 export default function ManagerRegistrationPage() {
     const [email, setEmail] = useState("");
@@ -41,7 +42,6 @@ export default function ManagerRegistrationPage() {
                 return;
             }
 
-            // Success
             window.location.href = "/login";
         } catch (err) {
             console.error(err);
@@ -51,100 +51,124 @@ export default function ManagerRegistrationPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-            <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg">
-                {/* Logo */}
-                <div className="flex justify-center">
-                    <Link href="/">
-                        <Image
-                            src="/logo.png"
-                            alt="Logo"
-                            width={48}
-                            height={48}
-                            className="h-12 w-auto object-contain"
-                            priority
-                        />
-                    </Link>
-                </div>
+        <div className="flex min-h-screen items-center justify-center bg-[#fcfcfc] p-4 font-sans text-[#0f0f0f]">
+            <div className="w-full max-w-[480px]">
+                {/* Back Link */}
+                <Link href="/register" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#0f0f0f] transition-colors mb-8 group">
+                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                    Back to Selection
+                </Link>
 
-                {/* Header */}
-                <div className="text-center">
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                        Manager Registration
-                    </h1>
-                    <p className="mt-2 text-sm text-gray-500">
-                        Create an account to manage operations
-                    </p>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                    <div className="rounded-lg bg-red-100 p-2 text-sm text-red-700">
-                        {error}
-                    </div>
-                )}
-
-                {/* Form */}
-                <form className="space-y-6" onSubmit={handleSubmit}>
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email address</label>
-                        <div className="mt-1">
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400 sm:text-sm"
+                <div className="rounded-[32px] bg-white p-8 md:p-12 shadow-premium border border-gray-100">
+                    {/* Logo & Header */}
+                    <div className="mb-10 text-center">
+                        <Link href="/" className="inline-block mb-8">
+                            <Image
+                                src="/logo.png"
+                                alt="IZY Logo"
+                                width={100}
+                                height={36}
+                                className="h-9 w-auto"
+                                priority
                             />
-                        </div>
-                    </div>
-                    <div>
-                        <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
-                        <div className="mt-1">
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400 sm:text-sm"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm Password</label>
-                        <div className="mt-1">
-                            <input
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                type="password"
-                                required
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400 sm:text-sm"
-                            />
-                        </div>
+                        </Link>
+                        <h1 className="text-3xl font-extrabold tracking-tight">
+                            Manager <span className="text-[#dc2626]">Portal</span>
+                        </h1>
+                        <p className="mt-2.5 text-gray-500">
+                            Create your management account to get started
+                        </p>
                     </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="flex w-full justify-center rounded-lg bg-yellow-400 px-4 py-2 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 disabled:opacity-50"
-                    >
-                        {loading ? "Registering..." : "Register"}
-                    </button>
-                </form>
+                    {/* Error Message */}
+                    {error && (
+                        <div className="mb-8 flex items-center gap-3 rounded-2xl bg-red-50 p-4 text-sm text-[#dc2626] border border-red-100 animate-in fade-in slide-in-from-top-2">
+                            <AlertCircle className="h-5 w-5 shrink-0" />
+                            <span className="font-medium">{error}</span>
+                        </div>
+                    )}
 
-                {/* Login Link */}
-                <div className="text-center text-sm">
-                    <span className="text-gray-500">Already have an account? </span>
-                    <Link href="/login" className="font-semibold text-yellow-500 hover:text-yellow-600">
-                        Login
-                    </Link>
+                    {/* Form */}
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+                        <div className="space-y-5">
+                            {/* Email Field */}
+                            <div>
+                                <label htmlFor="email" className="block text-[13px] font-bold mb-2 px-1">
+                                    Email Address
+                                </label>
+                                <input
+                                    id="email"
+                                    name="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="ek-input focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626]/10"
+                                    placeholder="manager@izy.com"
+                                />
+                            </div>
+
+                            {/* Password Field */}
+                            <div>
+                                <label htmlFor="password" className="block text-[13px] font-bold mb-2 px-1">
+                                    Password
+                                </label>
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="ek-input focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626]/10"
+                                    placeholder="••••••••"
+                                />
+                            </div>
+
+                            {/* Confirm Password Field */}
+                            <div>
+                                <label htmlFor="confirmPassword" className="block text-[13px] font-bold mb-2 px-1">
+                                    Confirm Password
+                                </label>
+                                <input
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    type="password"
+                                    required
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="ek-input focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626]/10"
+                                    placeholder="••••••••"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="pt-2">
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full h-12 flex items-center justify-center gap-2 rounded-xl bg-[#0f0f0f] text-sm font-bold text-white shadow-xl shadow-gray-900/10 transition-all hover:bg-[#262626] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? (
+                                    <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <>
+                                        <ShieldCheck className="h-4 w-4" />
+                                        Register Manager
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </form>
+
+                    {/* Login Link */}
+                    <div className="mt-10 text-center text-sm border-t border-gray-50 pt-8">
+                        <span className="text-gray-500">Already have an account? </span>
+                        <Link href="/login" className="font-bold text-[#dc2626] hover:text-[#b91c1c] transition-colors">
+                            Sign in
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

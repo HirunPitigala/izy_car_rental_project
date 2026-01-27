@@ -57,12 +57,26 @@ export default function Charts() {
         data = dataLastYear;
     }
 
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+            return (
+                <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-premium">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{label}</p>
+                    <p className="text-sm font-extrabold text-[#0f0f0f]">
+                        {payload[0].name === 'income' ? `LKR ${payload[0].value.toLocaleString()}` : payload[0].value}
+                    </p>
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
-        <div className="space-y-8">
+        <div className="space-y-10">
             {/* Filter */}
             <div className="flex justify-end">
                 <select
-                    className="rounded-md border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                    className="ek-input py-1.5 px-4 text-xs font-bold border-gray-100 focus:border-[#dc2626] cursor-pointer w-auto"
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
                 >
@@ -72,38 +86,40 @@ export default function Charts() {
                 </select>
             </div>
 
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
                 {/* Customers Chart */}
-                <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
-                    <h3 className="mb-4 text-lg font-semibold text-gray-900">Customers per Day</h3>
-                    <div className="h-80 w-full">
+                <div>
+                    <h3 className="mb-6 text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-2 border-l-2 border-[#dc2626]">
+                        Customer Traffic
+                    </h3>
+                    <div className="h-72 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={data}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                            <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" />
                                 <XAxis
                                     dataKey="name"
                                     stroke="#9CA3AF"
-                                    fontSize={12}
+                                    fontSize={10}
+                                    fontWeight={600}
                                     tickLine={false}
                                     axisLine={false}
+                                    dy={10}
                                 />
                                 <YAxis
                                     stroke="#9CA3AF"
-                                    fontSize={12}
+                                    fontSize={10}
+                                    fontWeight={600}
                                     tickLine={false}
                                     axisLine={false}
-                                    tickFormatter={(value) => `${value}`}
                                 />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                />
+                                <Tooltip content={<CustomTooltip />} />
                                 <Line
                                     type="monotone"
                                     dataKey="customers"
-                                    stroke="#16a34a"
-                                    strokeWidth={2}
-                                    dot={{ r: 4, fill: "#16a34a", strokeWidth: 2 }}
-                                    activeDot={{ r: 6 }}
+                                    stroke="#dc2626"
+                                    strokeWidth={3}
+                                    dot={{ r: 0 }}
+                                    activeDot={{ r: 6, strokeWidth: 0, fill: "#dc2626" }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
@@ -111,67 +127,79 @@ export default function Charts() {
                 </div>
 
                 {/* Reservations Chart */}
-                <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
-                    <h3 className="mb-4 text-lg font-semibold text-gray-900">Reservations Overview</h3>
-                    <div className="h-80 w-full">
+                <div>
+                    <h3 className="mb-6 text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-2 border-l-2 border-[#0f0f0f]">
+                        Reservations Volume
+                    </h3>
+                    <div className="h-72 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={data}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                            <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" />
                                 <XAxis
                                     dataKey="name"
                                     stroke="#9CA3AF"
-                                    fontSize={12}
+                                    fontSize={10}
+                                    fontWeight={600}
                                     tickLine={false}
                                     axisLine={false}
+                                    dy={10}
                                 />
                                 <YAxis
                                     stroke="#9CA3AF"
-                                    fontSize={12}
+                                    fontSize={10}
+                                    fontWeight={600}
                                     tickLine={false}
                                     axisLine={false}
                                 />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                <Tooltip content={<CustomTooltip />} />
+                                <Line
+                                    type="monotone"
+                                    dataKey="reservations"
+                                    stroke="#0f0f0f"
+                                    strokeWidth={3}
+                                    dot={{ r: 0 }}
+                                    activeDot={{ r: 6, strokeWidth: 0, fill: "#0f0f0f" }}
                                 />
-                                <Bar dataKey="reservations" fill="#16a34a" radius={[4, 4, 0, 0]} />
-                            </BarChart>
+                            </LineChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
             </div>
 
             {/* Income Chart */}
-            <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
-                <h3 className="mb-4 text-lg font-semibold text-gray-900">Income Overview</h3>
+            <div>
+                <h3 className="mb-6 text-[11px] font-bold text-gray-400 uppercase tracking-widest pl-2 border-l-2 border-[#dc2626]">
+                    Revenue Statistics
+                </h3>
                 <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                        <LineChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" />
                             <XAxis
                                 dataKey="name"
                                 stroke="#9CA3AF"
-                                fontSize={12}
+                                fontSize={10}
+                                fontWeight={600}
                                 tickLine={false}
                                 axisLine={false}
+                                dy={10}
                             />
                             <YAxis
                                 stroke="#9CA3AF"
-                                fontSize={12}
+                                fontSize={10}
+                                fontWeight={600}
                                 tickLine={false}
                                 axisLine={false}
-                                tickFormatter={(value) => `$${value}`}
+                                tickFormatter={(value) => `LKR ${value}`}
                             />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                                formatter={(value) => [`$${value}`, "Income"]}
-                            />
+                            <Tooltip content={<CustomTooltip />} />
                             <Line
                                 type="monotone"
                                 dataKey="income"
-                                stroke="#16a34a"
-                                strokeWidth={2}
-                                dot={{ r: 4, fill: "#16a34a", strokeWidth: 2 }}
-                                activeDot={{ r: 6 }}
+                                stroke="#dc2626"
+                                strokeWidth={3}
+                                dot={{ r: 0 }}
+                                activeDot={{ r: 6, strokeWidth: 0, fill: "#dc2626" }}
                             />
                         </LineChart>
                     </ResponsiveContainer>

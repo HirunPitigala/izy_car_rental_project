@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Check, Chrome, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Check, Chrome, AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -34,10 +34,8 @@ export default function LoginPage() {
                 throw new Error(data.error || "Login failed");
             }
 
-            // Force refresh to update the server-rendered Navbar with the new session
             router.refresh();
 
-            // Redirect based on role
             switch (data.role) {
                 case "admin": router.push("/admin/dashboard"); break;
                 case "manager": router.push("/manager/dashboard"); break;
@@ -47,56 +45,57 @@ export default function LoginPage() {
             }
         } catch (err: any) {
             setError(err.message);
-            setLoading(false); // Only stop loading on error, on success we redirect so keep loading state to prevent double submit
+            setLoading(false);
         }
-        // Note: We don't set loading(false) on success to prevent flashes before redirect
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-            <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg">
-                {/* Logo */}
-                <div className="flex justify-start">
-                    <Image
-                        src="/logo.png"
-                        alt="Logo"
-                        width={48}
-                        height={48}
-                        className="h-12 w-auto object-contain"
-                        priority
-                    />
-                </div>
+        <div className="flex min-h-screen items-center justify-center bg-[#fcfcfc] p-4 font-sans">
+            <div className="w-full max-w-[440px]">
+                {/* Back to Home */}
+                <Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#0f0f0f] transition-colors mb-8 group">
+                    <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+                    Back to website
+                </Link>
 
-                {/* Header */}
-                <div className="space-y-2">
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-                        {isAdmin ? "Admin Login" : "Welcome Back"}
-                    </h1>
-                    <p className="text-sm text-gray-500">
-                        Enter your credentials to access your account
-                    </p>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                    <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-500">
-                        <AlertCircle className="h-4 w-4" />
-                        <span>{error}</span>
+                <div className="rounded-[24px] bg-white p-8 md:p-10 shadow-premium border border-gray-100">
+                    {/* Logo & Header */}
+                    <div className="mb-10">
+                        <Image
+                            src="/logo.png"
+                            alt="IZY Logo"
+                            width={100}
+                            height={36}
+                            className="h-9 w-auto mb-8"
+                            priority
+                        />
+                        <h1 className="text-3xl font-extrabold text-[#0f0f0f] tracking-tight">
+                            {isAdmin ? "Admin Login" : "Welcome Back"}
+                        </h1>
+                        <p className="mt-2.5 text-gray-500">
+                            Please enter your details to sign in
+                        </p>
                     </div>
-                )}
 
-                {/* Form */}
-                <form className="space-y-6" onSubmit={handleSubmit}>
-                    <div className="space-y-4">
-                        {/* Email Field */}
-                        <div>
-                            <label
-                                htmlFor="email"
-                                className="block text-sm font-medium text-gray-700"
-                            >
-                                Email address
-                            </label>
-                            <div className="mt-1">
+                    {/* Error Message */}
+                    {error && (
+                        <div className="mb-8 flex items-center gap-3 rounded-xl bg-red-50 p-4 text-sm text-[#dc2626] border border-red-100 animate-in fade-in slide-in-from-top-2">
+                            <AlertCircle className="h-5 w-5 shrink-0" />
+                            <span className="font-medium">{error}</span>
+                        </div>
+                    )}
+
+                    {/* Form */}
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+                        <div className="space-y-5">
+                            {/* Email Field */}
+                            <div>
+                                <label
+                                    htmlFor="email"
+                                    className="block text-[13px] font-bold text-[#0f0f0f] mb-2 px-1"
+                                >
+                                    Email Address
+                                </label>
                                 <input
                                     id="email"
                                     name="email"
@@ -106,143 +105,134 @@ export default function LoginPage() {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     disabled={loading}
-                                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400 sm:text-sm disabled:opacity-50"
-                                    placeholder="you@example.com"
+                                    className="ek-input focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626]/10"
+                                    placeholder="name@company.com"
                                 />
+                            </div>
+
+                            {/* Password Field */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2 px-1">
+                                    <label
+                                        htmlFor="password"
+                                        className="block text-[13px] font-bold text-[#0f0f0f]"
+                                    >
+                                        Password
+                                    </label>
+                                    <Link
+                                        href="/forgot-password"
+                                        className="text-[12px] font-bold text-[#dc2626] hover:text-[#b91c1c] transition-colors"
+                                    >
+                                        Forgot?
+                                    </Link>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        id="password"
+                                        name="password"
+                                        type={showPassword ? "text" : "password"}
+                                        autoComplete="current-password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        disabled={loading}
+                                        className="ek-input focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626]/10 pr-12"
+                                        placeholder="••••••••"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        disabled={loading}
+                                        className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-[#0f0f0f] transition-colors"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-5 w-5" />
+                                        ) : (
+                                            <Eye className="h-5 w-5" />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Password Field */}
-                        <div>
-                            <label
-                                htmlFor="password"
-                                className="block text-sm font-medium text-gray-700"
-                            >
-                                Password
-                            </label>
-                            <div className="relative mt-1">
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type={showPassword ? "text" : "password"}
-                                    autoComplete="current-password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    disabled={loading}
-                                    className="block w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 shadow-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400 sm:text-sm disabled:opacity-50"
-                                    placeholder="••••••••"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    disabled={loading}
-                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-                                >
-                                    {showPassword ? (
-                                        <EyeOff className="h-5 w-5" aria-hidden="true" />
-                                    ) : (
-                                        <Eye className="h-5 w-5" aria-hidden="true" />
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-
-
-
-                    {/* Remember me & Forgot password */}
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center">
+                        {/* Remember me */}
+                        <div className="flex items-center px-1">
                             <input
                                 id="remember-me"
                                 name="remember-me"
                                 type="checkbox"
                                 disabled={loading}
-                                className="h-4 w-4 rounded border-gray-300 text-yellow-400 focus:ring-yellow-400"
+                                className="h-4 w-4 rounded border-gray-300 text-[#dc2626] focus:ring-[#dc2626] cursor-pointer"
                             />
                             <label
                                 htmlFor="remember-me"
-                                className="ml-2 block text-sm text-gray-700"
+                                className="ml-2.5 block text-sm text-gray-600 cursor-pointer"
                             >
-                                Remember me
+                                Keep me signed in
                             </label>
                         </div>
 
-                        <div className="text-sm">
-                            <Link
-                                href="#"
-                                className="font-medium text-gray-600 hover:text-gray-900"
-                            >
-                                Forgot password?
-                            </Link>
+                        {/* Sign In Button */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full h-12 flex items-center justify-center rounded-xl bg-[#0f0f0f] text-sm font-bold text-white shadow-xl shadow-gray-900/10 transition-all hover:bg-[#262626] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                    Signing in...
+                                </div>
+                            ) : "Sign in to Account"}
+                        </button>
+                    </form>
+
+                    {/* Divider */}
+                    <div className="relative my-8">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-gray-100" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase tracking-widest font-bold">
+                            <span className="bg-white px-4 text-gray-400">
+                                OR
+                            </span>
                         </div>
                     </div>
 
-                    {/* Sign In Button */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="flex w-full justify-center rounded-lg bg-yellow-400 px-4 py-2 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {loading ? "Signing in..." : "Sign In"}
-                    </button>
-                </form>
-
-                {/* Divider */}
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-300" />
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                        <span className="bg-white px-2 text-gray-500">
-                            Or continue with
-                        </span>
-                    </div>
-                </div>
-
-                {/* Social Login */}
-                <div>
+                    {/* Social Login */}
                     <button
                         type="button"
                         disabled={loading}
-                        className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 disabled:opacity-50"
+                        className="flex w-full h-12 items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-bold text-[#0f0f0f] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50"
                     >
-                        {/* Google Icon SVG */}
-                        <svg className="h-5 w-5" viewBox="0 0 24 24">
-                            <path
-                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                                fill="#4285F4"
-                            />
-                            <path
-                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                                fill="#34A853"
-                            />
-                            <path
-                                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                                fill="#FBBC05"
-                            />
-                            <path
-                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                                fill="#EA4335"
-                            />
-                        </svg>
-                        Sign in with Google
+                        <Image src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width={20} height={20} />
+                        Continue with Google
                     </button>
+
+                    {/* Footer */}
+                    <div className="mt-10 text-center">
+                        <p className="text-sm text-gray-500">
+                            Don't have an account?{" "}
+                            <Link
+                                href="/register/customer-public"
+                                className="font-bold text-[#dc2626] hover:text-[#b91c1c] transition-colors"
+                            >
+                                Sign up
+                            </Link>
+                        </p>
+                    </div>
                 </div>
 
-                {/* Footer */}
-                <p className="text-center text-sm text-gray-500">
-                    Don&apos;t have an account?{" "}
-                    <Link
-                        href="/register/customer-public"
-                        className="font-semibold text-yellow-500 hover:text-yellow-600"
+                {/* Admin Toggle */}
+                <div className="mt-8 text-center px-4">
+                    <button
+                        onClick={() => setIsAdmin(!isAdmin)}
+                        className="text-[12px] font-bold text-gray-400 hover:text-gray-600 uppercase tracking-widest transition-colors"
                     >
-                        Sign up
-                    </Link>
-                </p>
-            </div >
-        </div >
+                        {isAdmin ? "Switch to User Login" : "Switch to Admin Access"}
+                    </button>
+                </div>
+            </div>
+        </div>
     );
 }

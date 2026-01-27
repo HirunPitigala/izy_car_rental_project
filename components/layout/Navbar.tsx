@@ -4,10 +4,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserSession } from '@/lib/auth';
 import UserProfile from './UserProfile';
-import { Bell, ClipboardList } from 'lucide-react';
+import { Bell, ClipboardList, Menu, X } from 'lucide-react';
 
 interface NavItem {
     label: string;
@@ -51,6 +51,15 @@ interface NavbarProps {
 export default function Navbar({ session }: NavbarProps) {
     const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     // Don't show navbar on login or register pages
     const isAuthPage = pathname === '/login' || pathname.startsWith('/register');
@@ -77,158 +86,172 @@ export default function Navbar({ session }: NavbarProps) {
     }
 
     return (
-        <nav className="sticky top-0 z-50 w-full bg-white shadow-md">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div className="flex h-[72px] items-center justify-between">
+        <nav className={`sticky top-0 z-50 w-full transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100' : 'bg-white'}`}>
+            <div className="container-custom">
+                <div className="flex h-20 items-center justify-between">
                     {/* Logo */}
-                    <Link href="/" className="flex-shrink-0 transition-opacity hover:opacity-80">
+                    <Link href="/" className="flex-shrink-0 transition-transform hover:scale-[1.02] active:scale-[0.98]">
                         <Image
                             src="/logo.png"
                             alt="IZY Logo"
-                            width={120}
-                            height={40}
-                            className="h-10 w-auto"
+                            width={110}
+                            height={36}
+                            className="h-9 w-auto"
                             priority
                         />
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <div className="hidden items-center gap-2 md:flex">
+                    <div className="hidden items-center gap-1 lg:flex text-gray-400">
                         {currentNavItems.map((item) => (
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-200 ${isActive(item.href)
-                                    ? 'bg-gray-900 text-white shadow-lg'
-                                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                                className={`group relative px-4 py-2 text-[14px] font-medium transition-colors ${isActive(item.href)
+                                    ? 'text-[#0f0f0f]'
+                                    : 'text-gray-600 hover:text-[#0f0f0f]'
                                     }`}
                             >
-                                {item.label === 'Requested Bookings' && <ClipboardList className="h-4 w-4" />}
-                                {item.label}
+                                <span className="flex items-center gap-2">
+                                    {item.label === 'Requested Bookings' && <ClipboardList className="h-4 w-4" />}
+                                    {item.label}
+                                </span>
+                                {isActive(item.href) && (
+                                    <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-[#dc2626] rounded-full" />
+                                )}
                             </Link>
                         ))}
                     </div>
 
                     {/* Desktop Auth Buttons / Profile */}
-                    <div className="hidden items-center gap-3 md:flex">
+                    <div className="hidden items-center gap-4 lg:flex">
                         {session ? (
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-5">
                                 {session.role === 'admin' && (
-                                    <button className="relative rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900">
-                                        <Bell className="h-6 w-6" />
-                                        <span className="absolute right-2 top-2 flex h-2.5 w-2.5">
+                                    <button className="relative rounded-full p-2 text-gray-500 transition-all hover:bg-gray-100 hover:text-[#0f0f0f]">
+                                        <Bell className="h-5 w-5" />
+                                        <span className="absolute right-2 top-2 flex h-2 w-2">
                                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                                            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500"></span>
+                                            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-600"></span>
                                         </span>
                                     </button>
                                 )}
                                 {session.role === 'admin' && (
                                     <div className="relative group">
-                                        <button className="rounded-lg bg-[#fbbf24] px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:bg-[#f59e0b] hover:shadow-lg">
-                                            Register New
+                                        <button className="h-10 px-5 rounded-[10px] bg-[#0f0f0f] text-sm font-semibold text-white transition-all hover:bg-[#262626] active:scale-[0.98]">
+                                            Create Account
                                         </button>
-                                        <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                            <Link href="/register/employee" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Register Employee</Link>
-                                            <Link href="/register/manager" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Register Manager</Link>
-                                            <Link href="/register/customer" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Register Customer</Link>
+                                        <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-xl bg-white p-1.5 shadow-premium border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                            <Link href="/register/employee" className="flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 hover:text-[#0f0f0f]">Employee Account</Link>
+                                            <Link href="/register/manager" className="flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 hover:text-[#0f0f0f]">Manager Account</Link>
+                                            <Link href="/register/customer" className="flex items-center px-3 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-50 hover:text-[#0f0f0f]">Customer Account</Link>
                                         </div>
                                     </div>
                                 )}
                                 <UserProfile session={session} />
                             </div>
                         ) : (
-                            <>
+                            <div className="flex items-center gap-3">
                                 <Link
                                     href="/login"
-                                    className="rounded-lg border-2 border-[#fbbf24] px-6 py-2.5 text-sm font-semibold text-[#fbbf24] transition-all duration-200 hover:bg-[#fbbf24] hover:text-white"
+                                    className="h-10 px-5 flex items-center text-sm font-semibold text-[#0f0f0f] transition-all hover:text-gray-600"
                                 >
-                                    Login
+                                    Log in
                                 </Link>
                                 <Link
                                     href="/register/customer-public"
-                                    className="rounded-lg bg-[#fbbf24] px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:bg-[#f59e0b] hover:shadow-lg"
+                                    className="h-10 px-6 rounded-[10px] bg-[#dc2626] flex items-center text-sm font-semibold text-white transition-all shadow-md shadow-red-500/10 hover:bg-[#b91c1c] active:scale-[0.98]"
                                 >
                                     Register
                                 </Link>
-                            </>
+                            </div>
                         )}
                     </div>
 
                     {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#fbbf24] md:hidden"
+                        className="inline-flex items-center justify-center rounded-xl p-2 text-gray-600 transition-colors hover:bg-gray-100 hover:text-[#0f0f0f] lg:hidden"
                         aria-expanded={isMobileMenuOpen}
                     >
                         <span className="sr-only">Open main menu</span>
-                        {!isMobileMenuOpen ? (
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
+                        {isMobileMenuOpen ? (
+                            <X className="h-6 w-6" />
                         ) : (
-                            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <Menu className="h-6 w-6" />
                         )}
                     </button>
                 </div>
             </div>
 
             {/* Mobile Menu */}
-            {isMobileMenuOpen && (
-                <div className="border-t border-gray-200 bg-white md:hidden">
-                    <div className="space-y-1 px-4 pb-3 pt-2">
+            <div className={`fixed inset-x-0 top-20 z-40 lg:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="bg-white border-b border-gray-100 shadow-xl px-4 pb-8 pt-4">
+                    <div className="space-y-1">
                         {currentNavItems.map((item) => (
                             <Link
                                 key={item.href}
                                 href={item.href}
                                 onClick={() => setIsMobileMenuOpen(false)}
-                                className={`block rounded-lg px-4 py-3 text-base font-medium transition-all duration-200 ${isActive(item.href)
-                                    ? 'bg-gray-900 text-white'
-                                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-base font-medium transition-all ${isActive(item.href)
+                                    ? 'bg-gray-50 text-[#dc2626]'
+                                    : 'text-gray-600 hover:bg-gray-50 hover:text-[#0f0f0f]'
                                     }`}
                             >
                                 {item.label}
                             </Link>
                         ))}
-                        <div className="mt-4 space-y-2 border-t border-gray-200 pt-4">
-                            {session ? (
-                                <div className="space-y-2">
-                                    <div className="px-4 py-2 border rounded-lg bg-gray-50">
-                                        <p className="font-semibold">{session.user?.name}</p>
-                                        <p className="text-sm text-gray-500 capitalize">{session.role}</p>
+                    </div>
+
+                    <div className="mt-6 pt-6 border-t border-gray-100">
+                        {session ? (
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3 px-4 py-3 border border-gray-100 rounded-2xl bg-gray-50">
+                                    <div className="h-10 w-10 rounded-full bg-[#0f0f0f] flex items-center justify-center text-white font-bold">
+                                        {session.user?.name?.[0].toUpperCase()}
                                     </div>
-                                    <button
-                                        onClick={async () => {
-                                            await fetch("/api/auth/logout", { method: "POST" });
-                                            window.location.href = "/";
-                                        }}
-                                        className="block w-full rounded-lg border-2 border-red-500 px-4 py-3 text-center text-base font-semibold text-red-500 hover:bg-red-50"
-                                    >
-                                        Logout
-                                    </button>
+                                    <div>
+                                        <p className="font-bold text-[#0f0f0f]">{session.user?.name}</p>
+                                        <p className="text-xs text-gray-500 capitalize">{session.role}</p>
+                                    </div>
                                 </div>
-                            ) : (
-                                <>
-                                    <Link
-                                        href="/login"
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                        className="block rounded-lg border-2 border-[#fbbf24] px-4 py-3 text-center text-base font-semibold text-[#fbbf24] transition-all duration-200 hover:bg-[#fbbf24] hover:text-white"
-                                    >
-                                        Login
-                                    </Link>
-                                    <Link
-                                        href="/register/customer-public"
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                        className="block rounded-lg bg-[#fbbf24] px-4 py-3 text-center text-base font-semibold text-white shadow-md transition-all duration-200 hover:bg-[#f59e0b]"
-                                    >
-                                        Register
-                                    </Link>
-                                </>
-                            )}
-                        </div>
+                                <button
+                                    onClick={async () => {
+                                        await fetch("/api/auth/logout", { method: "POST" });
+                                        window.location.href = "/";
+                                    }}
+                                    className="w-full h-12 rounded-xl border border-gray-200 text-base font-semibold text-gray-600 transition-colors hover:bg-gray-50 active:bg-gray-100"
+                                >
+                                    Log out
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-3">
+                                <Link
+                                    href="/login"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="flex h-12 items-center justify-center rounded-xl border border-gray-200 text-base font-semibold text-gray-600 transition-all active:bg-gray-50"
+                                >
+                                    Log in
+                                </Link>
+                                <Link
+                                    href="/register/customer-public"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="flex h-12 items-center justify-center rounded-xl bg-[#dc2626] text-base font-semibold text-white shadow-lg shadow-red-500/20 transition-all active:bg-[#b91c1c]"
+                                >
+                                    Register
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
+            </div>
+            {/* Overlay for mobile menu */}
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 top-20 bg-gray-900/10 backdrop-blur-[2px] z-30 lg:hidden"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                />
             )}
         </nav>
     );

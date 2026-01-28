@@ -25,7 +25,6 @@ const adminNavItems: NavItem[] = [
     { label: 'Dashboard', href: '/admin/dashboard' },
     { label: 'Requested Bookings', href: '/admin/bookings/requested' },
     { label: 'Vehicles', href: '/admin/vehicles' },
-    { label: 'Reservations', href: '/admin/reservations' },
     { label: 'Reports', href: '/admin/reports' },
 ];
 

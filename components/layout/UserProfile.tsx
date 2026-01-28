@@ -59,20 +59,7 @@ export default function UserProfile({ session }: UserProfileProps) {
                             </div>
                         </div>
 
-                        <div className="py-1 space-y-0.5">
-                            <Link href="/customer/profile" className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-600 rounded-lg hover:bg-gray-50 hover:text-[#0f0f0f] transition-colors">
-                                <User className="h-4 w-4" />
-                                My Profile
-                            </Link>
-                            <Link href="/customer/bookings" className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-600 rounded-lg hover:bg-gray-50 hover:text-[#0f0f0f] transition-colors">
-                                <CreditCard className="h-4 w-4" />
-                                My Bookings
-                            </Link>
-                            <Link href="/settings" className="flex items-center gap-2.5 px-3 py-2 text-[13px] text-gray-600 rounded-lg hover:bg-gray-50 hover:text-[#0f0f0f] transition-colors">
-                                <Settings className="h-4 w-4" />
-                                Settings
-                            </Link>
-                        </div>
+
 
                         <div className="mt-1 pt-1 border-t border-gray-50">
                             <button

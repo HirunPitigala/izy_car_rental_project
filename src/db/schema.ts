@@ -20,9 +20,13 @@ export const agreement = mysqlTable("agreement", {
 	agreementDate: date("agreement_date", { mode: 'string' }),
 	approvalStatus: varchar("approval_status", { length: 30 }),
 	termsAccepted: tinyint("terms_accepted"),
+	adminId: int("admin_id").references(() => admin.adminId),
+	guarantorId: int("guarantor_id").references(() => guarantor.guarantorId),
 },
 	(table) => [
 		index("reservation_id").on(table.reservationId),
+		index("admin_id").on(table.adminId),
+		index("guarantor_id").on(table.guarantorId),
 		primaryKey({ columns: [table.agreementId], name: "agreement_agreement_id" }),
 	]);
 
@@ -33,9 +37,11 @@ export const checklist = mysqlTable("checklist", {
 	inspectionDate: date("inspection_date", { mode: 'string' }),
 	inspectionType: varchar("inspection_type", { length: 50 }),
 	remarks: text(),
+	employeeId: int("employee_id").references(() => employee.employeeId),
 },
 	(table) => [
 		index("reservation_id").on(table.reservationId),
+		index("employee_id").on(table.employeeId),
 		primaryKey({ columns: [table.checklistId], name: "checklist_checklist_id" }),
 	]);
 
@@ -67,9 +73,13 @@ export const driver = mysqlTable("driver", {
 	licenseNumber: varchar("license_number", { length: 50 }),
 	experienceYears: int("experience_years"),
 	availabilityStatus: varchar("availability_status", { length: 20 }),
+	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId),
+	adminId: int("admin_id").references(() => admin.adminId),
 },
 	(table) => [
 		primaryKey({ columns: [table.driverId], name: "driver_driver_id" }),
+		index("vehicle_id").on(table.vehicleId),
+		index("admin_id").on(table.adminId),
 	]);
 
 export const employee = mysqlTable("employee", {
@@ -127,9 +137,11 @@ export const notification = mysqlTable("notification", {
 	message: text(),
 	notificationDate: datetime("notification_date", { mode: 'string' }),
 	status: varchar({ length: 20 }),
+	adminId: int("admin_id").references(() => admin.adminId),
 },
 	(table) => [
 		index("customer_id").on(table.customerId),
+		index("admin_id").on(table.adminId),
 		primaryKey({ columns: [table.notificationId], name: "notification_notification_id" }),
 	]);
 
@@ -173,10 +185,12 @@ export const reservation = mysqlTable("reservation", {
 	distance: decimal({ precision: 10, scale: 2 }),
 	totalFare: decimal("total_fare", { precision: 10, scale: 2 }),
 	reservationStatus: varchar("reservation_status", { length: 30 }),
+	driverId: int("driver_id").references(() => driver.driverId),
 },
 	(table) => [
 		index("customer_id").on(table.customerId),
 		index("vehicle_id").on(table.vehicleId),
+		index("driver_id").on(table.driverId),
 		primaryKey({ columns: [table.reservationId], name: "reservation_reservation_id" }),
 	]);
 
@@ -188,10 +202,12 @@ export const review = mysqlTable("review", {
 	comment: text(),
 	// you can use { mode: 'date' }, if you want to have Date as type for this column
 	reviewDate: date("review_date", { mode: 'string' }),
+	reservationId: int("reservation_id").references(() => reservation.reservationId),
 },
 	(table) => [
 		index("customer_id").on(table.customerId),
 		index("vehicle_id").on(table.vehicleId),
+		index("reservation_id").on(table.reservationId),
 		primaryKey({ columns: [table.reviewId], name: "review_review_id" }),
 		check("review_chk_1", sql`(\`rating\` between 1 and 5)`),
 	]);

@@ -20,7 +20,7 @@ export default function Home() {
           <div className="max-w-2xl">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-md border border-white/20">
               <span className="flex h-2 w-2 rounded-full bg-[#dc2626]" />
-              Sri Lanka's #1 Car Rental Service
+              Sri Lankas #1 Car Rental Service
             </div>
             <h1 className="mb-6 text-5xl font-extrabold leading-[1.1] text-white md:text-6xl lg:text-7xl">
               Drive Your <br />
@@ -133,10 +133,10 @@ export default function Home() {
                 Our Passion
               </h2>
               <h3 className="mb-8 text-4xl font-extrabold text-[#0f0f0f] md:text-5xl leading-tight">
-                Sri Lanka's Premier <br /> Car Rental Authority
+                Sri Lankas Premier <br /> Car Rental Authority
               </h3>
               <p className="mb-8 text-lg leading-relaxed text-gray-600">
-                IZY is more than just a car rental; we are your dedicated travel partner. Since our inception, we've focused on delivering excellence in transportation across Sri Lanka.
+                IZY is more than just a car rental; we are your dedicated travel partner. Since our inception, we have focused on delivering excellence in transportation across Sri Lanka.
               </p>
 
               <div className="space-y-6">

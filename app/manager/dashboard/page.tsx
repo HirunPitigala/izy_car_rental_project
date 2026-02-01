@@ -16,12 +16,6 @@ export default function ManagerDashboard() {
                         <p className="mt-2 text-gray-500">Real-time analytics and fleet performance monitoring.</p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="flex -space-x-2">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-8 w-8 rounded-full border-2 border-white bg-gray-100" />
-                            ))}
-                        </div>
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">+12 active managers</p>
                     </div>
                 </div>
             </header>
@@ -33,26 +27,25 @@ export default function ManagerDashboard() {
                         label="Total Customers"
                         value="128"
                         icon={Users}
-                        trend="+12%"
+
                     />
                     <StatsCard
                         label="Vehicles on Rent"
                         value="45"
                         icon={Car}
-                        trend="+5%"
+
                     />
                     <StatsCard
                         label="Overdue Vehicles"
                         value="3"
                         icon={AlertCircle}
-                        trend="-2%"
                         isNegative
                     />
                     <StatsCard
                         label="Today's Income"
-                        value="$2,450"
+                        value="LKR2,450"
                         icon={CreditCard}
-                        trend="+18%"
+
                     />
                 </div>
 
@@ -80,7 +73,7 @@ export default function ManagerDashboard() {
                                     <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 group-hover:bg-red-50 group-hover:text-[#dc2626] transition-colors">
                                         <Car className="h-5 w-5" />
                                     </div>
-                                    <span className="font-bold text-[15px]">Add New Vehicle</span>
+
                                     <ChevronRight className="h-4 w-4 text-gray-300 ml-auto group-hover:translate-x-1" />
                                 </Link>
                                 <button className="ek-card p-5 border border-gray-100 flex items-center gap-4 hover:border-red-100 group transition-all text-left">
@@ -93,24 +86,7 @@ export default function ManagerDashboard() {
                             </div>
                         </div>
 
-                        <div>
-                            <h2 className="text-xl font-extrabold tracking-tight mb-6">Pending Requests</h2>
-                            <div className="ek-card border border-gray-100 divide-y divide-gray-50">
-                                {[1, 2].map((i) => (
-                                    <div key={i} className="p-6 flex items-start gap-4">
-                                        <div className="h-10 w-10 rounded-full bg-gray-50 shrink-0" />
-                                        <div className="flex-1">
-                                            <p className="text-sm font-bold">Booking Request #{2456 + i}</p>
-                                            <p className="text-xs text-gray-400 mt-0.5">Toyota Camry • 3 Days</p>
-                                        </div>
-                                        <span className="px-2.5 py-1 rounded-full bg-yellow-50 text-[10px] font-bold text-yellow-600 uppercase">Pending</span>
-                                    </div>
-                                ))}
-                                <Link href="/manager/bookings" className="block w-full text-center py-4 bg-gray-50/50 text-[13px] font-bold text-gray-500 hover:text-[#dc2626] transition-colors">
-                                    View All Pending
-                                </Link>
-                            </div>
-                        </div>
+
                     </div>
                 </div>
             </main>

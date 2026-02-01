@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
-import { getSession } from "@/lib/auth";
+import { getSession, logDebug } from "@/lib/auth";
+import { cookies } from "next/headers";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,7 +20,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  logDebug("RootLayout: Fetching session...");
+  const cookieStore = await cookies();
+  const allCookies = cookieStore.getAll().map((c) => c.name).join(", ");
+  logDebug(`RootLayout: All cookies: [${allCookies}]`);
   const session = await getSession();
+  logDebug(`RootLayout: Session found: ${!!session}, Role: ${session?.role}`);
 
   return (
     <html lang="en" suppressHydrationWarning>

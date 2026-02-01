@@ -21,11 +21,12 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const endpoint = "/api/auth/login";
+            const normalizedEmail = email.trim().toLowerCase();
+            const endpoint = isAdmin ? "/api/auth/admin/login" : "/api/auth/login";
             const res = await fetch(endpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email: normalizedEmail, password }),
             });
 
             const data = await res.json();
@@ -34,15 +35,16 @@ export default function LoginPage() {
                 throw new Error(data.error || "Login failed");
             }
 
-            router.refresh();
-
-            switch (data.role) {
-                case "admin": router.push("/admin/dashboard"); break;
-                case "manager": router.push("/manager/dashboard"); break;
-                case "employee": router.push("/employee/dashboard"); break;
-                case "customer": router.push("/"); break;
-                default: throw new Error("Unknown role");
-            }
+            // Small delay to ensure cookies are set before browser navigates
+            setTimeout(() => {
+                switch (data.role) {
+                    case "admin": window.location.replace("/admin/dashboard"); break;
+                    case "manager": window.location.replace("/manager/dashboard"); break;
+                    case "employee": window.location.replace("/employee/dashboard"); break;
+                    case "customer": window.location.replace("/"); break;
+                    default: window.location.replace("/");
+                }
+            }, 150);
         } catch (err: any) {
             setError(err.message);
             setLoading(false);

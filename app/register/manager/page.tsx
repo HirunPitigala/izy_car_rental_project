@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { ArrowLeft, ShieldCheck, AlertCircle } from "lucide-react";
+import { ArrowLeft, ShieldCheck, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function ManagerRegistrationPage() {
     const [email, setEmail] = useState("");
@@ -11,6 +11,8 @@ export default function ManagerRegistrationPage() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -114,16 +116,39 @@ export default function ManagerRegistrationPage() {
                                 <label htmlFor="password" className="block text-[13px] font-bold mb-2 px-1">
                                     Password
                                 </label>
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    required
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="ek-input focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626]/10"
-                                    placeholder="••••••••"
-                                />
+                                <div className="relative">
+                                    <input
+                                        id="password"
+                                        name="password"
+                                        type={showPassword ? "text" : "password"}
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="ek-input focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626]/10 pr-10"
+                                        placeholder="••••••••"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </button>
+                                </div>
+                                <div className="mt-2 text-xs text-gray-500 space-y-1 pl-1">
+                                    <p>Must contain:</p>
+                                    <ul className="list-disc pl-4 space-y-0.5">
+                                        <li className={/[A-Z]/.test(password) ? "text-green-600" : "text-gray-500"}>1 Uppercase letter</li>
+                                        <li className={/[a-z]/.test(password) ? "text-green-600" : "text-gray-500"}>1 Lowercase letter</li>
+                                        <li className={/\d/.test(password) ? "text-green-600" : "text-gray-500"}>1 Number</li>
+                                        <li className={/[@$!%*?&#^()_\-+=\[\]{};:'",.<>\/|`~]/.test(password) ? "text-green-600" : "text-gray-500"}>1 Special character</li>
+                                        <li className={password.length >= 8 && password.length <= 64 ? "text-green-600" : "text-gray-500"}>8-64 Characters</li>
+                                    </ul>
+                                </div>
                             </div>
 
                             {/* Confirm Password Field */}
@@ -131,16 +156,32 @@ export default function ManagerRegistrationPage() {
                                 <label htmlFor="confirmPassword" className="block text-[13px] font-bold mb-2 px-1">
                                     Confirm Password
                                 </label>
-                                <input
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    type="password"
-                                    required
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="ek-input focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626]/10"
-                                    placeholder="••••••••"
-                                />
+                                <div className="relative">
+                                    <input
+                                        id="confirmPassword"
+                                        name="confirmPassword"
+                                        type={showConfirmPassword ? "text" : "password"}
+                                        required
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className={`ek-input focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626]/10 pr-10 ${password && confirmPassword && password !== confirmPassword ? "border-red-500 focus:border-red-500" : ""}`}
+                                        placeholder="••••••••"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        {showConfirmPassword ? (
+                                            <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                            <Eye className="h-4 w-4" />
+                                        )}
+                                    </button>
+                                </div>
+                                {password && confirmPassword && password !== confirmPassword && (
+                                    <p className="mt-1 text-xs text-red-500 pl-1">Passwords do not match</p>
+                                )}
                             </div>
                         </div>
 

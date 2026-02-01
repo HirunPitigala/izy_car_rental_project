@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { encrypt } from "@/lib/auth";
+import { authService } from "@/src/modules/auth/auth.service";
 import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
@@ -14,28 +14,33 @@ export async function POST(request: Request) {
             );
         }
 
-        const adminEmail = process.env.ADMIN_EMAIL;
-        const adminPassword = process.env.ADMIN_PASSWORD;
+        const result = await authService.login({ email, password });
 
-        if (email !== adminEmail || password !== adminPassword) {
-            console.log(`Admin login failure: invalid credentials for ${email}`);
-            return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+        if (!result.success) {
+            return NextResponse.json({ error: result.error }, { status: result.status || 401 });
         }
 
-        // --- JWT Session Creation ---
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day session for security
-        const sessionToken = await encrypt({ userId: 0, role: "admin", expiresAt });
+        if (result.token && result.expiresAt) {
+            const cookieStore = await cookies();
+            const secure = process.env.NODE_ENV === "production";
+            const maxAge = 7 * 24 * 60 * 60; // 7 days in seconds
+            console.log(`Setting session cookie. Role: ${result.role}, Max-Age: ${maxAge}, Secure: ${secure}`);
 
-        const cookieStore = await cookies();
-        cookieStore.set("session", sessionToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            path: "/",
-            expires: expiresAt,
+            cookieStore.set("session", result.token, {
+                httpOnly: true,
+                secure: secure,
+                sameSite: "lax",
+                path: "/",
+                maxAge: maxAge,
+            });
+            console.log("Cookie set command executed.");
+        }
+
+        return NextResponse.json({
+            success: true,
+            role: result.role,
+            user: result.user
         });
-
-        return NextResponse.json({ success: true, role: "admin" });
 
     } catch (error) {
         console.error("Admin login error:", error);

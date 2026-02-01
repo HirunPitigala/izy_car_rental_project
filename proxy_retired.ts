@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
-    const sessionId = request.cookies.get("session_id")?.value;
+    const sessionToken = request.cookies.get("session")?.value;
     const { pathname } = request.nextUrl;
 
     // Protected routes
@@ -11,7 +11,7 @@ export function proxy(request: NextRequest) {
         pathname.startsWith(route)
     );
 
-    if (isProtectedRoute && !sessionId) {
+    if (isProtectedRoute && !sessionToken) {
         return NextResponse.redirect(new URL("/login", request.url));
     }
 

@@ -81,7 +81,7 @@ export default function AgreementForm({ searchParams, user }: { searchParams: an
                         <Phone className="w-5 h-5 fill-current" />
                     </div>
                     <div>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Contact us</p>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Contact us</p>
                         <p className="text-sm font-black text-gray-900">+94 77 308 4563</p>
                     </div>
                 </div>
@@ -91,7 +91,7 @@ export default function AgreementForm({ searchParams, user }: { searchParams: an
                 /* Step 1: Customer Details */
                 <form onSubmit={handleNext} className="space-y-12">
                     <div className="text-center mb-12">
-                        <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-2">Motor Vehicle Lease Agreement</h1>
+                        <h1 className="text-2xl font-black text-gray-900 tracking-tight mb-2">Motor Vehicle Lease Agreement</h1>
                     </div>
 
                     <div className="space-y-8 max-w-2xl mx-auto">
@@ -169,7 +169,7 @@ export default function AgreementForm({ searchParams, user }: { searchParams: an
                                         </div>
                                         <button type="button" className="px-6 py-2 bg-gray-100 rounded-full text-xs font-bold text-gray-600 hover:bg-gray-200 transition-colors">Browse File</button>
                                         <p className="text-xs font-bold text-gray-400">Choose a file or drag & drop it here</p>
-                                        <p className="text-[10px] font-medium text-gray-300 uppercase tracking-widest leading-none">JPEG, PNG, PDF, and MP4 formats, up to 50MB</p>
+                                        <p className="text-xs font-medium text-gray-300 uppercase tracking-widest leading-none">JPEG, PNG, PDF, and MP4 formats, up to 50MB</p>
                                     </div>
                                 </div>
                             </div>
@@ -189,7 +189,7 @@ export default function AgreementForm({ searchParams, user }: { searchParams: an
                 /* Step 2: Terms and Conditions */
                 <form onSubmit={handleSubmit} className="space-y-12">
                     <div className="text-center mb-12">
-                        <h1 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tight leading-none uppercase">Terms and conditions</h1>
+                        <h1 className="text-2xl font-black text-gray-900 tracking-tight leading-none uppercase">Terms and conditions</h1>
                     </div>
 
                     <div className="max-w-4xl mx-auto space-y-10">
@@ -230,12 +230,12 @@ export default function AgreementForm({ searchParams, user }: { searchParams: an
 
                                 {/* Signature Pad Mock */}
                                 <div className="w-full h-32 bg-gray-100 rounded-2xl flex flex-col items-center justify-center border-b-4 border-gray-300 relative overflow-hidden group cursor-crosshair">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest group-hover:hidden">Sign here</p>
-                                    <div className="hidden group-hover:block text-orange-400 font-serif italic text-4xl opacity-50 select-none">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest group-hover:hidden">Sign here</p>
+                                    <div className="hidden group-hover:block text-orange-400 font-serif italic text-2xl opacity-50 select-none">
                                         {formData.fullName || "Your Signature"}
                                     </div>
                                 </div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Sign here</p>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest text-center">Sign here</p>
                             </div>
 
                             <div className="pt-8">

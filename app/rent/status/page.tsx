@@ -37,13 +37,13 @@ function StatusContent() {
                                 {8 - seconds > 0 ? 8 - seconds : 1}s
                             </div>
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 mb-4 uppercase tracking-tight">Reviewing Request</h1>
+                        <h1 className="text-2xl font-black text-gray-900 mb-4 uppercase tracking-tight">Reviewing Request</h1>
                         <p className="text-gray-400 font-bold mb-10 leading-relaxed px-4">
                             Our team is currently verifying your documents and vehicle availability. Please stay on this page.
                         </p>
                         <div className="flex items-center justify-center gap-3 bg-gray-50/80 p-5 rounded-2xl border border-gray-100 mb-4 max-w-sm mx-auto">
                             <Clock className="w-5 h-5 text-gray-400" />
-                            <span className="text-sm font-bold text-gray-500 uppercase tracking-widest text-[10px]">Real-time Status Polling Active</span>
+                            <span className="text-sm font-bold text-gray-500 uppercase tracking-widest text-xs">Real-time Status Polling Active</span>
                         </div>
                     </>
                 )}
@@ -53,7 +53,7 @@ function StatusContent() {
                         <div className="w-28 h-28 bg-green-50 rounded-full flex items-center justify-center text-green-500 mx-auto mb-10 border border-green-100 shadow-sm shadow-green-50">
                             <CheckCircle2 className="w-14 h-14" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 mb-4 uppercase tracking-tight">Request Approved!</h1>
+                        <h1 className="text-2xl font-black text-gray-900 mb-4 uppercase tracking-tight">Request Approved!</h1>
                         <p className="text-gray-400 font-bold mb-10 leading-relaxed px-4">
                             Congratulations! Your rental request has been approved and the vehicle is reserved for you. Please complete payment to secure your booking.
                         </p>
@@ -72,7 +72,7 @@ function StatusContent() {
                         <div className="w-28 h-28 bg-red-50 rounded-full flex items-center justify-center text-red-500 mx-auto mb-10 border border-red-100">
                             <XCircle className="w-14 h-14" />
                         </div>
-                        <h1 className="text-3xl font-black text-gray-900 mb-4 uppercase tracking-tight">Request Declined</h1>
+                        <h1 className="text-2xl font-black text-gray-900 mb-4 uppercase tracking-tight">Request Declined</h1>
                         <p className="text-gray-400 font-bold mb-10 leading-relaxed px-4">
                             We're sorry, but we couldn't approve your request at this time. Please contact support for more information.
                         </p>
@@ -87,7 +87,7 @@ function StatusContent() {
             </div>
 
             <div className="mt-12 text-center">
-                <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.4em]">Reservation Reference: #CAR-{Math.floor(Math.random() * 9000) + 1000}</p>
+                <p className="text-xs font-black text-gray-300 uppercase tracking-[0.4em]">Reservation Reference: #CAR-{Math.floor(Math.random() * 9000) + 1000}</p>
             </div>
         </div>
     );

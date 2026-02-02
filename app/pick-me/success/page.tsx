@@ -16,7 +16,7 @@ export default function SuccessPage() {
                 </div>
 
                 <div className="space-y-4">
-                    <h1 className="text-4xl font-black text-gray-900 tracking-tight">Booking Confirmed!</h1>
+                    <h1 className="text-2xl font-black text-gray-900 tracking-tight">Booking Confirmed!</h1>
                     <p className="text-gray-500 font-medium text-lg leading-relaxed">
                         Your pickup request has been successfully placed. <br />
                         A driver will be assigned shortly.

@@ -71,7 +71,7 @@ export default function LoginPage() {
                             className="h-9 w-auto mb-8"
                             priority
                         />
-                        <h1 className="text-3xl font-extrabold text-[#0f0f0f] tracking-tight">
+                        <h1 className="text-2xl font-extrabold text-[#0f0f0f] tracking-tight">
                             {isAdmin ? "Admin Login" : "Welcome Back"}
                         </h1>
                         <p className="mt-2.5 text-gray-500">

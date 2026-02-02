@@ -6,7 +6,7 @@ export default function UnauthorizedPage() {
         <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
             <div className="text-center">
                 <ShieldAlert className="mx-auto h-16 w-16 text-red-500" />
-                <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900">
+                <h1 className="mt-4 text-2xl font-bold tracking-tight text-gray-900">
                     Access Denied
                 </h1>
                 <p className="mt-2 text-base text-gray-500">

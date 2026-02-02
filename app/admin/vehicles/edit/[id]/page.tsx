@@ -49,7 +49,7 @@ export default function EditVehiclePage({ params }: { params: Promise<{ id: stri
                             <ArrowLeft className="h-5 w-5 text-gray-600" />
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Edit Vehicle</h1>
+                            <h1 className="text-2xl font-bold text-gray-900">Edit Vehicle</h1>
                             <p className="mt-1 text-sm text-gray-500">Update the vehicle information below.</p>
                         </div>
                     </div>

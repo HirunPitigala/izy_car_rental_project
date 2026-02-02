@@ -32,7 +32,7 @@ export default function MockMap() {
                     <div className="bg-red-500 text-white p-2 rounded-full shadow-lg">
                         <MapPin className="w-6 h-6" />
                     </div>
-                    <div className="bg-white px-2 py-0.5 rounded shadow text-[10px] font-black uppercase mt-1">Pickup</div>
+                    <div className="bg-white px-2 py-0.5 rounded shadow text-xs font-black uppercase mt-1">Pickup</div>
                 </div>
             </div>
 
@@ -42,7 +42,7 @@ export default function MockMap() {
                     <div className="bg-green-500 text-white p-2 rounded-full shadow-lg">
                         <Navigation className="w-6 h-6 rotate-45" />
                     </div>
-                    <div className="bg-white px-2 py-0.5 rounded shadow text-[10px] font-black uppercase mt-1">Drop</div>
+                    <div className="bg-white px-2 py-0.5 rounded shadow text-xs font-black uppercase mt-1">Drop</div>
                 </div>
             </div>
 

@@ -106,7 +106,7 @@ export default function Navbar({ session }: NavbarProps) {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`group relative px-4 py-2 text-[14px] font-medium transition-colors ${isActive(item.href)
+                                className={`group relative px-4 py-2 text-sm font-medium transition-colors ${isActive(item.href)
                                     ? 'text-[#0f0f0f]'
                                     : 'text-gray-600 hover:text-[#0f0f0f]'
                                     }`}

@@ -78,8 +78,8 @@ function PaymentContent() {
     return (
         <div className="container mx-auto px-6 py-12 lg:py-20">
             <div className="text-center mb-16">
-                <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest mb-4 border border-blue-100">Step 4 of 5</span>
-                <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tight uppercase">Payment Details</h1>
+                <span className="inline-block px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-black uppercase tracking-widest mb-4 border border-blue-100">Step 4 of 5</span>
+                <h1 className="text-2xl font-black text-gray-900 mb-4 tracking-tight uppercase">Payment Details</h1>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start max-w-6xl mx-auto">
@@ -101,7 +101,7 @@ function PaymentContent() {
                         </div>
                         <div>
                             <p className="text-sm font-black text-green-900 mb-1 uppercase tracking-tight">Full Protection Included</p>
-                            <p className="text-[11px] font-bold text-green-700 leading-relaxed">Your transaction is protected by 256-bit SSL encryption. We do not store your full card details in our servers.</p>
+                            <p className="text-xs font-bold text-green-700 leading-relaxed">Your transaction is protected by 256-bit SSL encryption. We do not store your full card details in our servers.</p>
                         </div>
                     </div>
                 </div>
@@ -129,11 +129,11 @@ function PaymentContent() {
 
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Expiration</label>
+                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Expiration</label>
                                 <input type="text" required className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl px-5 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all placeholder:text-gray-300" placeholder="MM / YY" />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Secure CVV</label>
+                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Secure CVV</label>
                                 <div className="relative">
                                     <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 w-5 h-5" />
                                     <input type="password" required maxLength={4} className="w-full h-14 bg-gray-50/50 border border-gray-100 rounded-2xl pl-14 pr-5 text-sm font-bold text-gray-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all placeholder:text-gray-300" placeholder="***" />
@@ -162,7 +162,7 @@ function PaymentContent() {
                         </button>
                     </div>
 
-                    <p className="text-[10px] text-gray-400 font-bold text-center tracking-tight leading-relaxed">
+                    <p className="text-xs text-gray-400 font-bold text-center tracking-tight leading-relaxed">
                         Secure 128-bit SSL Encrypted Transaction. Your data privacy is guaranteed.
                     </p>
                 </form>

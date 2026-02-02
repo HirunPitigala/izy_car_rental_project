@@ -15,7 +15,7 @@ export default function CustomerDashboard() {
             {/* Header */}
             <header className="bg-white border-b border-gray-100 sticky top-0 z-20 px-4 py-8 md:px-10">
                 <div className="container-custom">
-                    <h1 className="text-3xl font-extrabold tracking-tight">Dashboard</h1>
+                    <h1 className="text-2xl font-extrabold tracking-tight">Dashboard</h1>
                     <p className="mt-2 text-gray-500">Welcome back! Manage your journey and bookings below.</p>
                 </div>
             </header>
@@ -27,7 +27,7 @@ export default function CustomerDashboard() {
                         <div key={i} className="ek-card p-6 border border-gray-100 flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                                <p className="text-3xl font-extrabold">{stat.value}</p>
+                                <p className="text-2xl font-extrabold">{stat.value}</p>
                             </div>
                             <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${stat.color}`}>
                                 {stat.icon}
@@ -68,7 +68,7 @@ export default function CustomerDashboard() {
                             <h2 className="text-xl font-extrabold tracking-tight mb-6">Special Offers</h2>
                             <div className="ek-card p-6 bg-[#0f0f0f] text-white border-0 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 h-32 w-32 bg-red-600/20 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-red-600/30 transition-colors" />
-                                <span className="inline-block px-3 py-1 rounded-full bg-red-600 text-[10px] font-bold uppercase tracking-widest mb-4">Weekend Sale</span>
+                                <span className="inline-block px-3 py-1 rounded-full bg-red-600 text-xs font-bold uppercase tracking-widest mb-4">Weekend Sale</span>
                                 <h3 className="text-2xl font-extrabold mb-2 leading-tight">Get 20% off <br />on SUVs</h3>
                                 <p className="text-gray-400 text-sm mb-6">Valid until Jan 30th. Book now to secure this offer.</p>
                                 <button className="w-full py-3 rounded-xl bg-white text-[#0f0f0f] text-sm font-bold transition-transform active:scale-[0.98]">

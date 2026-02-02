@@ -235,15 +235,23 @@ export const vehicle = mysqlTable("vehicle", {
 	plateNumber: varchar("plate_number", { length: 20 }),
 	capacity: int(),
 	seatingCapacity: int("seating_capacity"),
+	passengerCapacity: int("passenger_capacity"),
 	transmissionType: varchar("transmission_type", { length: 20 }),
 	fuelType: varchar("fuel_type", { length: 20 }),
 	luggageCapacity: int("luggage_capacity"),
+	rentPerHour: decimal("rent_per_hour", { precision: 10, scale: 2 }),
+	rentPerDay: decimal("rent_per_day", { precision: 10, scale: 2 }),
+	ratePerDay: decimal("rate_per_day", { precision: 10, scale: 2 }), // Keeping for compatibility
+	rentPerMonth: decimal("rent_per_month", { precision: 10, scale: 2 }),
+	ratePerMonth: decimal("rate_per_month", { precision: 10, scale: 2 }), // Keeping for compatibility
+	maxMileagePerDay: int("max_mileage_per_day"),
+	extraMileageCharge: decimal("extra_mileage_charge", { precision: 10, scale: 2 }),
+	minRentalPeriod: int("min_rental_period"),
+	maxRentalPeriod: int("max_rental_period"),
 	availabilityStatus: varchar("availability_status", { length: 20 }),
 	status: varchar("status", { length: 20 }), // AVAILABLE / UNAVAILABLE / MAINTENANCE
 	serviceCategory: varchar("service_category", { length: 50 }), // Keep for compatibility
 	categoryId: int("category_id").references(() => serviceCategory.categoryId),
-	ratePerDay: decimal("rate_per_day", { precision: 10, scale: 2 }),
-	ratePerMonth: decimal("rate_per_month", { precision: 10, scale: 2 }),
 	image: text("image"), // Store Base64
 	imageUrl: text("image_url"), // Deprecating but keeping for safety
 	description: text(),

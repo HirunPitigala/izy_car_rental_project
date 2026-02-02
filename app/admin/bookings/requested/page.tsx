@@ -109,7 +109,7 @@ export default function RequestedBookingsPage() {
                             <ChevronRight className="h-4 w-4" />
                             <span className="text-gray-900 font-medium font-bold">Requested Bookings</span>
                         </nav>
-                        <h1 className="text-3xl font-bold text-gray-900">Requested Bookings</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">Requested Bookings</h1>
                         <p className="mt-1 text-sm text-gray-500">Review and manage new reservation requests from customers.</p>
                     </div>
                 </div>

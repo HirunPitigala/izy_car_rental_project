@@ -62,7 +62,7 @@ export default function PublicCustomerRegistrationPage() {
                                 priority
                             />
                         </Link>
-                        <h1 className="text-3xl font-extrabold tracking-tight">
+                        <h1 className="text-2xl font-extrabold tracking-tight">
                             Join <span className="text-[#dc2626]">IZY</span>
                         </h1>
                         <p className="mt-2.5 text-gray-500">

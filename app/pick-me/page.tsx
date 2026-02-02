@@ -53,7 +53,7 @@ export default function PickMeSearchPage() {
                         <span className="inline-block px-4 py-2 rounded-full bg-yellow-100 text-yellow-700 text-sm font-bold tracking-wider uppercase mb-6">
                             Smart City Travel
                         </span>
-                        <h1 className="text-5xl md:text-7xl font-black text-gray-900 leading-tight mb-6 tracking-tight">
+                        <h1 className="text-2xl font-black text-gray-900 leading-tight mb-6 tracking-tight">
                             Request a ride, <span className="text-yellow-500">hop in</span> & go.
                         </h1>
                         <p className="text-xl md:text-2xl text-gray-600 font-medium max-w-2xl mx-auto">
@@ -67,7 +67,7 @@ export default function PickMeSearchPage() {
             {/* Booking Filter Panel */}
             <div className="container mx-auto px-6 -mt-24 relative z-20 mb-20 flex justify-center">
                 <div className="w-full max-w-4xl bg-white rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] p-8 md:p-12 border border-gray-100">
-                    <h2 className="text-3xl font-black text-gray-900 mb-8 flex items-center gap-3">
+                    <h2 className="text-2xl font-black text-gray-900 mb-8 flex items-center gap-3">
                         <div className="w-2.5 h-10 bg-yellow-400 rounded-full" />
                         Book a Ride
                     </h2>

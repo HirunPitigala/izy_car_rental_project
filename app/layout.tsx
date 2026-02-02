@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import { getSession, logDebug } from "@/lib/auth";
 import { cookies } from "next/headers";
 
-const inter = Inter({
+const poppins = Poppins({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-poppins",
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -30,7 +31,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} font-sans antialiased bg-[#fcfcfc] text-[#0f0f0f]`}
+        className={`${poppins.variable} font-sans antialiased bg-[#fcfcfc] text-[#0f0f0f]`}
         suppressHydrationWarning
       >
         <Navbar session={session} />

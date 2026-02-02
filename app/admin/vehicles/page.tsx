@@ -1,88 +1,111 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, ChevronRight, Search, Loader2 } from "lucide-react";
-import VehicleTable, { Vehicle } from "@/components/admin/VehicleTable";
-import { useState, useEffect } from "react";
+import { ChevronRight, Car, Truck, Key, Wind } from "lucide-react";
+
+const categories = [
+    {
+        name: "Rent a Car",
+        description: "Standard daily, weekly, and monthly vehicle rentals.",
+        icon: Car,
+        href: "/admin/vehicles/rent-a-car",
+        active: true,
+        color: "bg-blue-50 text-blue-600 border-blue-100 ring-blue-50",
+    },
+    {
+        name: "Pickups",
+        description: "Point-to-point pickup and drop-off services.",
+        icon: Car, // Or find a better one
+        href: "#",
+        active: false,
+        color: "bg-emerald-50 text-emerald-600 border-emerald-100 ring-emerald-50",
+    },
+    {
+        name: "Airport pickups",
+        description: "Long-term corporate and individual leasing options.",
+        icon: Key,
+        href: "#",
+        active: false,
+        color: "bg-purple-50 text-purple-600 border-purple-100 ring-purple-50",
+    },
+    {
+        name: "Wedding Car Rental",
+        description: "Premium and luxury vehicle rental services.",
+        icon: Wind,
+        href: "#",
+        active: false,
+        color: "bg-amber-50 text-amber-600 border-amber-100 ring-amber-50",
+    },
+];
 
 export default function AdminVehiclesPage() {
-    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState("");
-
-    const fetchVehicles = async () => {
-        setLoading(true);
-        try {
-            const res = await fetch("/api/admin/vehicles");
-            if (res.ok) {
-                const data = await res.json();
-                setVehicles(data);
-            }
-        } catch (error) {
-            console.error("Error fetching vehicles:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchVehicles();
-    }, []);
-
-    const filteredVehicles = vehicles.filter(v =>
-        v.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        v.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        v.plateNumber.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
     return (
-        <div className="min-h-screen bg-gray-50 pb-12">
+        <div className="min-h-screen bg-[#fcfcfc] pb-12">
             <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
                 {/* Header Section */}
-                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                        <nav className="mb-2 flex items-center gap-2 text-sm text-gray-500">
-                            <Link href="/admin/dashboard" className="hover:text-yellow-600">Admin</Link>
-                            <ChevronRight className="h-4 w-4" />
-                            <span className="text-gray-900 font-medium">Vehicles</span>
-                        </nav>
-                        <h1 className="text-3xl font-bold text-gray-900">Vehicles</h1>
-                        <p className="mt-1 text-sm text-gray-500">Manage and monitor your vehicle fleet status.</p>
-                    </div>
-
-                    <Link
-                        href="/admin/vehicles/add"
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-yellow-400 px-5 py-3 text-sm font-bold text-black shadow-md transition-all hover:bg-yellow-500 hover:shadow-lg"
-                    >
-                        <Plus className="h-5 w-5" />
-                        Add Vehicle
-                    </Link>
+                <div className="mb-10">
+                    <nav className="mb-3 flex items-center gap-2 text-sm text-gray-400">
+                        <Link href="/admin/dashboard" className="transition-colors hover:text-[#0f0f0f]">Admin</Link>
+                        <ChevronRight className="h-4 w-4" />
+                        <span className="font-medium text-[#0f0f0f]">Vehicles</span>
+                    </nav>
+                    <h1 className="text-2xl font-bold tracking-tight text-[#0f0f0f]">Service Category</h1>
+                    <p className="mt-2 text-base text-gray-500">Select a service category to manage vehicles.</p>
                 </div>
 
-                {/* Filters/Actions */}
-                <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl bg-white p-4 border border-gray-100 shadow-sm transition-all hover:shadow-md">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Search by brand, model or plate number..."
-                            className="w-full rounded-lg border border-gray-200 pl-10 pr-4 py-2.5 text-sm outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition-all"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
+                {/* Categories Grid */}
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {categories.map((category) => (
+                        <CategoryCard key={category.name} category={category} />
+                    ))}
                 </div>
-
-                {/* Vehicle Table */}
-                {loading ? (
-                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
-                        <Loader2 className="h-10 w-10 animate-spin text-yellow-500" />
-                        <p className="mt-4 text-gray-500 font-medium">Loading your fleet...</p>
-                    </div>
-                ) : (
-                    <VehicleTable vehicles={filteredVehicles} onRefresh={fetchVehicles} />
-                )}
             </main>
         </div>
     );
+}
+
+function CategoryCard({ category }: { category: any }) {
+    const Icon = category.icon;
+
+    const CardContent = (
+        <div className={`relative flex h-full flex-col p-6 transition-all duration-300 ${category.active
+            ? "bg-white border-2 border-transparent hover:border-yellow-400/50 hover:shadow-premium cursor-pointer"
+            : "bg-gray-50/50 border-2 border-gray-100 grayscale-[0.5] opacity-80 cursor-not-allowed"
+            } rounded-3xl border`}>
+            {/* Icon Wrapper */}
+            <div className={`mb-6 flex h-14 w-14 items-center justify-center rounded-2xl ${category.color} ring-4 transition-transform group-hover:scale-110`}>
+                <Icon className="h-7 w-7" />
+            </div>
+
+            <div className="flex-1">
+                <h3 className="mb-2 text-xl font-bold text-[#0f0f0f]">{category.name}</h3>
+                <p className="text-sm leading-relaxed text-gray-500">{category.description}</p>
+            </div>
+
+            <div className="mt-8 flex items-center justify-between">
+                <span className={`text-sm font-bold ${category.active ? "text-[#dc2626]" : "text-gray-400"}`}>
+                    {category.active ? "Manage Now" : "Coming Soon"}
+                </span>
+                {category.active && (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 transition-colors group-hover:bg-yellow-400 group-hover:text-black">
+                        <ChevronRight className="h-4 w-4" />
+                    </div>
+                )}
+            </div>
+
+            {!category.active && (
+                <div className="absolute inset-0 z-10 rounded-3xl" />
+            )}
+        </div>
+    );
+
+    if (category.active) {
+        return (
+            <Link href={category.href} className="group h-full">
+                {CardContent}
+            </Link>
+        );
+    }
+
+    return <div className="group h-full">{CardContent}</div>;
 }

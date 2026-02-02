@@ -22,7 +22,7 @@ export default function Home() {
               <span className="flex h-2 w-2 rounded-full bg-[#dc2626]" />
               Sri Lankas #1 Car Rental Service
             </div>
-            <h1 className="mb-6 text-5xl font-extrabold leading-[1.1] text-white md:text-6xl lg:text-7xl">
+            <h1 className="mb-6 text-2xl font-extrabold leading-[1.1] text-white">
               Drive Your <br />
               <span className="text-[#dc2626]">Dream Journey.</span>
             </h1>
@@ -32,14 +32,14 @@ export default function Home() {
             <div className="flex flex-wrap gap-4">
               <Link
                 href="/rent"
-                className="h-14 px-10 rounded-xl bg-[#dc2626] flex items-center gap-2 text-[16px] font-bold text-white transition-all shadow-xl shadow-red-600/20 hover:bg-[#b91c1c] active:scale-[0.98]"
+                className="h-14 px-10 rounded-xl bg-[#dc2626] flex items-center gap-2 text-base font-bold text-white transition-all shadow-xl shadow-red-600/20 hover:bg-[#b91c1c] active:scale-[0.98]"
               >
                 Book Now
                 <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
                 href="/wedding"
-                className="h-14 px-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/30 flex items-center text-[16px] font-bold text-white transition-all hover:bg-white/20 active:scale-[0.98]"
+                className="h-14 px-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/30 flex items-center text-base font-bold text-white transition-all hover:bg-white/20 active:scale-[0.98]"
               >
                 Wedding Hire
               </Link>
@@ -70,7 +70,7 @@ export default function Home() {
             <h2 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-[#dc2626]">
               Why Choose IZY
             </h2>
-            <h3 className="text-4xl font-extrabold text-[#0f0f0f] md:text-5xl">
+            <h3 className="text-2xl font-extrabold text-[#0f0f0f]">
               We provide the best experience <br /> for your travel needs.
             </h3>
           </div>
@@ -132,7 +132,7 @@ export default function Home() {
               <h2 className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-[#dc2626]">
                 Our Passion
               </h2>
-              <h3 className="mb-8 text-4xl font-extrabold text-[#0f0f0f] md:text-5xl leading-tight">
+              <h3 className="mb-8 text-2xl font-extrabold text-[#0f0f0f] leading-tight">
                 Sri Lankas Premier <br /> Car Rental Authority
               </h3>
               <p className="mb-8 text-lg leading-relaxed text-gray-600">
@@ -158,13 +158,13 @@ export default function Home() {
               <div className="mt-12 flex gap-4">
                 <Link
                   href="/about"
-                  className="h-14 px-8 rounded-xl bg-[#0f0f0f] flex items-center text-[16px] font-bold text-white transition-all hover:bg-[#262626]"
+                  className="h-14 px-8 rounded-xl bg-[#0f0f0f] flex items-center text-base font-bold text-white transition-all hover:bg-[#262626]"
                 >
                   Learn More
                 </Link>
                 <Link
                   href="/contact"
-                  className="h-14 px-8 rounded-xl border border-gray-200 flex items-center text-[16px] font-bold text-gray-600 transition-all hover:bg-gray-100"
+                  className="h-14 px-8 rounded-xl border border-gray-200 flex items-center text-base font-bold text-gray-600 transition-all hover:bg-gray-100"
                 >
                   Contact Us
                 </Link>

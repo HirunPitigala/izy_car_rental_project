@@ -95,15 +95,15 @@ export default function RentVehicleCard({ vehicle, searchParams }: RentVehicleCa
                             <span className="text-xs font-bold text-gray-400">/ day</span>
                         </div>
                         {vehicle.ratePerHour && (
-                            <p className="text-[10px] font-bold text-gray-400">LKR {Number(vehicle.ratePerHour).toLocaleString()} / hour</p>
+                            <p className="text-xs font-bold text-gray-400">LKR {Number(vehicle.ratePerHour).toLocaleString()} / hour</p>
                         )}
                     </div>
 
                     <Link
                         href={isAvailable ? `/rent/${vehicle.vehicleId}${searchParams ? `?${searchParams}` : ""}` : "#"}
                         className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${isAvailable
-                                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-100 active:scale-95"
-                                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-100 active:scale-95"
+                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
                             }`}
                     >
                         {isAvailable ? "Book Now" : "Unavailable"}

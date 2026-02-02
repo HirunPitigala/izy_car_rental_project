@@ -119,7 +119,7 @@ function VehicleDetailsContent() {
                         <div className="p-10">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
                                 <div>
-                                    <h1 className="text-4xl font-black text-gray-900 mb-2">{vehicle.brand} <span className="text-gray-400 font-medium">{vehicle.model}</span></h1>
+                                    <h1 className="text-2xl font-black text-gray-900 mb-2">{vehicle.brand} <span className="text-gray-400 font-medium">{vehicle.model}</span></h1>
                                     <div className="flex items-center gap-4">
                                         <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">{vehicle.plateNumber}</span>
                                         <div className="h-3 w-px bg-gray-200" />
@@ -129,8 +129,8 @@ function VehicleDetailsContent() {
                                     </div>
                                 </div>
                                 <div className="text-left md:text-right bg-gray-50 md:bg-transparent p-4 md:p-0 rounded-2xl w-full md:w-auto">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Standard Rate</p>
-                                    <p className="text-3xl font-black text-gray-900">LKR {Number(vehicle.ratePerDay).toLocaleString()}<span className="text-sm text-gray-400 font-bold tracking-tight">/day</span></p>
+                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Standard Rate</p>
+                                    <p className="text-2xl font-black text-gray-900">LKR {Number(vehicle.ratePerDay).toLocaleString()}<span className="text-sm text-gray-400 font-bold tracking-tight">/day</span></p>
                                 </div>
                             </div>
 
@@ -144,22 +144,22 @@ function VehicleDetailsContent() {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
                                     <Users className="w-5 h-5 text-blue-600 mb-3" />
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Capacity</p>
+                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Capacity</p>
                                     <p className="font-bold text-gray-900">{vehicle.capacity} Seats</p>
                                 </div>
                                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
                                     <Briefcase className="w-5 h-5 text-blue-600 mb-3" />
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Luggage</p>
+                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Luggage</p>
                                     <p className="font-bold text-gray-900">{vehicle.luggageCapacity} Bags</p>
                                 </div>
                                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
                                     <Gauge className="w-5 h-5 text-blue-600 mb-3" />
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Transmission</p>
+                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Transmission</p>
                                     <p className="font-bold text-gray-900">{vehicle.transmissionType}</p>
                                 </div>
                                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
                                     <Fuel className="w-5 h-5 text-blue-600 mb-3" />
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Fuel Type</p>
+                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Fuel Type</p>
                                     <p className="font-bold text-gray-900">{vehicle.fuelType}</p>
                                 </div>
                             </div>

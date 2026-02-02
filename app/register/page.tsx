@@ -20,7 +20,7 @@ export default function RegisterSelectionPage() {
                             priority
                         />
                     </Link>
-                    <h1 className="text-3xl font-extrabold text-[#0f0f0f] tracking-tight">
+                    <h1 className="text-2xl font-extrabold text-[#0f0f0f] tracking-tight">
                         Create your account
                     </h1>
                     <p className="mt-3 text-gray-500">

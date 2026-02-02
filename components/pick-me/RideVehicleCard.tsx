@@ -21,7 +21,7 @@ export default function RideVehicleCard({ vehicle }: RideVehicleCardProps) {
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute top-4 left-4 bg-gray-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-white">
+                <div className="absolute top-4 left-4 bg-gray-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest text-white">
                     {vehicle.type}
                 </div>
             </div>

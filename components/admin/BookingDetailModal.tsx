@@ -160,7 +160,7 @@ function InfoField({ icon: Icon, label, value, valueClasses = "" }: { icon: any,
                 <Icon className="h-4 w-4 text-gray-400" />
             </div>
             <div>
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</div>
+                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">{label}</div>
                 <div className={`text-sm text-gray-700 ${valueClasses}`}>{value}</div>
             </div>
         </div>

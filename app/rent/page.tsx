@@ -24,7 +24,7 @@ export default function RentPage() {
             <section className="container mx-auto px-6 pt-16 pb-24">
                 <div className="max-w-4xl mx-auto">
                     <div className="mb-12">
-                        <h1 className="text-4xl font-bold text-gray-900 mb-4 tracking-tight">Rent a Car</h1>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-4 tracking-tight">Rent a Car</h1>
                         <p className="text-gray-500 text-lg">Select your rental period to check available vehicles.</p>
                     </div>
 

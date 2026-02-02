@@ -46,7 +46,7 @@ export default function TripDetailsPage() {
                     <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-8">
                         <CheckCircle2 className="w-12 h-12 text-green-500" />
                     </div>
-                    <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Ride Confirmed!</h1>
+                    <h1 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Ride Confirmed!</h1>
                     <p className="text-gray-500 font-medium leading-relaxed mb-10 text-lg">
                         Gihan is on his way and will arrive in <span className="text-gray-900 font-bold">{vehicle.estimatedTime}</span>.
                         Get ready for your journey!
@@ -96,8 +96,8 @@ export default function TripDetailsPage() {
             <div className="w-full md:w-2/5 p-4 md:p-8 flex flex-col">
                 <div className="bg-white h-full rounded-[40px] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-50 overflow-y-auto max-h-[calc(100vh-140px)]">
                     <div className="flex items-center justify-between mb-10">
-                        <h1 className="text-3xl font-black text-gray-900 tracking-tight">Confirm Trip</h1>
-                        <span className="px-4 py-1.5 bg-yellow-100 text-yellow-700 rounded-full text-[10px] font-black uppercase tracking-widest">{vehicle.type} Option</span>
+                        <h1 className="text-2xl font-black text-gray-900 tracking-tight">Confirm Trip</h1>
+                        <span className="px-4 py-1.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-black uppercase tracking-widest">{vehicle.type} Option</span>
                     </div>
 
                     <div className="space-y-8">
@@ -136,11 +136,11 @@ export default function TripDetailsPage() {
                                 </div>
                                 <div className="flex-1 space-y-6">
                                     <div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pickup point</p>
+                                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Pickup point</p>
                                         <p className="font-bold text-gray-900">Current Location (Galle Road, Colombo)</p>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Destination</p>
+                                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Destination</p>
                                         <p className="font-bold text-gray-900">City Center Mall (Drop point)</p>
                                     </div>
                                 </div>
@@ -152,21 +152,21 @@ export default function TripDetailsPage() {
                             <div className="bg-[#f8fafc] p-5 rounded-3xl border border-gray-100">
                                 <div className="flex items-center gap-3 mb-1">
                                     <div className="p-2 bg-white rounded-xl shadow-sm"><Navigation className="w-4 h-4 text-gray-400" /></div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Distance</p>
+                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Distance</p>
                                 </div>
                                 <p className="text-xl font-black text-gray-900">12.5 KM</p>
                             </div>
                             <div className="bg-[#f8fafc] p-5 rounded-3xl border border-gray-100">
                                 <div className="flex items-center gap-3 mb-1">
                                     <div className="p-2 bg-white rounded-xl shadow-sm"><Clock className="w-4 h-4 text-gray-400" /></div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Est. Time</p>
+                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Est. Time</p>
                                 </div>
                                 <p className="text-xl font-black text-gray-900">{vehicle.estimatedTime}</p>
                             </div>
                             <div className="bg-[#f8fafc] p-5 rounded-3xl border border-gray-100 col-span-2">
                                 <div className="flex items-center gap-3 mb-1">
                                     <div className="p-2 bg-white rounded-xl shadow-sm"><Hash className="w-4 h-4 text-gray-400" /></div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Booking ID</p>
+                                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Booking ID</p>
                                 </div>
                                 <p className="text-xl font-black text-gray-900">{bookingId}</p>
                             </div>
@@ -176,12 +176,12 @@ export default function TripDetailsPage() {
                         <div className="bg-gray-900 p-8 rounded-[40px] text-white flex justify-between items-center shadow-2xl relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-400/10 rounded-full -mr-16 -mt-16 blur-3xl group-hover:bg-yellow-400/20 transition-all" />
                             <div className="relative z-10">
-                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Total Fare Estimate</p>
-                                <p className="text-4xl font-black text-yellow-400 tracking-tight">LKR {(vehicle.pricePerKm * 12.5).toLocaleString()}</p>
+                                <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Total Fare Estimate</p>
+                                <p className="text-2xl font-black text-yellow-400 tracking-tight">LKR {(vehicle.pricePerKm * 12.5).toLocaleString()}</p>
                             </div>
                             <div className="text-right relative z-10">
                                 <Shield className="w-8 h-8 text-yellow-500 ml-auto mb-2" />
-                                <p className="text-[10px] font-black leading-none opacity-50 uppercase tracking-tighter">Secured by<br />PickMe</p>
+                                <p className="text-xs font-black leading-none opacity-50 uppercase tracking-tighter">Secured by<br />PickMe</p>
                             </div>
                         </div>
 

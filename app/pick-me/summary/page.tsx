@@ -114,11 +114,11 @@ export default function SummaryPage() {
                             </div>
                             <div className="flex-1 space-y-8">
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Pickup From</label>
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-1">Pickup From</label>
                                     <h3 className="text-lg font-bold text-gray-900">{pickup_location}</h3>
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Dropoff At</label>
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-1">Dropoff At</label>
                                     <h3 className="text-lg font-bold text-gray-900">{dropoff_location}</h3>
                                 </div>
                             </div>
@@ -160,7 +160,7 @@ export default function SummaryPage() {
 
                         <div className="pt-4 border-t border-gray-200 flex justify-between items-end">
                             <span className="text-sm font-bold text-gray-500 uppercase">Total Fare</span>
-                            <span className="text-3xl font-black text-gray-900 tracking-tight">LKR {fareDetails.total_fare}</span>
+                            <span className="text-2xl font-black text-gray-900 tracking-tight">LKR {fareDetails.total_fare}</span>
                         </div>
                     </div>
 

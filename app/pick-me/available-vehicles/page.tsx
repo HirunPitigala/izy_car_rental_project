@@ -21,7 +21,7 @@ export default function AvailableRidesPage() {
                             >
                                 <ChevronLeft className="w-6 h-6 text-gray-900" />
                             </button>
-                            <h1 className="text-4xl font-black text-gray-900 tracking-tight">Choose your ride</h1>
+                            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Choose your ride</h1>
                         </div>
                         <div className="flex items-center gap-2">
                             <p className="text-gray-500 font-medium bg-white px-4 py-1.5 rounded-full border border-gray-100 shadow-sm">

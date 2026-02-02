@@ -2,14 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Save, ArrowLeft, Info, Gauge, Zap, Coins, Clock, Calendar, Scale } from "lucide-react";
+import { saveVehicle } from "@/lib/actions/vehicleActions";
 
 interface VehicleFormProps {
     mode: "add" | "edit";
     defaultValues?: any;
+    redirectPath?: string;
 }
 
-export default function VehicleForm({ mode, defaultValues }: VehicleFormProps) {
+export default function VehicleForm({ mode, defaultValues, redirectPath = "/admin/vehicles/rent-a-car" }: VehicleFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState(
@@ -17,14 +19,20 @@ export default function VehicleForm({ mode, defaultValues }: VehicleFormProps) {
             brand: "",
             model: "",
             plateNumber: "",
-            seatingCapacity: "4",
-            transmissionType: "AUTO",
-            fuelType: "PETROL",
-            luggageCapacity: "2",
-            ratePerDay: "",
-            ratePerMonth: "",
+            seatingCapacity: 4,
+            passengerCapacity: 4,
+            transmissionType: "Automatic",
+            fuelType: "Petrol",
+            luggageCapacity: 2,
+            rentPerHour: "",
+            rentPerDay: "",
+            rentPerMonth: "",
+            maxMileagePerDay: "",
+            extraMileageCharge: "",
+            minRentalPeriod: 1,
+            maxRentalPeriod: 30,
             status: "AVAILABLE",
-            serviceCategory: "NORMAL",
+            serviceCategory: "Rent a Car",
             description: "",
             image: "",
         }
@@ -46,264 +54,427 @@ export default function VehicleForm({ mode, defaultValues }: VehicleFormProps) {
         setLoading(true);
 
         try {
-            const url = mode === "add"
-                ? "/api/admin/vehicles"
-                : `/api/admin/vehicles/${defaultValues.vehicleId}`;
+            const result = await saveVehicle(formData);
 
-            const res = await fetch(url, {
-                method: mode === "add" ? "POST" : "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                alert(data.message || "Success!");
-                router.push("/admin/vehicles");
+            if (result.success) {
+                router.push(redirectPath);
                 router.refresh();
             } else {
-                alert(data.error || "Something went wrong");
+                alert(result.error || "Something went wrong");
             }
         } catch (error) {
             console.error("Form submission error:", error);
-            alert("An error occurred");
+            alert("An error occurred during save");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                {/* Left Column: Form Fields */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="ek-card border border-gray-100">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-6">General Information</h3>
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Brand</label>
+        <form onSubmit={handleSubmit} className="space-y-10 pb-20">
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
+
+                {/* Left Column: Form Fields (8/12) */}
+                <div className="lg:col-span-8 space-y-10">
+
+                    {/* Section 1: Basic Identity */}
+                    <div className="rounded-[2.5rem] bg-white p-8 shadow-sm border border-gray-100">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="h-1.5 w-6 bg-yellow-400 rounded-full" />
+                            <h3 className="text-xl font-black text-gray-900 tracking-tight">Identity & Category</h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                            <FormGroup label="Vehicle Brand">
                                 <input
                                     type="text"
                                     required
-                                    className="w-full ek-input outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
-                                    placeholder="e.g. Toyota"
+                                    className="ek-input-modern"
+                                    placeholder="e.g. Mercedes-Benz"
                                     value={formData.brand}
                                     onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                                 />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Model</label>
+                            </FormGroup>
+                            <FormGroup label="Vehicle Model">
                                 <input
                                     type="text"
                                     required
-                                    className="w-full ek-input outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
-                                    placeholder="e.g. Corolla"
+                                    className="ek-input-modern"
+                                    placeholder="e.g. S-Class"
                                     value={formData.model}
                                     onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                                 />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Plate Number</label>
+                            </FormGroup>
+                            <FormGroup label="Plate Number">
                                 <input
                                     type="text"
                                     required
-                                    className="w-full ek-input outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
-                                    placeholder="e.g. CAS-1234"
+                                    className="ek-input-modern font-mono font-bold"
+                                    placeholder="e.g. CAB-9988"
                                     value={formData.plateNumber}
                                     onChange={(e) => setFormData({ ...formData, plateNumber: e.target.value })}
                                 />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Service Category</label>
+                            </FormGroup>
+                            <FormGroup label="Service Category">
                                 <select
                                     required
-                                    className="w-full ek-input outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                                    className="ek-input-modern appearance-none"
                                     value={formData.serviceCategory}
                                     onChange={(e) => setFormData({ ...formData, serviceCategory: e.target.value })}
                                 >
-                                    <option value="NORMAL">Normal</option>
-                                    <option value="PICKME">PickMe</option>
-                                    <option value="WEDDING">Wedding</option>
-                                    <option value="AIRPORT">Airport</option>
+                                    <option value="Rent a Car">Rent a Car</option>
+                                    <option value="Pickups" disabled>Pickups (Coming Soon)</option>
+                                    <option value="Trental" disabled>Trental (Coming Soon)</option>
+                                    <option value="Wind Car Rental" disabled>Wind Car Rental (Coming Soon)</option>
                                 </select>
-                            </div>
+                            </FormGroup>
                         </div>
                     </div>
 
-                    <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-6">Pricing Information (Base Rates)</h3>
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Rate Per Day (LKR)</label>
-                                <input
-                                    type="number"
-                                    required
-                                    className="w-full ek-input outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
-                                    value={formData.ratePerDay}
-                                    onChange={(e) => setFormData({ ...formData, ratePerDay: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Rate Per Month (LKR)</label>
-                                <input
-                                    type="number"
-                                    required
-                                    className="w-full ek-input outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
-                                    value={formData.ratePerMonth}
-                                    onChange={(e) => setFormData({ ...formData, ratePerMonth: e.target.value })}
-                                />
-                            </div>
+                    {/* Section 2: Technical Specifications */}
+                    <div className="rounded-[2.5rem] bg-white p-8 shadow-sm border border-gray-100">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="h-1.5 w-6 bg-indigo-400 rounded-full" />
+                            <h3 className="text-xl font-black text-gray-900 tracking-tight">Technical Specifications</h3>
                         </div>
-                    </div>
 
-                    <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-6">Specifications</h3>
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Seating Capacity</label>
+                        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                            <FormGroup label="Seating Capacity">
                                 <input
                                     type="number"
                                     required
-                                    className="w-full ek-input outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                                    className="ek-input-modern"
                                     value={formData.seatingCapacity}
-                                    onChange={(e) => setFormData({ ...formData, seatingCapacity: e.target.value })}
+                                    onChange={(e) => setFormData({ ...formData, seatingCapacity: parseInt(e.target.value) })}
                                 />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Luggage Capacity</label>
+                            </FormGroup>
+                            <FormGroup label="Passenger Capacity">
                                 <input
                                     type="number"
                                     required
-                                    className="w-full ek-input outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
-                                    value={formData.luggageCapacity}
-                                    onChange={(e) => setFormData({ ...formData, luggageCapacity: e.target.value })}
+                                    className="ek-input-modern"
+                                    value={formData.passengerCapacity}
+                                    onChange={(e) => setFormData({ ...formData, passengerCapacity: parseInt(e.target.value) })}
                                 />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Transmission</label>
+                            </FormGroup>
+                            <FormGroup label="Luggage (Items)">
+                                <input
+                                    type="number"
+                                    required
+                                    className="ek-input-modern"
+                                    value={formData.luggageCapacity}
+                                    onChange={(e) => setFormData({ ...formData, luggageCapacity: parseInt(e.target.value) })}
+                                />
+                            </FormGroup>
+                            <FormGroup label="Transmission">
                                 <select
-                                    className="w-full ek-input outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                                    className="ek-input-modern appearance-none"
                                     value={formData.transmissionType}
                                     onChange={(e) => setFormData({ ...formData, transmissionType: e.target.value })}
                                 >
-                                    <option value="AUTO">Auto</option>
-                                    <option value="MANUAL">Manual</option>
+                                    <option value="Automatic">Automatic (AMT/DCT)</option>
+                                    <option value="Manual">Manual (Synced)</option>
                                 </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Fuel Type</label>
+                            </FormGroup>
+                            <FormGroup label="Fuel Source">
                                 <select
-                                    className="w-full ek-input outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
+                                    className="ek-input-modern appearance-none"
                                     value={formData.fuelType}
                                     onChange={(e) => setFormData({ ...formData, fuelType: e.target.value })}
                                 >
-                                    <option value="PETROL">Petrol</option>
-                                    <option value="DIESEL">Diesel</option>
-                                    <option value="HYBRID">Hybrid</option>
-                                    <option value="ELECTRIC">Electric</option>
+                                    <option value="Petrol">Petrol (Octane 92/95)</option>
+                                    <option value="Diesel">Diesel (Super/V-Power)</option>
+                                    <option value="Hybrid">Hybrid (Electric/Gas)</option>
+                                    <option value="Electric">Electric (BEV)</option>
                                 </select>
-                            </div>
+                            </FormGroup>
+                            <FormGroup label="Vehicle Description (Optional)">
+                                <textarea
+                                    className="ek-input-modern h-14 resize-none py-3"
+                                    placeholder="Add notes..."
+                                    value={formData.description || ""}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                />
+                            </FormGroup>
                         </div>
-                        <div className="mt-6 space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Description</label>
-                            <textarea
-                                rows={4}
-                                className="w-full ek-input outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500"
-                                placeholder="Describe the vehicle's features and condition..."
-                                value={formData.description || ""}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            />
+                    </div>
+
+                    {/* Section 3: Pricing & Usage Limits */}
+                    <div className="rounded-[2.5rem] bg-white p-8 shadow-sm border border-gray-100">
+                        <div className="flex items-center gap-3 mb-8">
+                            <div className="h-1.5 w-6 bg-emerald-400 rounded-full" />
+                            <h3 className="text-xl font-black text-gray-900 tracking-tight">Pricing & Usage Limits</h3>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                            <div className="space-y-6">
+                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Standard Rental Rates</h4>
+                                <div className="grid grid-cols-1 gap-4">
+                                    <FormGroup label="Rent Per Hour (LKR)" icon={Clock}>
+                                        <input
+                                            type="number"
+                                            required
+                                            className="ek-input-modern pl-10"
+                                            value={formData.rentPerHour}
+                                            onChange={(e) => setFormData({ ...formData, rentPerHour: e.target.value })}
+                                        />
+                                    </FormGroup>
+                                    <FormGroup label="Rent Per Day (LKR)" icon={Calendar}>
+                                        <input
+                                            type="number"
+                                            required
+                                            className="ek-input-modern pl-10 font-bold text-[#0f0f0f]"
+                                            value={formData.rentPerDay}
+                                            onChange={(e) => setFormData({ ...formData, rentPerDay: e.target.value })}
+                                        />
+                                    </FormGroup>
+                                    <FormGroup label="Rent Per Month (LKR)" icon={Info}>
+                                        <input
+                                            type="number"
+                                            required
+                                            className="ek-input-modern pl-10"
+                                            value={formData.rentPerMonth}
+                                            onChange={(e) => setFormData({ ...formData, rentPerMonth: e.target.value })}
+                                        />
+                                    </FormGroup>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Kilometer & Period Limits</h4>
+                                <div className="grid grid-cols-1 gap-4">
+                                    <FormGroup label="Max KMs Per Day" icon={Gauge}>
+                                        <input
+                                            type="number"
+                                            required
+                                            className="ek-input-modern pl-10"
+                                            value={formData.maxMileagePerDay}
+                                            onChange={(e) => setFormData({ ...formData, maxMileagePerDay: e.target.value })}
+                                        />
+                                    </FormGroup>
+                                    <FormGroup label="Extra KM Charge (LKR)" icon={Coins}>
+                                        <input
+                                            type="number"
+                                            required
+                                            className="ek-input-modern pl-10"
+                                            value={formData.extraMileageCharge}
+                                            onChange={(e) => setFormData({ ...formData, extraMileageCharge: e.target.value })}
+                                        />
+                                    </FormGroup>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormGroup label="Min Days">
+                                            <input
+                                                type="number"
+                                                required
+                                                className="ek-input-modern"
+                                                value={formData.minRentalPeriod}
+                                                onChange={(e) => setFormData({ ...formData, minRentalPeriod: parseInt(e.target.value) })}
+                                            />
+                                        </FormGroup>
+                                        <FormGroup label="Max Days">
+                                            <input
+                                                type="number"
+                                                required
+                                                className="ek-input-modern"
+                                                value={formData.maxRentalPeriod}
+                                                onChange={(e) => setFormData({ ...formData, maxRentalPeriod: parseInt(e.target.value) })}
+                                            />
+                                        </FormGroup>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Column: Image and Status */}
-                <div className="space-y-6">
-                    <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-6">Vehicle Image</h3>
+                {/* Right Column: Visuals & Actions (4/12) */}
+                <div className="lg:col-span-4 space-y-10">
+
+                    {/* Media Upload */}
+                    <div className="rounded-[2.5rem] bg-white p-8 shadow-sm border border-gray-100">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="h-1.5 w-6 bg-amber-400 rounded-full" />
+                            <h3 className="text-xl font-black text-gray-900 tracking-tight">Vehicle Media</h3>
+                        </div>
 
                         {formData.image ? (
-                            <div className="group relative aspect-video w-full overflow-hidden rounded-xl bg-gray-100 border border-gray-200">
+                            <div className="group relative aspect-video w-full overflow-hidden rounded-[2rem] bg-gray-50 border border-gray-100 shadow-inner">
                                 <img
                                     src={formData.image.startsWith('data:') ? formData.image : `data:image/jpeg;base64,${formData.image}`}
                                     alt="Vehicle preview"
-                                    className="h-full w-full object-cover"
+                                    className="h-full w-full object-cover transition-transform group-hover:scale-110"
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, image: "" })}
-                                    className="absolute right-2 top-2 rounded-full bg-red-500 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 shadow-sm"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
+                                <div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 flex items-center justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, image: "" })}
+                                        className="h-12 w-12 rounded-full bg-white text-rose-500 shadow-xl flex items-center justify-center active:scale-95 transition-all"
+                                    >
+                                        <X className="h-6 w-6" />
+                                    </button>
+                                </div>
                             </div>
                         ) : (
-                            <div className="relative">
+                            <div className="relative group">
                                 <input
                                     type="file"
                                     accept="image/*"
                                     className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                                     onChange={handleImageUpload}
                                 />
-                                <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center transition-colors hover:border-yellow-500">
-                                    <div className="rounded-full bg-white p-3 shadow-sm mb-4">
-                                        <Upload className="h-6 w-6 text-gray-400" />
+                                <div className="flex flex-col items-center justify-center rounded-[2.5rem] border-4 border-dashed border-gray-100 bg-gray-50 p-12 text-center transition-all group-hover:bg-white group-hover:border-yellow-400 group-hover:shadow-xl group-hover:shadow-yellow-500/10">
+                                    <div className="rounded-3xl bg-white p-5 shadow-lg mb-6 group-hover:scale-110 transition-transform">
+                                        <Upload className="h-8 w-8 text-gray-400 group-hover:text-yellow-500" />
                                     </div>
-                                    <p className="text-sm font-medium text-gray-900">Upload vehicle photo</p>
-                                    <p className="mt-1 text-xs text-gray-500">PNG, JPG or WEBP up to 5MB</p>
-                                    <span className="mt-4 text-xs font-semibold text-yellow-600 underline underline-offset-4">
-                                        Select File
-                                    </span>
+                                    <p className="text-sm font-black text-gray-900">Drop your photo here</p>
+                                    <p className="mt-2 text-xs uppercase font-black text-gray-400 tracking-wider">High-Res PNG or JPG</p>
                                 </div>
                             </div>
                         )}
                     </div>
 
-                    <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-6">Availability Status</h3>
-                        <select
-                            className={`w-full ek-input outline-none font-medium transition-colors focus:ring-1 ${formData.status === "AVAILABLE"
-                                ? "bg-green-50 text-green-700 border-green-200 focus:border-green-500 focus:ring-green-500"
-                                : formData.status === "MAINTENANCE"
-                                    ? "bg-yellow-50 text-yellow-700 border-yellow-200 focus:border-yellow-500 focus:ring-yellow-500"
-                                    : "bg-red-50 text-red-700 border-red-200 focus:border-red-500 focus:ring-red-500"
-                                }`}
-                            value={formData.status}
-                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        >
-                            <option value="AVAILABLE">Available</option>
-                            <option value="UNAVAILABLE">Unavailable</option>
-                            <option value="MAINTENANCE">Maintenance</option>
-                        </select>
+                    {/* Operational Status */}
+                    <div className="rounded-[2.5rem] bg-white p-8 shadow-sm border border-gray-100">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="h-1.5 w-6 bg-slate-400 rounded-full" />
+                            <h3 className="text-xl font-black text-gray-900 tracking-tight">Fleet Status</h3>
+                        </div>
+
+                        <div className="space-y-4">
+                            <StatusRadio
+                                checked={formData.status === "AVAILABLE"}
+                                value="AVAILABLE"
+                                label="Operational"
+                                description="Active and ready for rental"
+                                color="bg-emerald-500"
+                                onClick={(val) => setFormData({ ...formData, status: val })}
+                            />
+                            <StatusRadio
+                                checked={formData.status === "MAINTENANCE"}
+                                value="MAINTENANCE"
+                                label="Maintenance"
+                                description="Currently in workshop"
+                                color="bg-amber-500"
+                                onClick={(val) => setFormData({ ...formData, status: val })}
+                            />
+                            <StatusRadio
+                                checked={formData.status === "UNAVAILABLE"}
+                                value="UNAVAILABLE"
+                                label="Grounded"
+                                description="Permanently or temporarily out"
+                                color="bg-rose-500"
+                                onClick={(val) => setFormData({ ...formData, status: val })}
+                            />
+                        </div>
                     </div>
 
-                    <div className="flex flex-col gap-3">
+                    {/* Submission Actions */}
+                    <div className="space-y-4">
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full ek-button bg-yellow-400 text-black shadow-md transition-all hover:bg-yellow-500 hover:shadow-lg active:scale-[0.98] disabled:opacity-50"
+                            className="w-full h-16 rounded-[2rem] bg-[#0f0f0f] text-white font-black text-sm uppercase tracking-widest shadow-2xl shadow-gray-200 transition-all hover:bg-[#262626] hover:-translate-y-1 active:scale-95 disabled:opacity-50"
                         >
                             {loading ? (
-                                <div className="flex items-center justify-center gap-2">
-                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent"></div>
-                                    Saving...
+                                <div className="flex items-center justify-center gap-3">
+                                    <div className="h-5 w-5 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+                                    Syncing...
                                 </div>
                             ) : (
-                                mode === "add" ? "Save Vehicle" : "Update Vehicle"
+                                <div className="flex items-center justify-center gap-2">
+                                    <Save className="h-5 w-5" />
+                                    {mode === "add" ? "Enroll Vehicle" : "Apply Changes"}
+                                </div>
                             )}
                         </button>
                         <button
                             type="button"
                             disabled={loading}
-                            onClick={() => router.push("/admin/vehicles")}
-                            className="w-full ek-button border border-gray-200 bg-white text-gray-700 transition-all hover:bg-gray-50 disabled:opacity-50"
+                            onClick={() => router.push(redirectPath)}
+                            className="w-full h-16 rounded-[2rem] border-2 border-gray-100 bg-white text-gray-400 font-bold text-sm uppercase tracking-widest transition-all hover:bg-gray-50 hover:text-gray-900 active:scale-95 disabled:opacity-50"
                         >
-                            Cancel
+                            Abandon Changes
                         </button>
                     </div>
                 </div>
             </div>
+
+            <style jsx global>{`
+                .ek-input-modern {
+                    width: 100%;
+                    height: 54px;
+                    padding: 0 1.25rem;
+                    background-color: #f9f9f9;
+                    border: 2px solid #f1f1f1;
+                    border-radius: 1rem;
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    color: #0f0f0f;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                    outline: none;
+                }
+                .ek-input-modern:focus {
+                    background-color: #ffffff;
+                    border-color: #fbbf24;
+                    box-shadow: 0 10px 15px -3px rgba(251, 191, 36, 0.1);
+                }
+                .ek-input-modern::placeholder {
+                    color: #9ca3af;
+                    font-weight: 500;
+                }
+            `}</style>
         </form>
+    );
+}
+
+interface FormGroupProps {
+    label: string;
+    children: React.ReactNode;
+    icon?: React.ElementType;
+}
+
+function FormGroup({ label, children, icon: Icon }: FormGroupProps) {
+    return (
+        <div className="space-y-2.5 relative">
+            <label className="text-xs font-black tracking-[0.15em] text-gray-400 uppercase ml-1">
+                {label}
+            </label>
+            <div className="relative">
+                {Icon && (
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-gray-400">
+                        <Icon className="h-4 w-4" />
+                    </div>
+                )}
+                {children}
+            </div>
+        </div>
+    );
+}
+
+interface StatusRadioProps {
+    checked: boolean;
+    value: string;
+    label: string;
+    description: string;
+    color: string;
+    onClick: (value: string) => void;
+}
+
+function StatusRadio({ checked, value, label, description, color, onClick }: StatusRadioProps) {
+    return (
+        <div
+            onClick={() => onClick(value)}
+            className={`cursor-pointer group flex items-start gap-4 p-5 rounded-3xl border transition-all duration-300 ${checked
+                ? "bg-white border-transparent shadow-xl ring-2 ring-gray-100"
+                : "bg-gray-50/50 border-gray-100 hover:bg-white"
+                }`}
+        >
+            <div className={`mt-1.5 h-3 w-3 rounded-full flex-shrink-0 ${checked ? color : "bg-gray-200"}`} />
+            <div className="flex-1">
+                <p className={`text-sm font-black tracking-tight ${checked ? "text-gray-900" : "text-gray-400"}`}>{label}</p>
+                <p className={`text-xs font-medium leading-none mt-1 ${checked ? "text-gray-500" : "text-gray-300"}`}>{description}</p>
+            </div>
+        </div>
     );
 }

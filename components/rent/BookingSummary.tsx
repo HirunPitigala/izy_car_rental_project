@@ -38,7 +38,7 @@ export default function BookingSummary({
             <div className="p-8 space-y-8">
                 {/* Vehicle Info */}
                 <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Selected Vehicle</p>
+                    <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Selected Vehicle</p>
                     <div className="flex justify-between items-center">
                         <p className="text-lg font-bold text-gray-900">{vehicle.brand} {vehicle.model}</p>
                         <span className="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-lg border border-gray-100">{vehicle.plateNumber}</span>
@@ -50,7 +50,7 @@ export default function BookingSummary({
                 {/* Dates Info */}
                 <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-4">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pick-up</p>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Pick-up</p>
                         <div className="space-y-1">
                             <div className="flex items-center gap-2 text-gray-900 font-bold text-sm">
                                 <Calendar className="w-4 h-4 text-blue-600" />
@@ -63,7 +63,7 @@ export default function BookingSummary({
                         </div>
                     </div>
                     <div className="space-y-4">
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Return</p>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Return</p>
                         <div className="space-y-1">
                             <div className="flex items-center gap-2 text-gray-900 font-bold text-sm">
                                 <Calendar className="w-4 h-4 text-blue-600" />
@@ -93,7 +93,7 @@ export default function BookingSummary({
                         <span className="text-lg font-black text-gray-900">Estimated Total</span>
                         <div className="text-right">
                             <p className="text-2xl font-black text-blue-600">LKR {totalPrice.toLocaleString()}</p>
-                            <p className="text-[10px] font-bold text-gray-400 italic">Inclusive of taxes</p>
+                            <p className="text-xs font-bold text-gray-400 italic">Inclusive of taxes</p>
                         </div>
                     </div>
                 </div>

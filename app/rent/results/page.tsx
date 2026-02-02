@@ -69,12 +69,12 @@ function ResultsContent() {
                     </div>
                     <div className="flex gap-8">
                         <div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pick-up</p>
+                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Pick-up</p>
                             <p className="text-sm font-bold text-gray-900">{startDate || "N/A"}</p>
                         </div>
                         <div className="h-10 w-px bg-gray-100 hidden md:block" />
                         <div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Return</p>
+                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Return</p>
                             <p className="text-sm font-bold text-gray-900">{endDate || "N/A"}</p>
                         </div>
                     </div>
@@ -90,7 +90,7 @@ function ResultsContent() {
             </div>
 
             <div className="mb-10">
-                <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">Available Vehicles</h2>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-2">Available Vehicles</h2>
                 <p className="text-gray-500 font-medium">Found <span className="text-blue-600 font-bold">{vehicles.length}</span> results for your selected dates.</p>
             </div>
 

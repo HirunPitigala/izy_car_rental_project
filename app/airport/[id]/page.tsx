@@ -21,7 +21,7 @@ export default function AirportDetailsPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
                 <div className="text-center">
-                    <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Vehicle Not Found</h1>
+                    <h1 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Vehicle Not Found</h1>
                     <Link href="/airport/available" className="text-yellow-600 font-bold hover:underline">
                         Back to Airport Fleet
                     </Link>
@@ -75,7 +75,7 @@ export default function AirportDetailsPage() {
                             <div className="p-10">
                                 <div className="flex justify-between items-start mb-8">
                                     <div>
-                                        <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-2 tracking-tight">
+                                        <h1 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">
                                             {vehicle.brand} <span className="text-gray-400">{vehicle.model}</span>
                                         </h1>
                                         <div className="flex items-center gap-4 text-gray-400 font-bold text-lg">
@@ -85,7 +85,7 @@ export default function AirportDetailsPage() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-4xl font-black text-gray-900 leading-none">LKR {vehicle.ratePerDay.toLocaleString()}</p>
+                                        <p className="text-2xl font-black text-gray-900 leading-none">LKR {vehicle.ratePerDay.toLocaleString()}</p>
                                         <p className="text-gray-400 font-black uppercase tracking-widest text-[10px] mt-2 italic">Standard Fixed Rate</p>
                                     </div>
                                 </div>

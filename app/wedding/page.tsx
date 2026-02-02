@@ -64,7 +64,7 @@ export default function WeddingRentalPage() {
         <div className="container-custom py-12">
             {/* Header */}
             <div className="text-center max-w-3xl mx-auto mb-16">
-                <h1 className="text-4xl font-bold text-[#0f0f0f] mb-4">Premium Wedding Car Rental</h1>
+                <h1 className="text-2xl font-bold text-[#0f0f0f] mb-4">Premium Wedding Car Rental</h1>
                 <p className="text-lg text-gray-500">
                     Make your special day unforgettable with our luxurious fleet of wedding cars.
                     Select your dream vehicle and let us handle the rest.

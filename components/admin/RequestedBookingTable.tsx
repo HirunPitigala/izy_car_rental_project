@@ -89,7 +89,7 @@ export default function RequestedBookingTable({ bookings }: RequestedBookingTabl
                                     <td className="px-6 py-4 text-gray-600">
                                         <div className="text-xs font-medium">From: {booking.pickupLocation}</div>
                                         <div className="text-xs font-medium">To: {booking.dropoffLocation}</div>
-                                        <div className="text-[10px] text-gray-400 mt-0.5">{booking.distance} km</div>
+                                        <div className="text-xs text-gray-400 mt-0.5">{booking.distance} km</div>
                                     </td>
                                     <td className="px-6 py-4 font-semibold text-gray-900">
                                         LKR {parseFloat(booking.totalFare).toLocaleString()}

@@ -18,8 +18,8 @@ export default function InvoiceView({ data }: { data: InvoiceData }) {
             {/* Header Section */}
             <div className="bg-gray-900 p-12 text-white flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
                 <div>
-                    <span className="inline-block px-3 py-1 rounded-full bg-blue-600 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Official Receipt</span>
-                    <h1 className="text-5xl font-black uppercase tracking-tighter mb-1">Invoice</h1>
+                    <span className="inline-block px-3 py-1 rounded-full bg-blue-600 text-xs font-black uppercase tracking-[0.2em] mb-4">Official Receipt</span>
+                    <h1 className="text-2xl font-black uppercase tracking-tighter mb-1">Invoice</h1>
                     <p className="text-gray-400 font-bold text-sm flex items-center gap-2">
                         <FileText className="w-4 h-4" />
                         NO: #INV-{data.invoiceId}
@@ -38,19 +38,19 @@ export default function InvoiceView({ data }: { data: InvoiceData }) {
                 {/* Meta Data Grid */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-12">
                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Booking Reference</p>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Booking Reference</p>
                         <p className="font-black text-gray-900">#BK-{data.bookingId}</p>
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Issue Date</p>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Issue Date</p>
                         <p className="font-black text-gray-900">{new Date().toLocaleDateString('en-GB')}</p>
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Payment Type</p>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Payment Type</p>
                         <p className="font-black text-gray-900">Online Card</p>
                     </div>
                     <div>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Currency</p>
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Currency</p>
                         <p className="font-black text-gray-900">LKR (Lankan Rupee)</p>
                     </div>
                 </div>
@@ -88,22 +88,22 @@ export default function InvoiceView({ data }: { data: InvoiceData }) {
                     <table className="w-full text-left">
                         <thead className="bg-gray-50/50">
                             <tr>
-                                <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest font-mono">Item Description</th>
-                                <th className="p-6 text-[10px] font-black text-gray-400 uppercase tracking-widest font-mono text-right">Amount</th>
+                                <th className="p-6 text-xs font-black text-gray-400 uppercase tracking-widest font-mono">Item Description</th>
+                                <th className="p-6 text-xs font-black text-gray-400 uppercase tracking-widest font-mono text-right">Amount</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
                             <tr>
                                 <td className="p-6 font-bold text-gray-700">
                                     <p className="text-sm">Standard Vehicle Rental Fee</p>
-                                    <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-tight font-black">Daily Subscription Model</p>
+                                    <p className="text-xs text-gray-400 mt-1 uppercase tracking-tight font-black">Daily Subscription Model</p>
                                 </td>
                                 <td className="p-6 text-sm font-black text-gray-900 text-right">LKR {data.totalAmount.toLocaleString()}</td>
                             </tr>
                             <tr>
                                 <td className="p-6 font-bold text-gray-700">
                                     <p className="text-sm">Full Insurance Coverage (Waiver)</p>
-                                    <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-tight font-black">Complimentary</p>
+                                    <p className="text-xs text-gray-400 mt-1 uppercase tracking-tight font-black">Complimentary</p>
                                 </td>
                                 <td className="p-6 text-sm font-black text-gray-900 text-right font-mono">0.00</td>
                             </tr>
@@ -111,7 +111,7 @@ export default function InvoiceView({ data }: { data: InvoiceData }) {
                         <tfoot className="bg-gray-50/80">
                             <tr className="border-t-2 border-gray-900">
                                 <td className="p-8 text-xl font-black text-gray-900">TOTAL PAID AMOUNT</td>
-                                <td className="p-8 text-3xl font-black text-blue-600 text-right">LKR {data.totalAmount.toLocaleString()}</td>
+                                <td className="p-8 text-2xl font-black text-blue-600 text-right">LKR {data.totalAmount.toLocaleString()}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -137,7 +137,7 @@ export default function InvoiceView({ data }: { data: InvoiceData }) {
             </div>
 
             <div className="bg-gray-50/50 p-8 text-center border-t border-gray-50">
-                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.4em]">Generated automatically by Car Rental & Transportation System</p>
+                <p className="text-xs text-gray-400 font-black uppercase tracking-[0.4em]">Generated automatically by Car Rental & Transportation System</p>
             </div>
         </div>
     );

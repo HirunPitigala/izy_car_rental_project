@@ -21,7 +21,7 @@ export default function WeddingDetailsPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">Vehicle Not Found</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-4">Vehicle Not Found</h1>
                     <Link href="/wedding/available" className="text-red-600 font-bold hover:underline">
                         Back to Available Wedding Cars
                     </Link>
@@ -72,7 +72,7 @@ export default function WeddingDetailsPage() {
                             <div className="p-10">
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
-                                        <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-2">
+                                        <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
                                             {vehicle.brand} <span className="text-gray-400">{vehicle.model}</span>
                                         </h1>
                                         <div className="flex items-center gap-4 text-gray-500 font-medium font-mono text-lg">
@@ -82,7 +82,7 @@ export default function WeddingDetailsPage() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-4xl font-extrabold text-red-600 leading-none">LKR {vehicle.ratePerDay.toLocaleString()}</p>
+                                        <p className="text-2xl font-extrabold text-red-600 leading-none">LKR {vehicle.ratePerDay.toLocaleString()}</p>
                                         <p className="text-gray-400 font-bold uppercase tracking-widest text-sm mt-1">per day</p>
                                     </div>
                                 </div>

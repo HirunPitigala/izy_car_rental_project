@@ -12,7 +12,7 @@ export default function ManagerDashboard() {
             <header className="bg-white border-b border-gray-100 sticky top-0 z-20 px-4 py-8 md:px-10">
                 <div className="container-custom flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-extrabold tracking-tight">Manager Overview</h1>
+                        <h1 className="text-2xl font-extrabold tracking-tight">Manager Overview</h1>
                         <p className="mt-2 text-gray-500">Real-time analytics and fleet performance monitoring.</p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -80,7 +80,7 @@ export default function ManagerDashboard() {
                                     <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 group-hover:bg-red-50 group-hover:text-[#dc2626] transition-colors">
                                         <TrendingUp className="h-5 w-5" />
                                     </div>
-                                    <span className="font-bold text-[15px]">Generate Report</span>
+                                    <span className="font-bold text-sm">Generate Report</span>
                                     <ChevronRight className="h-4 w-4 text-gray-300 ml-auto group-hover:translate-x-1" />
                                 </button>
                             </div>

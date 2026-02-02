@@ -74,7 +74,7 @@ export default function ManagerRegistrationPage() {
                                 priority
                             />
                         </Link>
-                        <h1 className="text-3xl font-extrabold tracking-tight">
+                        <h1 className="text-2xl font-extrabold tracking-tight">
                             Manager <span className="text-[#dc2626]">Portal</span>
                         </h1>
                         <p className="mt-2.5 text-gray-500">
@@ -95,7 +95,7 @@ export default function ManagerRegistrationPage() {
                         <div className="space-y-5">
                             {/* Email Field */}
                             <div>
-                                <label htmlFor="email" className="block text-[13px] font-bold mb-2 px-1">
+                                <label htmlFor="email" className="block text-sm font-bold mb-2 px-1">
                                     Email Address
                                 </label>
                                 <input
@@ -113,7 +113,7 @@ export default function ManagerRegistrationPage() {
 
                             {/* Password Field */}
                             <div>
-                                <label htmlFor="password" className="block text-[13px] font-bold mb-2 px-1">
+                                <label htmlFor="password" className="block text-sm font-bold mb-2 px-1">
                                     Password
                                 </label>
                                 <div className="relative">
@@ -153,7 +153,7 @@ export default function ManagerRegistrationPage() {
 
                             {/* Confirm Password Field */}
                             <div>
-                                <label htmlFor="confirmPassword" className="block text-[13px] font-bold mb-2 px-1">
+                                <label htmlFor="confirmPassword" className="block text-sm font-bold mb-2 px-1">
                                     Confirm Password
                                 </label>
                                 <div className="relative">

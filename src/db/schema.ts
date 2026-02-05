@@ -214,68 +214,70 @@ export const review = mysqlTable("review", {
 
 export const serviceCategory = mysqlTable("service_category", {
 	categoryId: int("category_id").autoincrement().notNull(),
-	categoryName: varchar("category_name", { length: 100 }),
-	baseFare: decimal("base_fare", { precision: 10, scale: 2 }),
-	additionalRate: decimal("additional_rate", { precision: 10, scale: 2 }),
-	description: text(),
+	categoryName: varchar("category_name", { length: 100 }).notNull(),
 },
 	(table) => [
-		primaryKey({ columns: [table.categoryId], name: "service_category_category_id" }),
+		primaryKey({ columns: [table.categoryId], name: "service_category_pk" }),
+		unique("category_name").on(table.categoryName),
 	]);
 
 export const vehicleBrand = mysqlTable("vehicle_brand", {
 	brandId: int("brand_id").autoincrement().notNull(),
-	brandName: varchar("brand_name", { length: 50 }),
+	brandName: varchar("brand_name", { length: 100 }).notNull(),
 },
 	(table) => [
-		primaryKey({ columns: [table.brandId], name: "vehicle_brand_brand_id" }),
+		primaryKey({ columns: [table.brandId], name: "vehicle_brand_pk" }),
 		unique("brand_name").on(table.brandName),
 	]);
 
 export const vehicleModel = mysqlTable("vehicle_model", {
 	modelId: int("model_id").autoincrement().notNull(),
-	brandId: int("brand_id").references(() => vehicleBrand.brandId),
-	modelName: varchar("model_name", { length: 50 }),
+	modelName: varchar("model_name", { length: 100 }).notNull(),
+	brandId: int("brand_id").notNull().references(() => vehicleBrand.brandId, { onDelete: 'cascade', onUpdate: 'cascade' }),
 },
 	(table) => [
-		primaryKey({ columns: [table.modelId], name: "vehicle_model_model_id" }),
-		unique("brand_model").on(table.brandId, table.modelName),
+		primaryKey({ columns: [table.modelId], name: "vehicle_model_pk" }),
+		index("brand_id_idx").on(table.brandId),
+		unique("brand_model_unique").on(table.brandId, table.modelName),
 	]);
 
 export const vehicle = mysqlTable("vehicle", {
 	vehicleId: int("vehicle_id").autoincrement().notNull(),
-	brand: varchar({ length: 50 }), // Keep for compatibility
-	brandId: int("brand_id").references(() => vehicleBrand.brandId),
-	model: varchar({ length: 50 }), // Keep for compatibility
-	modelId: int("model_id").references(() => vehicleModel.modelId),
-	plateNumber: varchar("plate_number", { length: 20 }),
-	capacity: int(),
-	seatingCapacity: int("seating_capacity"),
-	passengerCapacity: int("passenger_capacity"),
-	transmissionType: varchar("transmission_type", { length: 20 }),
-	fuelType: varchar("fuel_type", { length: 20 }),
-	luggageCapacity: int("luggage_capacity"),
-	rentPerHour: decimal("rent_per_hour", { precision: 10, scale: 2 }),
-	rentPerDay: decimal("rent_per_day", { precision: 10, scale: 2 }),
-	ratePerDay: decimal("rate_per_day", { precision: 10, scale: 2 }), // Keeping for compatibility
-	rentPerMonth: decimal("rent_per_month", { precision: 10, scale: 2 }),
-	ratePerMonth: decimal("rate_per_month", { precision: 10, scale: 2 }), // Keeping for compatibility
-	maxMileagePerDay: int("max_mileage_per_day"),
-	extraMileageCharge: decimal("extra_mileage_charge", { precision: 10, scale: 2 }),
-	minRentalPeriod: int("min_rental_period"),
-	maxRentalPeriod: int("max_rental_period"),
-	availabilityStatus: varchar("availability_status", { length: 20 }),
-	status: varchar("status", { length: 20 }), // AVAILABLE / UNAVAILABLE / MAINTENANCE
-	serviceCategory: varchar("service_category", { length: 50 }), // Keep for compatibility
-	categoryId: int("category_id").references(() => serviceCategory.categoryId),
-	image: text("image"), // Store Base64
-	imageUrl: text("image_url"), // Deprecating but keeping for safety
-	description: text(),
+	plateNumber: varchar("plate_no", { length: 20 }).notNull(), // "plate_no" as requested
+	categoryId: int("category_id").notNull().references(() => serviceCategory.categoryId, { onDelete: 'restrict', onUpdate: 'cascade' }),
+	brandId: int("brand_id").notNull().references(() => vehicleBrand.brandId, { onDelete: 'restrict', onUpdate: 'cascade' }),
+	modelId: int("model_id").notNull().references(() => vehicleModel.modelId, { onDelete: 'restrict', onUpdate: 'cascade' }),
+
+	// Image stored as longtext (Base64) to support "blob/binary" requirement via text representation in standardized web apps
+	vehicleImage: text("vehicle_image"),
+
+	seatingCapacity: int("seating_capacity").notNull(),
+	luggageCapacity: int("luggage_capacity").notNull(),
+	transmission: varchar("transmission", { length: 20 }).notNull(),
+	fuelType: varchar("fuel_type", { length: 20 }).notNull(),
+	description: text("description"),
+
+	rentPerHour: decimal("rent_per_hr", { precision: 10, scale: 2 }).notNull(),
+	rentPerDay: decimal("rent_per_day", { precision: 10, scale: 2 }).notNull(),
+	rentPerMonth: decimal("rent_per_month", { precision: 10, scale: 2 }).notNull(),
+
+	maxKmsPerDay: int("max_kms_per_day").notNull(),
+	extraKmPrice: decimal("extra_km_price", { precision: 10, scale: 2 }).notNull(),
+	minRentalDays: int("minimum_rent_days").notNull(),
+
+	// Timestamps
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+	updatedAt: datetime("updated_at").default(sql`CURRENT_TIMESTAMP`).$onUpdate(() => new Date()),
+
+	// Keeping status for logical flow despite not in explicit list, but essential for standard app function
+	status: varchar("status", { length: 20 }).default("AVAILABLE"),
 },
 	(table) => [
-		primaryKey({ columns: [table.vehicleId], name: "vehicle_vehicle_id" }),
-		unique("plate_number").on(table.plateNumber),
+		primaryKey({ columns: [table.vehicleId], name: "vehicle_pk" }),
+		unique("plate_no_unique").on(table.plateNumber),
+		index("category_id_idx").on(table.categoryId),
+		index("brand_id_idx").on(table.brandId),
+		index("model_id_idx").on(table.modelId),
 	]);
 
 export const users = mysqlTable("users", {

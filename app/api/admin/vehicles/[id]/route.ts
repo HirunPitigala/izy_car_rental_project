@@ -21,18 +21,15 @@ export async function GET(
                 brand: vehicleBrand.brandName,
                 model: vehicleModel.modelName,
                 plateNumber: vehicle.plateNumber,
-                capacity: vehicle.capacity,
                 seatingCapacity: vehicle.seatingCapacity,
-                transmissionType: vehicle.transmissionType,
+                transmissionType: vehicle.transmission,
                 fuelType: vehicle.fuelType,
                 luggageCapacity: vehicle.luggageCapacity,
-                availabilityStatus: vehicle.availabilityStatus,
                 status: vehicle.status,
                 serviceCategory: serviceCategory.categoryName,
-                ratePerDay: vehicle.ratePerDay,
-                ratePerMonth: vehicle.ratePerMonth,
-                image: vehicle.image,
-                imageUrl: vehicle.imageUrl,
+                rentPerDay: vehicle.rentPerDay,
+                rentPerMonth: vehicle.rentPerMonth,
+                image: vehicle.vehicleImage,
                 description: vehicle.description,
                 createdAt: vehicle.createdAt,
             })
@@ -96,31 +93,37 @@ export async function PUT(
             const [existingCategory] = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, body.serviceCategory));
             if (existingCategory) {
                 categoryId = existingCategory.categoryId;
+            } else {
+                const [result] = await db.insert(serviceCategory).values({ categoryName: body.serviceCategory });
+                categoryId = (result as any).insertId;
             }
         }
 
+        // Prepare update object
+        const updateData: any = {
+            plateNumber: body.plateNumber,
+            seatingCapacity: body.seatingCapacity ? parseInt(body.seatingCapacity) : undefined,
+            transmission: body.transmissionType,
+            fuelType: body.fuelType,
+            luggageCapacity: body.luggageCapacity ? parseInt(body.luggageCapacity) : undefined,
+            rentPerDay: body.rentPerDay,
+            rentPerMonth: body.rentPerMonth,
+            status: body.status,
+            vehicleImage: body.image,
+            description: body.description,
+        };
+
+        if (brandId) updateData.brandId = brandId;
+        if (modelId) updateData.modelId = modelId;
+        if (categoryId) updateData.categoryId = categoryId;
+        if (body.rentPerHour) updateData.rentPerHour = body.rentPerHour;
+        if (body.maxMileagePerDay) updateData.maxKmsPerDay = parseInt(body.maxMileagePerDay);
+        if (body.extraMileageCharge) updateData.extraKmPrice = body.extraMileageCharge;
+        if (body.minRentalPeriod) updateData.minRentalDays = parseInt(body.minRentalPeriod);
+
         await db
             .update(vehicle)
-            .set({
-                brand: body.brand, // Legacy
-                brandId: brandId,
-                model: body.model, // Legacy
-                modelId: modelId,
-                plateNumber: body.plateNumber,
-                seatingCapacity: parseInt(body.seatingCapacity) || parseInt(body.capacity),
-                capacity: parseInt(body.capacity) || parseInt(body.seatingCapacity),
-                transmissionType: body.transmissionType,
-                fuelType: body.fuelType,
-                luggageCapacity: parseInt(body.luggageCapacity),
-                ratePerDay: body.ratePerDay,
-                ratePerMonth: body.ratePerMonth,
-                status: body.status || "AVAILABLE",
-                serviceCategory: body.serviceCategory || "NORMAL", // Legacy
-                categoryId: categoryId,
-                image: body.image, // Base64
-                description: body.description,
-                availabilityStatus: body.status || "AVAILABLE", // For legacy compatibility
-            })
+            .set(updateData)
             .where(eq(vehicle.vehicleId, parseInt(id)));
 
         return NextResponse.json({ success: true, message: "Vehicle updated successfully" });

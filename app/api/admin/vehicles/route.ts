@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { vehicle, vehicleBrand, vehicleModel, serviceCategory } from "@/src/db/schema";
 import { getSession } from "@/lib/auth";
-import { desc, eq, sql, and } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
 export async function GET() {
     try {
@@ -16,18 +16,15 @@ export async function GET() {
             brand: vehicleBrand.brandName,
             model: vehicleModel.modelName,
             plateNumber: vehicle.plateNumber,
-            capacity: vehicle.capacity,
             seatingCapacity: vehicle.seatingCapacity,
-            transmissionType: vehicle.transmissionType,
+            transmissionType: vehicle.transmission,
             fuelType: vehicle.fuelType,
             luggageCapacity: vehicle.luggageCapacity,
-            availabilityStatus: vehicle.availabilityStatus,
             status: vehicle.status,
             serviceCategory: serviceCategory.categoryName,
-            ratePerDay: vehicle.ratePerDay,
-            ratePerMonth: vehicle.ratePerMonth,
-            image: vehicle.image,
-            imageUrl: vehicle.imageUrl,
+            rentPerDay: vehicle.rentPerDay,
+            rentPerMonth: vehicle.rentPerMonth,
+            image: vehicle.vehicleImage,
             description: vehicle.description,
             createdAt: vehicle.createdAt,
         })
@@ -83,28 +80,35 @@ export async function POST(req: Request) {
             const [existingCategory] = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, body.serviceCategory));
             if (existingCategory) {
                 categoryId = existingCategory.categoryId;
+            } else {
+                // Create if missing to avoid failure
+                const [result] = await db.insert(serviceCategory).values({ categoryName: body.serviceCategory });
+                categoryId = (result as any).insertId;
             }
         }
 
+        if (!brandId || !modelId || !categoryId) {
+            return NextResponse.json({ error: "Missing required relationship data (brand, model, category)" }, { status: 400 });
+        }
+
         const [newVehicleResult] = await db.insert(vehicle).values({
-            brand: body.brand, // Legacy
             brandId: brandId,
-            model: body.model, // Legacy
             modelId: modelId,
             plateNumber: body.plateNumber,
-            seatingCapacity: parseInt(body.seatingCapacity) || parseInt(body.capacity) || 4,
-            capacity: parseInt(body.capacity) || parseInt(body.seatingCapacity) || 4,
-            transmissionType: body.transmissionType,
-            fuelType: body.fuelType,
+            seatingCapacity: parseInt(body.seatingCapacity) || 4,
+            transmission: body.transmissionType || "Automatic",
+            fuelType: body.fuelType || "Petrol",
             luggageCapacity: parseInt(body.luggageCapacity) || 2,
-            ratePerDay: body.ratePerDay,
-            ratePerMonth: body.ratePerMonth,
+            rentPerDay: body.rentPerDay?.toString() || "0",
+            rentPerMonth: body.rentPerMonth?.toString() || "0",
+            rentPerHour: body.rentPerHour?.toString() || "0",
+            minRentalDays: parseInt(body.minRentalPeriod) || 1,
+            maxKmsPerDay: parseInt(body.maxMileagePerDay) || 100,
+            extraKmPrice: body.extraMileageCharge?.toString() || "0",
             status: body.status || "AVAILABLE",
-            serviceCategory: body.serviceCategory || "NORMAL", // Legacy
             categoryId: categoryId,
-            image: body.image, // Base64
+            vehicleImage: body.image, // Base64
             description: body.description,
-            availabilityStatus: body.status || "AVAILABLE", // For legacy compatibility
         });
 
         const newVehicleId = (newVehicleResult as any).insertId;

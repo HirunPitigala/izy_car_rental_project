@@ -1,5 +1,12 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, primaryKey, unique, int, varchar, index, foreignKey, text, date, datetime, decimal, check, tinyint, boolean } from "drizzle-orm/mysql-core"
-import { sql } from "drizzle-orm"
+import { mysqlTable, primaryKey, unique, int, varchar, index, text, date, datetime, decimal, check, boolean, customType } from "drizzle-orm/mysql-core"
+import { sql, relations } from "drizzle-orm"
+
+// Custom blob type for binary storage (PDFs, etc.)
+const mysqlBlob = customType<{ data: Buffer }>({
+	dataType() {
+		return 'blob';
+	},
+});
 
 export const admin = mysqlTable("admin", {
 	adminId: int("admin_id").autoincrement().notNull(),
@@ -12,58 +19,54 @@ export const admin = mysqlTable("admin", {
 		unique("email").on(table.email),
 	]);
 
-export const agreement = mysqlTable("agreement", {
-	agreementId: int("agreement_id").autoincrement().notNull(),
-	reservationId: int("reservation_id").references(() => reservation.reservationId),
-	documentUrl: text("document_url"),
-	// you can use { mode: 'date' }, if you want to have Date as type for this column
-	agreementDate: date("agreement_date", { mode: 'string' }),
-	approvalStatus: varchar("approval_status", { length: 30 }),
-	termsAccepted: tinyint("terms_accepted"),
-	adminId: int("admin_id").references(() => admin.adminId),
-	guarantorId: int("guarantor_id").references(() => guarantor.guarantorId),
+export const booking = mysqlTable("booking", {
+	bookingId: int("booking_id").autoincrement().notNull(),
+	serviceCategoryId: int("service_category_id").notNull().references(() => serviceCategory.categoryId),
+
+	// Rental Details
+	rentalDate: datetime("rental_date").notNull(),
+	returnDate: datetime("return_date").notNull(),
+
+	// Customer Details
+	customerFullName: varchar("customer_full_name", { length: 100 }).notNull(),
+	customerPhoneNumber1: varchar("customer_phone_number1", { length: 15 }).notNull(),
+	customerPhoneNumber2: varchar("customer_phone_number2", { length: 15 }),
+	customerLicenseNo: varchar("customer_license_no", { length: 50 }).notNull(),
+	customerNicNo: varchar("customer_nic_no", { length: 20 }).notNull(),
+	customerDrivingLicencePdf: mysqlBlob("customer_driving_licence_pdf"),
+
+	// Terms Acceptance
+	terms1: boolean("terms1").default(false),
+	terms2Confirmation: boolean("terms2_confirmation").default(false),
+
+	// Guarantee Person Details
+	guaranteeFullname: varchar("guarantee_fullname", { length: 100 }),
+	guaranteeAddress: text("guarantee_address"),
+	guaranteePhoneNo1: varchar("guarantee_phone_no1", { length: 15 }),
+	guaranteePhoneNo2: varchar("guarantee_phone_no2", { length: 15 }),
+	guaranteeNicNo: varchar("guarantee_nic_no", { length: 20 }),
+	guaranteeNicPdf: mysqlBlob("guarantee_nic_pdf"),
+	guaranteeLicensePdf: mysqlBlob("guarantee_license_pdf"),
+
+	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 },
 	(table) => [
-		index("reservation_id").on(table.reservationId),
-		index("admin_id").on(table.adminId),
-		index("guarantor_id").on(table.guarantorId),
-		primaryKey({ columns: [table.agreementId], name: "agreement_agreement_id" }),
+		primaryKey({ columns: [table.bookingId], name: "booking_pk" }),
+		index("service_category_id_idx").on(table.serviceCategoryId),
 	]);
 
 export const checklist = mysqlTable("checklist", {
 	checklistId: int("checklist_id").autoincrement().notNull(),
-	reservationId: int("reservation_id").references(() => reservation.reservationId),
-	// you can use { mode: 'date' }, if you want to have Date as type for this column
+	bookingId: int("booking_id").references(() => booking.bookingId),
 	inspectionDate: date("inspection_date", { mode: 'string' }),
 	inspectionType: varchar("inspection_type", { length: 50 }),
 	remarks: text(),
 	employeeId: int("employee_id").references(() => employee.employeeId),
 },
 	(table) => [
-		index("reservation_id").on(table.reservationId),
-		index("employee_id").on(table.employeeId),
+		index("booking_id_idx").on(table.bookingId),
+		index("employee_id_idx").on(table.employeeId),
 		primaryKey({ columns: [table.checklistId], name: "checklist_checklist_id" }),
-	]);
-
-export const customer = mysqlTable("customer", {
-	customerId: int("customer_id").autoincrement().notNull(),
-	fullName: varchar("full_name", { length: 100 }),
-	nic: varchar({ length: 20 }),
-	email: varchar({ length: 100 }),
-	phone: varchar({ length: 15 }),
-	address: text(),
-	username: varchar({ length: 50 }),
-	password: varchar({ length: 255 }),
-	licenseNumber: varchar("license_number", { length: 50 }),
-	// you can use { mode: 'date' }, if you want to have Date as type for this column
-	registrationDate: date("registration_date", { mode: 'string' }),
-	termsAccepted: tinyint("terms_accepted"),
-},
-	(table) => [
-		primaryKey({ columns: [table.customerId], name: "customer_customer_id" }),
-		unique("nic").on(table.nic),
-		unique("email").on(table.email),
-		unique("username").on(table.username),
 	]);
 
 export const driver = mysqlTable("driver", {
@@ -94,21 +97,6 @@ export const employee = mysqlTable("employee", {
 		unique("email").on(table.email),
 	]);
 
-export const guarantor = mysqlTable("guarantor", {
-	guarantorId: int("guarantor_id").autoincrement().notNull(),
-	fullName: varchar("full_name", { length: 100 }),
-	nic: varchar({ length: 20 }),
-	phone: varchar({ length: 15 }),
-	email: varchar({ length: 100 }),
-	address: text(),
-	relationshipToCustomer: varchar("relationship_to_customer", { length: 50 }),
-	customerId: int("customer_id").references(() => customer.customerId),
-},
-	(table) => [
-		index("customer_id").on(table.customerId),
-		primaryKey({ columns: [table.guarantorId], name: "guarantor_guarantor_id" }),
-	]);
-
 export const item = mysqlTable("item", {
 	itemId: int("item_id").autoincrement().notNull(),
 	itemName: varchar("item_name", { length: 100 }),
@@ -133,21 +121,21 @@ export const manager = mysqlTable("manager", {
 
 export const notification = mysqlTable("notification", {
 	notificationId: int("notification_id").autoincrement().notNull(),
-	customerId: int("customer_id").references(() => customer.customerId),
+	bookingId: int("booking_id").references(() => booking.bookingId),
 	message: text(),
 	notificationDate: datetime("notification_date", { mode: 'string' }),
 	status: varchar({ length: 20 }),
 	adminId: int("admin_id").references(() => admin.adminId),
 },
 	(table) => [
-		index("customer_id").on(table.customerId),
-		index("admin_id").on(table.adminId),
+		index("booking_id_idx").on(table.bookingId),
+		index("admin_id_idx").on(table.adminId),
 		primaryKey({ columns: [table.notificationId], name: "notification_notification_id" }),
 	]);
 
 export const payment = mysqlTable("payment", {
 	paymentId: int("payment_id").autoincrement().notNull(),
-	reservationId: int("reservation_id").references(() => reservation.reservationId),
+	bookingId: int("booking_id").references(() => booking.bookingId),
 	amount: decimal({ precision: 10, scale: 2 }),
 	paymentMethod: varchar("payment_method", { length: 30 }),
 	paymentDate: datetime("payment_date", { mode: 'string' }),
@@ -155,14 +143,13 @@ export const payment = mysqlTable("payment", {
 	invoiceNumber: varchar("invoice_number", { length: 50 }),
 },
 	(table) => [
-		index("reservation_id").on(table.reservationId),
+		index("booking_id_idx").on(table.bookingId),
 		primaryKey({ columns: [table.paymentId], name: "payment_payment_id" }),
 	]);
 
 export const report = mysqlTable("report", {
 	reportId: int("report_id").autoincrement().notNull(),
 	reportType: varchar("report_type", { length: 50 }),
-	// you can use { mode: 'date' }, if you want to have Date as type for this column
 	generatedDate: date("generated_date", { mode: 'string' }),
 	totalRevenue: decimal("total_revenue", { precision: 12, scale: 2 }),
 	totalCustomers: int("total_customers"),
@@ -174,40 +161,17 @@ export const report = mysqlTable("report", {
 		primaryKey({ columns: [table.reportId], name: "report_report_id" }),
 	]);
 
-export const reservation = mysqlTable("reservation", {
-	reservationId: int("reservation_id").autoincrement().notNull(),
-	customerId: int("customer_id").references(() => customer.customerId),
-	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId),
-	startDatetime: datetime("start_datetime", { mode: 'string' }),
-	endDatetime: datetime("end_datetime", { mode: 'string' }),
-	pickupLocation: varchar("pickup_location", { length: 255 }),
-	dropoffLocation: varchar("dropoff_location", { length: 255 }),
-	distance: decimal({ precision: 10, scale: 2 }),
-	totalFare: decimal("total_fare", { precision: 10, scale: 2 }),
-	reservationStatus: varchar("reservation_status", { length: 30 }),
-	driverId: int("driver_id").references(() => driver.driverId),
-},
-	(table) => [
-		index("customer_id").on(table.customerId),
-		index("vehicle_id").on(table.vehicleId),
-		index("driver_id").on(table.driverId),
-		primaryKey({ columns: [table.reservationId], name: "reservation_reservation_id" }),
-	]);
-
 export const review = mysqlTable("review", {
 	reviewId: int("review_id").autoincrement().notNull(),
-	customerId: int("customer_id").references(() => customer.customerId),
+	bookingId: int("booking_id").references(() => booking.bookingId),
 	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId),
 	rating: int(),
 	comment: text(),
-	// you can use { mode: 'date' }, if you want to have Date as type for this column
 	reviewDate: date("review_date", { mode: 'string' }),
-	reservationId: int("reservation_id").references(() => reservation.reservationId),
 },
 	(table) => [
-		index("customer_id").on(table.customerId),
-		index("vehicle_id").on(table.vehicleId),
-		index("reservation_id").on(table.reservationId),
+		index("booking_id_idx").on(table.bookingId),
+		index("vehicle_id_idx").on(table.vehicleId),
 		primaryKey({ columns: [table.reviewId], name: "review_review_id" }),
 		check("review_chk_1", sql`(\`rating\` between 1 and 5)`),
 	]);
@@ -243,33 +207,24 @@ export const vehicleModel = mysqlTable("vehicle_model", {
 
 export const vehicle = mysqlTable("vehicle", {
 	vehicleId: int("vehicle_id").autoincrement().notNull(),
-	plateNumber: varchar("plate_no", { length: 20 }).notNull(), // "plate_no" as requested
+	plateNumber: varchar("plate_no", { length: 20 }).notNull(),
 	categoryId: int("category_id").notNull().references(() => serviceCategory.categoryId, { onDelete: 'restrict', onUpdate: 'cascade' }),
 	brandId: int("brand_id").notNull().references(() => vehicleBrand.brandId, { onDelete: 'restrict', onUpdate: 'cascade' }),
 	modelId: int("model_id").notNull().references(() => vehicleModel.modelId, { onDelete: 'restrict', onUpdate: 'cascade' }),
-
-	// Image stored as longtext (Base64) to support "blob/binary" requirement via text representation in standardized web apps
 	vehicleImage: text("vehicle_image"),
-
 	seatingCapacity: int("seating_capacity").notNull(),
 	luggageCapacity: int("luggage_capacity").notNull(),
 	transmission: varchar("transmission", { length: 20 }).notNull(),
 	fuelType: varchar("fuel_type", { length: 20 }).notNull(),
 	description: text("description"),
-
 	rentPerHour: decimal("rent_per_hr", { precision: 10, scale: 2 }).notNull(),
 	rentPerDay: decimal("rent_per_day", { precision: 10, scale: 2 }).notNull(),
 	rentPerMonth: decimal("rent_per_month", { precision: 10, scale: 2 }).notNull(),
-
 	maxKmsPerDay: int("max_kms_per_day").notNull(),
 	extraKmPrice: decimal("extra_km_price", { precision: 10, scale: 2 }).notNull(),
 	minRentalDays: int("minimum_rent_days").notNull(),
-
-	// Timestamps
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 	updatedAt: datetime("updated_at").default(sql`CURRENT_TIMESTAMP`).$onUpdate(() => new Date()),
-
-	// Keeping status for logical flow despite not in explicit list, but essential for standard app function
 	status: varchar("status", { length: 20 }).default("AVAILABLE"),
 },
 	(table) => [
@@ -284,8 +239,8 @@ export const users = mysqlTable("users", {
 	id: int("id").autoincrement().notNull(),
 	email: varchar({ length: 100 }),
 	passwordHash: varchar("password_hash", { length: 255 }),
-	role: varchar({ length: 20 }), // ADMIN | MANAGER | EMPLOYEE | CUSTOMER
-	relatedId: int("related_id"), // points to admin.id / customer.id / etc
+	role: varchar({ length: 20 }),
+	relatedId: int("related_id"),
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 	status: varchar({ length: 20 }).default("active"),
 	name: varchar({ length: 100 }),
@@ -320,3 +275,60 @@ export const passwordResetTokens = mysqlTable("password_reset_tokens", {
 		primaryKey({ columns: [table.id], name: "password_reset_tokens_id" }),
 		unique("token").on(table.token),
 	]);
+
+// Relations
+export const bookingRelations = relations(booking, ({ one, many }) => ({
+	serviceCategory: one(serviceCategory, {
+		fields: [booking.serviceCategoryId],
+		references: [serviceCategory.categoryId],
+	}),
+	payments: many(payment),
+	checklists: many(checklist),
+	notifications: many(notification),
+	reviews: many(review),
+}));
+
+export const serviceCategoryRelations = relations(serviceCategory, ({ many }) => ({
+	bookings: many(booking),
+	vehicles: many(vehicle),
+}));
+
+export const paymentRelations = relations(payment, ({ one }) => ({
+	booking: one(booking, {
+		fields: [payment.bookingId],
+		references: [booking.bookingId],
+	}),
+}));
+
+export const checklistRelations = relations(checklist, ({ one }) => ({
+	booking: one(booking, {
+		fields: [checklist.bookingId],
+		references: [booking.bookingId],
+	}),
+	employee: one(employee, {
+		fields: [checklist.employeeId],
+		references: [employee.employeeId],
+	}),
+}));
+
+export const notificationRelations = relations(notification, ({ one }) => ({
+	booking: one(booking, {
+		fields: [notification.bookingId],
+		references: [booking.bookingId],
+	}),
+	admin: one(admin, {
+		fields: [notification.adminId],
+		references: [admin.adminId],
+	}),
+}));
+
+export const reviewRelations = relations(review, ({ one }) => ({
+	booking: one(booking, {
+		fields: [review.bookingId],
+		references: [booking.bookingId],
+	}),
+	vehicle: one(vehicle, {
+		fields: [review.vehicleId],
+		references: [vehicle.vehicleId],
+	}),
+}));

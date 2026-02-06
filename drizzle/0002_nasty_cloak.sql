@@ -45,9 +45,9 @@ ALTER TABLE `vehicle` DROP COLUMN `brand`;
 ALTER TABLE `vehicle` DROP COLUMN `model`;
 --> statement-breakpoint
 ALTER TABLE `vehicle` DROP COLUMN `service_category`;
---> statement-breakpoint
+
 ALTER TABLE `vehicle` DROP COLUMN `availability_status`;
---> statement-breakpoint
+
 ALTER TABLE `vehicle` DROP COLUMN `image_url`;
---> statement-breakpoint
+
 ALTER TABLE `vehicle` DROP COLUMN `capacity`;

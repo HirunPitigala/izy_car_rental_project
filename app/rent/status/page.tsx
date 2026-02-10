@@ -1,104 +1,124 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, Clock, CheckCircle2, XCircle, ChevronRight } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import {
+    CheckCircle2,
+    Calendar,
+    Clock,
+    ShieldCheck,
+    ArrowRight,
+    Car,
+    FileText,
+    MapPin
+} from "lucide-react";
+import { Suspense } from "react";
 
 function StatusContent() {
-    const router = useRouter();
     const searchParams = useSearchParams();
-    const [status, setStatus] = useState<"pending" | "approved" | "rejected">("pending");
-    const [seconds, setSeconds] = useState(0);
-
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setSeconds(prev => prev + 1);
-        }, 1000);
-
-        // Simulation: Approve after 8 seconds for demonstration purposes
-        const promoTimer = setTimeout(() => {
-            setStatus("approved");
-        }, 8000);
-
-        return () => {
-            clearInterval(timer);
-            clearTimeout(promoTimer);
-        };
-    }, []);
+    const startDate = searchParams.get("rental_start_date");
+    const endDate = searchParams.get("rental_end_date");
+    const totalPrice = searchParams.get("totalPrice");
 
     return (
-        <div className="max-w-2xl mx-auto py-20 px-6">
-            <div className="bg-white rounded-[48px] border border-gray-100 p-12 text-center shadow-[0_24px_80px_rgba(0,0,0,0.03)]">
-                {status === "pending" && (
-                    <>
-                        <div className="w-28 h-28 bg-blue-50/50 rounded-full flex items-center justify-center text-blue-600 mx-auto mb-10 relative border border-blue-50">
-                            <Loader2 className="w-14 h-14 animate-spin" />
-                            <div className="absolute top-0 right-0 w-10 h-10 bg-blue-600 text-white rounded-full border-4 border-white flex items-center justify-center text-xs font-black">
-                                {8 - seconds > 0 ? 8 - seconds : 1}s
+        <div className="max-w-4xl mx-auto py-20 px-6">
+            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-100 overflow-hidden text-center">
+                {/* Header Decoration */}
+                <div className="h-4 bg-red-600 w-full" />
+
+                <div className="p-16">
+                    <div className="w-24 h-24 bg-green-50 rounded-[2.5rem] flex items-center justify-center text-green-600 mx-auto mb-10 shadow-xl shadow-green-100 animate-in zoom-in-50 duration-700">
+                        <CheckCircle2 className="w-12 h-12" />
+                    </div>
+
+                    <h1 className="text-4xl font-black text-[#0f0f0f] mb-4 uppercase tracking-tight">Booking Requested</h1>
+                    <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-xs mb-12">Reference: <span className="text-[#0f0f0f]">IZR-{Math.random().toString(36).substr(2, 9).toUpperCase()}</span></p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16 text-left">
+                        <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 border-b border-gray-100 pb-2">Journey Details</p>
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                        <Calendar className="w-5 h-5 text-red-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-tight">Rental Period</p>
+                                        <p className="text-sm font-black text-[#0f0f0f]">{startDate} — {endDate}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                                        <ShieldCheck className="w-5 h-5 text-red-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-tight">Protection Status</p>
+                                        <p className="text-sm font-black text-[#0f0f0f]">Comprehensive Coverage Included</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <h1 className="text-2xl font-black text-gray-900 mb-4 uppercase tracking-tight">Reviewing Request</h1>
-                        <p className="text-gray-400 font-bold mb-10 leading-relaxed px-4">
-                            Our team is currently verifying your documents and vehicle availability. Please stay on this page.
-                        </p>
-                        <div className="flex items-center justify-center gap-3 bg-gray-50/80 p-5 rounded-2xl border border-gray-100 mb-4 max-w-sm mx-auto">
-                            <Clock className="w-5 h-5 text-gray-400" />
-                            <span className="text-sm font-bold text-gray-500 uppercase tracking-widest text-xs">Real-time Status Polling Active</span>
-                        </div>
-                    </>
-                )}
 
-                {status === "approved" && (
-                    <>
-                        <div className="w-28 h-28 bg-green-50 rounded-full flex items-center justify-center text-green-500 mx-auto mb-10 border border-green-100 shadow-sm shadow-green-50">
-                            <CheckCircle2 className="w-14 h-14" />
+                        <div className="bg-[#0f0f0f] p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col justify-center">
+                            <Car className="absolute -right-10 -top-10 w-48 h-48 text-white/5" />
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Estimated Total</p>
+                            <p className="text-4xl font-black text-white mb-2">LKR {Number(totalPrice).toLocaleString()}</p>
+                            <p className="text-[10px] font-black text-green-500 uppercase tracking-widest flex items-center gap-2">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Payment on Approval
+                            </p>
                         </div>
-                        <h1 className="text-2xl font-black text-gray-900 mb-4 uppercase tracking-tight">Request Approved!</h1>
-                        <p className="text-gray-400 font-bold mb-10 leading-relaxed px-4">
-                            Congratulations! Your rental request has been approved and the vehicle is reserved for you. Please complete payment to secure your booking.
-                        </p>
-                        <button
-                            onClick={() => router.push(`/rent/payment?${searchParams.toString()}`)}
-                            className="w-full h-16 bg-blue-600 hover:bg-black text-white font-black rounded-[20px] transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-3 text-lg group active:scale-95"
+                    </div>
+
+                    <div className="bg-red-50 p-10 rounded-[2.5rem] border border-red-100 mb-16 text-left flex items-start gap-6">
+                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0">
+                            <Clock className="w-7 h-7 text-red-600 animate-pulse" />
+                        </div>
+                        <div>
+                            <h3 className="font-black text-[#0f0f0f] uppercase tracking-tight text-lg mb-2">Pending Approval</h3>
+                            <p className="text-sm font-medium text-gray-600 leading-relaxed mb-4">
+                                Your booking is currently being reviewed by our administrative team. We typically approve requests within <strong>60 minutes</strong> during operational hours.
+                            </p>
+                            <div className="flex gap-6">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-red-600" />
+                                    <span className="text-[10px] font-black text-[#0f0f0f] uppercase tracking-widest">Identity Check</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-red-600" />
+                                    <span className="text-[10px] font-black text-[#0f0f0f] uppercase tracking-widest">Insurance Review</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                        <Link
+                            href="/rent"
+                            className="h-16 px-12 bg-[#0f0f0f] hover:bg-red-600 text-white font-black rounded-2xl transition-all shadow-xl shadow-gray-200 flex items-center justify-center gap-4 text-xs uppercase tracking-widest"
                         >
-                            Proceed to Payment
-                            <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                        </button>
-                    </>
-                )}
-
-                {status === "rejected" && (
-                    <>
-                        <div className="w-28 h-28 bg-red-50 rounded-full flex items-center justify-center text-red-500 mx-auto mb-10 border border-red-100">
-                            <XCircle className="w-14 h-14" />
-                        </div>
-                        <h1 className="text-2xl font-black text-gray-900 mb-4 uppercase tracking-tight">Request Declined</h1>
-                        <p className="text-gray-400 font-bold mb-10 leading-relaxed px-4">
-                            We're sorry, but we couldn't approve your request at this time. Please contact support for more information.
-                        </p>
+                            Return Home
+                        </Link>
                         <button
-                            onClick={() => router.push("/rent")}
-                            className="w-full h-16 bg-gray-900 hover:bg-black text-white font-black rounded-[20px] transition-all shadow-xl shadow-gray-100 flex items-center justify-center gap-3 text-lg active:scale-95"
+                            className="h-16 px-12 border border-gray-100 bg-white hover:bg-gray-50 text-[#0f0f0f] font-black rounded-2xl transition-all flex items-center justify-center gap-4 text-xs uppercase tracking-widest"
+                            onClick={() => window.print()}
                         >
-                            Back to Fleet
+                            <FileText className="w-4 h-4" />
+                            Print Confirmation
                         </button>
-                    </>
-                )}
-            </div>
-
-            <div className="mt-12 text-center">
-                <p className="text-xs font-black text-gray-300 uppercase tracking-[0.4em]">Reservation Reference: #CAR-{Math.floor(Math.random() * 9000) + 1000}</p>
+                    </div>
+                </div>
             </div>
         </div>
     );
 }
 
-export default function RentStatusPage() {
+export default function BookingStatusPage() {
     return (
-        <div className="min-h-screen bg-[#fafafa]">
+        <div className="min-h-screen bg-[#fcfcfc]">
             <Suspense fallback={
                 <div className="flex items-center justify-center min-h-screen">
-                    <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
+                    <Loader2 className="w-12 h-12 text-red-600 animate-spin" />
                 </div>
             }>
                 <StatusContent />
@@ -106,3 +126,5 @@ export default function RentStatusPage() {
         </div>
     );
 }
+
+import { Loader2 } from "lucide-react";

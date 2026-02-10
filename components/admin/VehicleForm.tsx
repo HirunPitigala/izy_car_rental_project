@@ -35,6 +35,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
             serviceCategory: "Rent a Car",
             description: "",
             image: "",
+            chassisNumber: "",
         }
     );
 
@@ -110,6 +111,16 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
                             placeholder="e.g. CAB-9988"
                             value={formData.plateNumber}
                             onChange={(e) => setFormData({ ...formData, plateNumber: e.target.value })}
+                        />
+                    </FormGroup>
+
+                    <FormGroup label="Chassis Number">
+                        <input
+                            type="text"
+                            className="ek-input-primary font-mono"
+                            placeholder="e.g. 1HGCM82633A004352"
+                            value={formData.chassisNumber || ""}
+                            onChange={(e) => setFormData({ ...formData, chassisNumber: e.target.value })}
                         />
                     </FormGroup>
 

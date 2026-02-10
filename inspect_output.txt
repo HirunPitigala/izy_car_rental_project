@@ -1,0 +1,23 @@
+CATEGORIES:
+[
+  {
+    "category_id": 1,
+    "category_name": "Rent a Car"
+  }
+]
+
+VEHICLES:
+[
+  {
+    "vehicle_id": 8,
+    "plate_no": "CAS-1234",
+    "category_id": 1,
+    "status": "AVAILABLE"
+  },
+  {
+    "vehicle_id": 10,
+    "plate_no": "cas221",
+    "category_id": 1,
+    "status": "AVAILABLE"
+  }
+]

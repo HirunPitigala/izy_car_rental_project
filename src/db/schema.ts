@@ -1,10 +1,10 @@
 import { mysqlTable, primaryKey, unique, int, varchar, index, text, date, datetime, decimal, check, boolean, customType } from "drizzle-orm/mysql-core"
-import { sql, relations } from "drizzle-orm"
+import { sql } from "drizzle-orm"
 
 // Custom blob type for binary storage (PDFs, etc.)
 const mysqlBlob = customType<{ data: Buffer }>({
 	dataType() {
-		return 'blob';
+		return 'longblob';
 	},
 });
 
@@ -21,38 +21,52 @@ export const admin = mysqlTable("admin", {
 
 export const booking = mysqlTable("booking", {
 	bookingId: int("booking_id").autoincrement().notNull(),
-	serviceCategoryId: int("service_category_id").notNull().references(() => serviceCategory.categoryId),
+	serviceCategoryId: int("service_category_id").references(() => serviceCategory.categoryId),
+	userId: int("user_id").references(() => users.id),
+	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId),
 
 	// Rental Details
-	rentalDate: datetime("rental_date").notNull(),
-	returnDate: datetime("return_date").notNull(),
+	rentalDate: datetime("rental_date"),
+	returnDate: datetime("return_date"),
 
-	// Customer Details
-	customerFullName: varchar("customer_full_name", { length: 100 }).notNull(),
-	customerPhoneNumber1: varchar("customer_phone_number1", { length: 15 }).notNull(),
+	// Customer Details (Merged from customer table)
+	customerFullName: varchar("customer_full_name", { length: 100 }),
+	customerPhoneNumber1: varchar("customer_phone_number1", { length: 15 }),
 	customerPhoneNumber2: varchar("customer_phone_number2", { length: 15 }),
-	customerLicenseNo: varchar("customer_license_no", { length: 50 }).notNull(),
-	customerNicNo: varchar("customer_nic_no", { length: 20 }).notNull(),
-	customerDrivingLicencePdf: mysqlBlob("customer_driving_licence_pdf"),
+	customerLicenseNo: varchar("customer_license_no", { length: 50 }),
+	customerNicNo: varchar("customer_nic_no", { length: 20 }),
+	customerDrivingLicencePdf: varchar("customer_driving_licence_pdf", { length: 255 }),
+	customerIdPdf: varchar("customer_id_pdf", { length: 255 }),
+
+	// Location & Pricing (Restored from reservation)
+	pickupLocation: varchar("pickup_location", { length: 255 }),
+	dropoffLocation: varchar("dropoff_location", { length: 255 }),
+	distance: decimal({ precision: 10, scale: 2 }),
+	totalFare: decimal("total_fare", { precision: 10, scale: 2 }),
+	bookingStatus: varchar("booking_status", { length: 30 }).default("PENDING"),
+	rejectionReason: text("rejection_reason"),
 
 	// Terms Acceptance
 	terms1: boolean("terms1").default(false),
 	terms2Confirmation: boolean("terms2_confirmation").default(false),
 
-	// Guarantee Person Details
+	// Guarantee Person Details (Merged from guarantor table)
 	guaranteeFullname: varchar("guarantee_fullname", { length: 100 }),
 	guaranteeAddress: text("guarantee_address"),
 	guaranteePhoneNo1: varchar("guarantee_phone_no1", { length: 15 }),
 	guaranteePhoneNo2: varchar("guarantee_phone_no2", { length: 15 }),
 	guaranteeNicNo: varchar("guarantee_nic_no", { length: 20 }),
-	guaranteeNicPdf: mysqlBlob("guarantee_nic_pdf"),
-	guaranteeLicensePdf: mysqlBlob("guarantee_license_pdf"),
+	guaranteeNicPdf: varchar("guarantee_nic_pdf", { length: 255 }),
+	guaranteeLicensePdf: varchar("guarantee_license_pdf", { length: 255 }),
 
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+	status: boolean("status").default(false),
 },
 	(table) => [
 		primaryKey({ columns: [table.bookingId], name: "booking_pk" }),
 		index("service_category_id_idx").on(table.serviceCategoryId),
+		index("user_id_idx").on(table.userId),
+		index("vehicle_id_idx").on(table.vehicleId),
 	]);
 
 export const checklist = mysqlTable("checklist", {
@@ -223,6 +237,7 @@ export const vehicle = mysqlTable("vehicle", {
 	maxKmsPerDay: int("max_kms_per_day").notNull(),
 	extraKmPrice: decimal("extra_km_price", { precision: 10, scale: 2 }).notNull(),
 	minRentalDays: int("minimum_rent_days").notNull(),
+	chassisNumber: varchar("chassis_number", { length: 100 }),
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 	updatedAt: datetime("updated_at").default(sql`CURRENT_TIMESTAMP`).$onUpdate(() => new Date()),
 	status: varchar("status", { length: 20 }).default("AVAILABLE"),
@@ -275,60 +290,3 @@ export const passwordResetTokens = mysqlTable("password_reset_tokens", {
 		primaryKey({ columns: [table.id], name: "password_reset_tokens_id" }),
 		unique("token").on(table.token),
 	]);
-
-// Relations
-export const bookingRelations = relations(booking, ({ one, many }) => ({
-	serviceCategory: one(serviceCategory, {
-		fields: [booking.serviceCategoryId],
-		references: [serviceCategory.categoryId],
-	}),
-	payments: many(payment),
-	checklists: many(checklist),
-	notifications: many(notification),
-	reviews: many(review),
-}));
-
-export const serviceCategoryRelations = relations(serviceCategory, ({ many }) => ({
-	bookings: many(booking),
-	vehicles: many(vehicle),
-}));
-
-export const paymentRelations = relations(payment, ({ one }) => ({
-	booking: one(booking, {
-		fields: [payment.bookingId],
-		references: [booking.bookingId],
-	}),
-}));
-
-export const checklistRelations = relations(checklist, ({ one }) => ({
-	booking: one(booking, {
-		fields: [checklist.bookingId],
-		references: [booking.bookingId],
-	}),
-	employee: one(employee, {
-		fields: [checklist.employeeId],
-		references: [employee.employeeId],
-	}),
-}));
-
-export const notificationRelations = relations(notification, ({ one }) => ({
-	booking: one(booking, {
-		fields: [notification.bookingId],
-		references: [booking.bookingId],
-	}),
-	admin: one(admin, {
-		fields: [notification.adminId],
-		references: [admin.adminId],
-	}),
-}));
-
-export const reviewRelations = relations(review, ({ one }) => ({
-	booking: one(booking, {
-		fields: [review.bookingId],
-		references: [booking.bookingId],
-	}),
-	vehicle: one(vehicle, {
-		fields: [review.vehicleId],
-		references: [vehicle.vehicleId],
-	}),
-}));

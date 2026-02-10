@@ -159,7 +159,7 @@ export default function VehicleTable({ vehicles, onRefresh }: VehicleTableProps)
                                                     <Eye className="h-4 w-4" />
                                                 </button>
                                                 <Link
-                                                    href={`/admin/vehicles/rent-a-car/edit/${vehicle.vehicleId}`}
+                                                    href={`/admin/vehicles/rent-a-car/${vehicle.vehicleId}/edit`}
                                                     className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-all hover:bg-gray-50 hover:text-[#0f0f0f] shadow-sm active:scale-95"
                                                     title="Edit Vehicle"
                                                 >

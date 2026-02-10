@@ -1,5 +1,5 @@
 import { db } from "@/src/db";
-import { users, customer, emailVerificationTokens, manager, passwordResetTokens } from "@/src/db/schema";
+import { users, emailVerificationTokens, manager, passwordResetTokens } from "@/src/db/schema";
 import { eq, and, gt } from "drizzle-orm";
 
 export class AuthRepository {
@@ -8,10 +8,6 @@ export class AuthRepository {
         return user;
     }
 
-    async createCustomer(data: typeof customer.$inferInsert) {
-        const [result] = await db.insert(customer).values(data);
-        return (result as any).insertId as number;
-    }
 
     async createUser(data: typeof users.$inferInsert) {
         const [result] = await db.insert(users).values(data);

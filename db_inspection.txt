@@ -1,0 +1,69 @@
+Listing tables...
+Tables: ["__drizzle_migrations","admin","booking","checklist","driver","email_verification_tokens","employee","item","manager","notification","password_reset_tokens","payment","report","review","service_category","users","vehicle","vehicle_brand","vehicle_model"]
+
+Inspecting 'booking' table columns...
+Column: booking_id, Type: int
+Column: service_category_id, Type: int
+Column: rental_date, Type: datetime
+Column: return_date, Type: datetime
+Column: customer_full_name, Type: varchar(100)
+Column: customer_phone_number1, Type: varchar(15)
+Column: customer_phone_number2, Type: varchar(15)
+Column: customer_license_no, Type: varchar(50)
+Column: customer_nic_no, Type: varchar(20)
+Column: customer_driving_licence_pdf, Type: blob
+Column: terms1, Type: tinyint(1)
+Column: terms2_confirmation, Type: tinyint(1)
+Column: guarantee_fullname, Type: varchar(100)
+Column: guarantee_address, Type: text
+Column: guarantee_phone_no1, Type: varchar(15)
+Column: guarantee_phone_no2, Type: varchar(15)
+Column: guarantee_nic_no, Type: varchar(20)
+Column: guarantee_nic_pdf, Type: blob
+Column: guarantee_license_pdf, Type: blob
+Column: created_at, Type: datetime
+Column: status, Type: tinyint(1)
+Column: vehicle_id, Type: int
+Column: user_id, Type: int
+Column: booking_status, Type: varchar(30)
+Column: pickup_location, Type: varchar(255)
+Column: dropoff_location, Type: varchar(255)
+Column: distance, Type: decimal(10,2)
+Column: total_fare, Type: decimal(10,2)
+
+Checking 'service_category' table data...
+Categories: [
+  {
+    "category_id": 1,
+    "category_name": "Rent a Car"
+  }
+]
+
+Checking 'users' table (first 5)...
+Users: [
+  {
+    "id": 24,
+    "email": "hirupitigala555@gmail.com",
+    "role": "customer"
+  },
+  {
+    "id": 25,
+    "email": "velev43990@sepole.com",
+    "role": "customer"
+  },
+  {
+    "id": 26,
+    "email": "6i102@virgilian.com",
+    "role": "manager"
+  },
+  {
+    "id": 27,
+    "email": "63rxisgovw@ozsaip.com",
+    "role": "manager"
+  },
+  {
+    "id": 28,
+    "email": "pafas38046@gxuzi.com",
+    "role": "customer"
+  }
+]

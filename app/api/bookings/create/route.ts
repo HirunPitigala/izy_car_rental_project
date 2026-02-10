@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { reservation } from "@/src/db/schema";
+import { booking } from "@/src/db/schema";
 import { getSession } from "@/lib/auth";
 
 export async function POST(req: Request) {
@@ -24,43 +24,20 @@ export async function POST(req: Request) {
         // Checking schema definition: `vehicleId: int("vehicle_id").references(...)`
         // It does NOT say `.notNull()`. So it is nullable.
 
-        const newBooking = await db.insert(reservation).values({
-            customerId: session.user.id, // Assuming session.user.id maps to customer_id or we need to lookup customer table?
-            // Auth session normally has generic User ID. 
-            // In this system, `users` table has `related_id` which points to `customer.customer_id` if role is customer.
-            // We should use that if available.
-            // Let's check getSession implementation or just try to use session.user.id if it's the customer id.
-            // Looking at `app/api/auth/session/route.ts` (implied existence), session usually holds basic info.
-            // PROXY.TS checked standard session cookie.
-            // Let's assume for now session.user.id is the USER id, and we might need the CUSTOMER id.
-            // However, looking at the `reservation` table: `customerId: int("customer_id").references(() => customer.customerId)`
-            // If `users.related_id` holds the customerId, we should use that.
-            // I'll assume session object has it or I need to fetch it.
-            // To be safe and "Zero backend changes" meaning "don't create new lookups if possible", I'll try to use the session ID if it matches, 
-            // OR simpler: just insert and if it fails, handle it.
-            // Actually, best practice: Fetch user.relatedId from `users` table using session.email if needed.
-            // But let's assume session.user.id IS the customerId for simplicity or that the Auth logic handles it.
-            // WAIT, `users` table has `related_id`.
-            // Let's try to pass `customer_id` from frontend (which came from session).
-
-            customerId: body.customer_id, // Passed from frontend session.user.id. Hope it matches.
+        const newBooking = await db.insert(booking).values({
+            userId: session.userId,
+            serviceCategoryId: body.service_category_id || 1,
             pickupLocation: body.pickup_location,
             dropoffLocation: body.dropoff_location,
-            startDatetime: body.start_datetime,
-            // End datetime is not provided for Pickup (one-way usually). We can set it to start + est duration or null.
-            // Schema: `endDatetime: datetime(...)` - Nullable? Not explicitly .notNull().
-
+            rentalDate: body.start_datetime ? new Date(body.start_datetime) : null,
             distance: body.distance,
             totalFare: body.total_fare,
-            reservationStatus: body.reservation_status || "PENDING",
-
-            // For PickMe, vehicle is assigned later or "Any".
-            // We leave vehicleId null or 0 if allowed.
+            bookingStatus: body.reservation_status || "PENDING",
+            customerFullName: body.customer_full_name || session.user?.name || "Customer",
+            customerPhoneNumber1: body.customer_phone_number1 || "0000000000",
         });
 
-        // Insert returns result array in MySQL usually or specific object.
-        // Drizzle insertId handling:
-        const bookingId = newBooking[0]?.insertId;
+        const bookingId = (newBooking as any)[0]?.insertId;
 
         return NextResponse.json({
             success: true,

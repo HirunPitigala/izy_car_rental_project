@@ -91,22 +91,10 @@ export class AuthService {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Transaction simulation (should ideally be in a transaction block from DB)
-        // For now, we follow existing pattern but separated
-        const customerId = await authRepository.createCustomer({
-            fullName: "New Customer",
-            email,
-            password: hashedPassword,
-            username: email,
-            registrationDate: new Date().toISOString().split("T")[0],
-            termsAccepted: 1,
-        });
-
         const userId = await authRepository.createUser({
             email,
             passwordHash: hashedPassword,
             role: "customer",
-            relatedId: customerId,
             name: "New Customer",
             status: "active",
             emailVerified: false,

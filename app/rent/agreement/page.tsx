@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import AgreementForm from "@/components/rent/AgreementForm";
+import BookingForm from "@/components/rent/BookingForm";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -15,15 +15,15 @@ export default async function AgreementPage(props: { searchParams: Promise<any> 
     }
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-[#fcfcfc]">
             <div className="container mx-auto px-6">
                 <Suspense fallback={
                     <div className="flex flex-col items-center justify-center py-32">
-                        <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-                        <p className="text-gray-400 font-bold">Verifying session...</p>
+                        <Loader2 className="w-12 h-12 text-red-600 animate-spin mb-4" />
+                        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">Securely Authenticating...</p>
                     </div>
                 }>
-                    <AgreementForm searchParams={searchParams} user={session.user} />
+                    <BookingForm searchParams={searchParams} user={session.user} />
                 </Suspense>
             </div>
         </div>

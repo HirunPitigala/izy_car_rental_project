@@ -1,8 +1,8 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { vehicle, vehicleBrand, vehicleModel, serviceCategory } from "@/src/db/schema";
-import { eq, sql, desc, and } from "drizzle-orm";
+import { vehicle, vehicleBrand, vehicleModel, serviceCategory, booking } from "@/src/db/schema";
+import { eq, sql, desc, and, ne, notInArray, or, lt, gt, lte, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 // ----------------------------------------------------------------------------
@@ -62,7 +62,9 @@ export async function saveVehicle(data: any) {
             categoryId,
             brandId,
             modelId,
-            vehicleImage: data.image, // Base64 string from UI
+            vehicleImage: data.image.startsWith('data:')
+                ? (await (await import("@/lib/cloudinary")).uploadBase64ToCloudinary(data.image, 'vehicles')).secure_url
+                : data.image, // If it's already a URL or empty, keep it.
 
             seatingCapacity: parseInt(data.seatingCapacity),
             luggageCapacity: parseInt(data.luggageCapacity),
@@ -79,29 +81,24 @@ export async function saveVehicle(data: any) {
             minRentalDays: parseInt(data.minRentalPeriod),
 
             status: data.status,
+            chassisNumber: data.chassisNumber,
         };
 
         // 3. Persist to DB
-        // Check if updating or creating based on plate number or explicit ID if we had one.
-        // The UI handles "add" vs "edit" but strictly sends data. 
-        // If we want to support "edit", we typically check if an ID exists.
-        // However, the prompt focuses on "Add Vehicle form".
-        // I'll check for an ID for safety/edit support, but rely on inserting mainly.
-
-        let success = false;
-
-        // Naive "Upsert" check if we had an internal vehicleId, but data might not have it if it's new.
-        // We can check if plate exists ?
-        const [existing] = await db.select().from(vehicle).where(eq(vehicle.plateNumber, data.plateNumber));
-
-        if (existing) {
-            // In a real "Update" scenario we'd use ID, but for strict "Add" flow re-submission:
-            await db.update(vehicle).set(vehiclePayload).where(eq(vehicle.vehicleId, existing.vehicleId));
+        if (data.vehicleId) {
+            // Update mode
+            await db.update(vehicle).set(vehiclePayload).where(eq(vehicle.vehicleId, data.vehicleId));
         } else {
+            // Create mode - check if plate already exists to prevent crash
+            const [existing] = await db.select().from(vehicle).where(eq(vehicle.plateNumber, data.plateNumber));
+            if (existing) {
+                return { success: false, error: "A vehicle with this plate number already exists." };
+            }
             await db.insert(vehicle).values(vehiclePayload);
         }
 
         revalidatePath("/admin/vehicles");
+        revalidatePath("/admin/vehicles/rent-a-car");
         return { success: true };
 
     } catch (error: any) {
@@ -113,6 +110,77 @@ export async function saveVehicle(data: any) {
 // ----------------------------------------------------------------------------
 // Fetch Actions (Updated for new Schema)
 // ----------------------------------------------------------------------------
+
+export async function getAvailableVehicles(startDate: string, startTime: string, endDate: string, endTime: string) {
+    try {
+        const start = `${startDate} ${startTime}:00`;
+        const end = `${endDate} ${endTime}:00`;
+
+        // 1. Find IDs of vehicles that are ALREADY booked during this period
+        // Logic: Only block if the booking is currently active (PENDING or ACCEPTED)
+        // and its date range overlaps with the requested search range.
+        const blockedVehiclesQuery = await db.select({ id: booking.vehicleId })
+            .from(booking)
+            .where(
+                and(
+                    or(
+                        eq(booking.bookingStatus, 'PENDING'),
+                        eq(booking.bookingStatus, 'ACCEPTED')
+                    ),
+                    sql`${booking.rentalDate} < ${end}`,
+                    sql`${booking.returnDate} > ${start}`
+                )
+            );
+
+        const blockedIds = blockedVehiclesQuery
+            .map(b => b.id)
+            .filter((id): id is number => id !== null);
+
+        // 2. Query all vehicles NOT in the blocked list
+        const query = db.select({
+            vehicleId: vehicle.vehicleId,
+            brand: vehicleBrand.brandName,
+            model: vehicleModel.modelName,
+            plateNumber: vehicle.plateNumber,
+            seatingCapacity: vehicle.seatingCapacity,
+            luggageCapacity: vehicle.luggageCapacity,
+            transmissionType: vehicle.transmission,
+            fuelType: vehicle.fuelType,
+            rentPerHour: vehicle.rentPerHour,
+            rentPerDay: vehicle.rentPerDay,
+            rentPerMonth: vehicle.rentPerMonth,
+            maxMileagePerDay: vehicle.maxKmsPerDay,
+            extraMileageCharge: vehicle.extraKmPrice,
+            minRentalPeriod: vehicle.minRentalDays,
+            status: vehicle.status,
+            serviceCategory: serviceCategory.categoryName,
+            image: vehicle.vehicleImage,
+            description: vehicle.description,
+        })
+            .from(vehicle)
+            .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
+            .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
+            .innerJoin(serviceCategory, eq(vehicle.categoryId, serviceCategory.categoryId))
+            .where(
+                and(
+                    eq(vehicle.status, "AVAILABLE"),
+                    // Ensure we're only looking at Rent a Car vehicles
+                    or(
+                        eq(serviceCategory.categoryName, "Rent a Car"),
+                        eq(serviceCategory.categoryName, "Rent-A-Car")
+                    ),
+                    blockedIds.length > 0 ? notInArray(vehicle.vehicleId, blockedIds) : undefined
+                )
+            );
+
+        const availableVehicles = await query;
+
+        return { success: true, data: availableVehicles };
+    } catch (error: any) {
+        console.error("Error searching availability:", error);
+        return { success: false, error: `Failed to search availability: ${error.message || 'Unknown error'}` };
+    }
+}
 
 export async function getVehiclesByCategory(categoryName: string) {
     try {
@@ -139,6 +207,7 @@ export async function getVehiclesByCategory(categoryName: string) {
             serviceCategory: serviceCategory.categoryName,
             image: vehicle.vehicleImage, // Mapping back
             description: vehicle.description,
+            chassisNumber: vehicle.chassisNumber,
             createdAt: vehicle.createdAt,
         })
             .from(vehicle)
@@ -181,6 +250,7 @@ export async function getVehicleById(id: number) {
             serviceCategory: serviceCategory.categoryName,
             image: vehicle.vehicleImage,
             description: vehicle.description,
+            chassisNumber: vehicle.chassisNumber,
         })
             .from(vehicle)
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))

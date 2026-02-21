@@ -149,8 +149,15 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
                 <div className="space-y-6">
                     {formData.image ? (
                         <div className="relative aspect-video w-full overflow-hidden rounded-xl border-2 border-[#0f0f0f]">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                                src={formData.image.startsWith('data:') ? formData.image : `data:image/jpeg;base64,${formData.image}`}
+                                src={
+                                    formData.image.startsWith('http')
+                                        ? formData.image
+                                        : formData.image.startsWith('data:')
+                                            ? formData.image
+                                            : `data:image/jpeg;base64,${formData.image}`
+                                }
                                 alt="Vehicle preview"
                                 className="h-full w-full object-cover"
                             />

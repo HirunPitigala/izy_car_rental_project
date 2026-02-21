@@ -105,11 +105,21 @@ export default function VehicleTable({ vehicles, onRefresh }: VehicleTableProps)
                                             <div className="flex items-center gap-4">
                                                 <div className="relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm">
                                                     {vehicle.image ? (
-                                                        <img
-                                                            src={vehicle.image.startsWith('data:') ? vehicle.image : `data:image/jpeg;base64,${vehicle.image}`}
-                                                            alt={vehicle.model}
-                                                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                                                        />
+                                                        <div className="relative h-full w-full">
+                                                            <Image
+                                                                src={
+                                                                    vehicle.image.startsWith('http')
+                                                                        ? vehicle.image
+                                                                        : vehicle.image.startsWith('data:')
+                                                                            ? vehicle.image
+                                                                            : `data:image/jpeg;base64,${vehicle.image}`
+                                                                }
+                                                                alt={vehicle.model}
+                                                                fill
+                                                                className="object-cover transition-transform group-hover:scale-105"
+                                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                            />
+                                                        </div>
                                                     ) : (
                                                         <div className="flex h-full w-full items-center justify-center text-xs text-gray-300">
                                                             No Image

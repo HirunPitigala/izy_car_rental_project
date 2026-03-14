@@ -15,9 +15,9 @@ const categories = [
     {
         name: "Pickups",
         description: "Point-to-point pickup and drop-off services.",
-        icon: Car, // Or find a better one
-        href: "#",
-        active: false,
+        icon: Truck,
+        href: "/admin/vehicles/pickup-service",
+        active: true,
         color: "bg-emerald-50 text-emerald-600 border-emerald-100 ring-emerald-50",
     },
     {

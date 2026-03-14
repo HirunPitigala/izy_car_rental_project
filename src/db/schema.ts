@@ -59,6 +59,10 @@ export const booking = mysqlTable("booking", {
 	guaranteeNicPdf: varchar("guarantee_nic_pdf", { length: 255 }),
 	guaranteeLicensePdf: varchar("guarantee_license_pdf", { length: 255 }),
 
+	// Pickup Specifics
+	numberOfTravelers: int("no_of_travellers"),
+	numberOfLuggages: int("no_of_luggages"),
+
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 	status: boolean("status").default(false),
 },
@@ -236,6 +240,7 @@ export const vehicle = mysqlTable("vehicle", {
 	rentPerMonth: decimal("rent_per_month", { precision: 10, scale: 2 }).notNull(),
 	maxKmsPerDay: int("max_kms_per_day").notNull(),
 	extraKmPrice: decimal("extra_km_price", { precision: 10, scale: 2 }).notNull(),
+	pricePerKm: decimal("rent_per_km", { precision: 10, scale: 2 }), // Aligned with actual DB column: rent_per_km
 	minRentalDays: int("minimum_rent_days").notNull(),
 	chassisNumber: varchar("chassis_number", { length: 100 }),
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),

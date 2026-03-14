@@ -78,6 +78,7 @@ export async function saveVehicle(data: any) {
 
             maxKmsPerDay: parseInt(data.maxMileagePerDay),
             extraKmPrice: data.extraMileageCharge.toString(),
+            pricePerKm: data.pricePerKm ? data.pricePerKm.toString() : null,
             minRentalDays: parseInt(data.minRentalPeriod),
 
             status: data.status,
@@ -156,6 +157,7 @@ export async function getAvailableVehicles(startDate: string, startTime: string,
             serviceCategory: serviceCategory.categoryName,
             image: vehicle.vehicleImage,
             description: vehicle.description,
+            pricePerKm: vehicle.pricePerKm,
         })
             .from(vehicle)
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
@@ -208,6 +210,7 @@ export async function getVehiclesByCategory(categoryName: string) {
             image: vehicle.vehicleImage, // Mapping back
             description: vehicle.description,
             chassisNumber: vehicle.chassisNumber,
+            pricePerKm: vehicle.pricePerKm,
             createdAt: vehicle.createdAt,
         })
             .from(vehicle)
@@ -251,6 +254,7 @@ export async function getVehicleById(id: number) {
             image: vehicle.vehicleImage,
             description: vehicle.description,
             chassisNumber: vehicle.chassisNumber,
+            pricePerKm: vehicle.pricePerKm,
         })
             .from(vehicle)
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))

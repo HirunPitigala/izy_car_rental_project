@@ -36,6 +36,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
             description: "",
             image: "",
             chassisNumber: "",
+            pricePerKm: "",
         }
     );
 
@@ -132,7 +133,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
                             onChange={(e) => setFormData({ ...formData, serviceCategory: e.target.value })}
                         >
                             <option value="Rent a Car">Rent a Car</option>
-                            <option value="Pickups" disabled>Pickups (Coming Soon)</option>
+                            <option value="Pickups">Pickups</option>
                             <option value="Trental" disabled>Trental (Coming Soon)</option>
                             <option value="Wind Car Rental" disabled>Wind Car Rental (Coming Soon)</option>
                         </select>
@@ -307,6 +308,19 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
                             onChange={(e) => setFormData({ ...formData, extraMileageCharge: e.target.value })}
                         />
                     </FormGroup>
+
+                    {formData.serviceCategory === "Pickups" && (
+                        <FormGroup label="Price Per KM (FOR PICKUP SERVICE ONLY)">
+                            <input
+                                type="number"
+                                required
+                                className="ek-input-primary border-yellow-500 bg-yellow-50/10"
+                                placeholder="e.g. 150"
+                                value={formData.pricePerKm || ""}
+                                onChange={(e) => setFormData({ ...formData, pricePerKm: e.target.value })}
+                            />
+                        </FormGroup>
+                    )}
 
                     {/* Min/Max Days - separate inputs */}
                     <FormGroup label="Minimum Days">

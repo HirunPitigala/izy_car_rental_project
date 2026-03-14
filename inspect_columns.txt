@@ -73,14 +73,6 @@ BOOKING_COLUMNS:
     "Extra": ""
   },
   {
-    "Field": "customer_driving_licence_pdf",
-    "Type": "blob",
-    "Null": "YES",
-    "Key": "",
-    "Default": null,
-    "Extra": ""
-  },
-  {
     "Field": "terms1",
     "Type": "tinyint(1)",
     "Null": "YES",
@@ -137,22 +129,6 @@ BOOKING_COLUMNS:
     "Extra": ""
   },
   {
-    "Field": "guarantee_nic_pdf",
-    "Type": "blob",
-    "Null": "YES",
-    "Key": "",
-    "Default": null,
-    "Extra": ""
-  },
-  {
-    "Field": "guarantee_license_pdf",
-    "Type": "blob",
-    "Null": "YES",
-    "Key": "",
-    "Default": null,
-    "Extra": ""
-  },
-  {
     "Field": "created_at",
     "Type": "datetime",
     "Null": "YES",
@@ -203,6 +179,102 @@ BOOKING_COLUMNS:
   {
     "Field": "dropoff_location",
     "Type": "varchar(255)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "distance",
+    "Type": "decimal(10,2)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "total_fare",
+    "Type": "decimal(10,2)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "customer_license_pdf",
+    "Type": "text",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "customer_driving_licence_pdf",
+    "Type": "varchar(255)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "customer_id_pdf",
+    "Type": "text",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "guarantee_nic_pdf",
+    "Type": "text",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "guarantee_license_pdf",
+    "Type": "text",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "rejection_reason",
+    "Type": "text",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "pickup_loc",
+    "Type": "decimal(10,7)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "dropoff_loc",
+    "Type": "decimal(10,7)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "no_of_travellers",
+    "Type": "int",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "no_of_luggages",
+    "Type": "int",
     "Null": "YES",
     "Key": "",
     "Default": null,
@@ -294,7 +366,7 @@ VEHICLE_COLUMNS:
   },
   {
     "Field": "vehicle_image",
-    "Type": "longtext",
+    "Type": "text",
     "Null": "YES",
     "Key": "",
     "Default": null,
@@ -375,6 +447,14 @@ VEHICLE_COLUMNS:
   {
     "Field": "chassis_number",
     "Type": "varchar(100)",
+    "Null": "YES",
+    "Key": "",
+    "Default": null,
+    "Extra": ""
+  },
+  {
+    "Field": "rent_per_km",
+    "Type": "decimal(10,2)",
     "Null": "YES",
     "Key": "",
     "Default": null,

@@ -63,6 +63,9 @@ export const booking = mysqlTable("booking", {
 	numberOfTravelers: int("no_of_travellers"),
 	numberOfLuggages: int("no_of_luggages"),
 
+	// Message / Notes
+	message: text("message"),
+
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 	status: boolean("status").default(false),
 },

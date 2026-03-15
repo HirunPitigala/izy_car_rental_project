@@ -32,8 +32,8 @@ const categories = [
         name: "Wedding Car Rental",
         description: "Premium and luxury vehicle rental services.",
         icon: Wind,
-        href: "#",
-        active: false,
+        href: "/admin/vehicles/wedding-cars",
+        active: true,
         color: "bg-amber-50 text-amber-600 border-amber-100 ring-amber-50",
     },
 ];

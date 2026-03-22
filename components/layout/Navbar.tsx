@@ -18,7 +18,7 @@ const guestNavItems: NavItem[] = [
     { label: 'Rent a Car', href: '/rent' },
     { label: 'Wedding Car Rental', href: '/wedding' },
     { label: 'Airport Rental', href: '/airport' },
-    { label: 'Pick Me', href: '/pick-me' },
+    { label: 'Pickup Service', href: '/pickup-service' },
 ];
 
 const adminNavItems: NavItem[] = [
@@ -40,7 +40,7 @@ const customerNavItems: NavItem[] = [
     { label: 'Rent a Car', href: '/rent' },
     { label: 'Wedding Car Rental', href: '/wedding' },
     { label: 'Airport Rental', href: '/airport' },
-    { label: 'Pick Me', href: '/pick-me' },
+    { label: 'Pickup Service', href: '/pickup-service' },
 ];
 
 interface NavbarProps {

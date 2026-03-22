@@ -67,7 +67,7 @@ export default function EditPickupVehiclePage() {
                         <ChevronRight className="h-4 w-4" />
                         <Link href="/admin/vehicles" className="transition-colors hover:text-[#0f0f0f]">Vehicles</Link>
                         <ChevronRight className="h-4 w-4" />
-                        <Link href="/admin/vehicles/pickup-service" className="transition-colors hover:text-[#0f0f0f]">Pickup Service</Link>
+                        <Link href="/admin/vehicles/pickup-service" className="transition-colors hover:text-[#0f0f0f]">Pickups</Link>
                         <ChevronRight className="h-4 w-4" />
                         <span className="font-medium text-[#0f0f0f]">Modify Config</span>
                     </nav>
@@ -81,21 +81,21 @@ export default function EditPickupVehiclePage() {
                         </Link>
                         <div>
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-500 rounded-lg shadow-lg shadow-indigo-500/20">
+                                <div className="p-2 bg-emerald-500 rounded-lg shadow-lg shadow-emerald-500/20">
                                     <Edit3 className="h-4 w-4 text-white" />
                                 </div>
                                 <h1 className="text-2xl font-black tracking-tight text-[#0f0f0f]">Update Configuration</h1>
                             </div>
-                            <p className="mt-2 text-gray-500 font-medium">Modifying details for <span className="text-indigo-600 font-bold">{vehicle.brand} {vehicle.model}</span> • {vehicle.plateNumber}</p>
+                            <p className="mt-2 text-gray-500 font-medium">Modifying details for <span className="text-emerald-600 font-bold">{vehicle.brand} {vehicle.model}</span> • {vehicle.plateNumber}</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Form Section */}
-                <VehicleForm
-                    mode="edit"
-                    defaultValues={vehicle}
-                    redirectPath="/admin/vehicles/pickup-service"
+                <VehicleForm 
+                    mode="edit" 
+                    defaultValues={vehicle} 
+                    redirectPath="/admin/vehicles/pickup-service" 
                 />
             </main>
         </div>

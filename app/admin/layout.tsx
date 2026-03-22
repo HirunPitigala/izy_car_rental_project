@@ -17,7 +17,7 @@ export default async function AdminLayout({
             // Logged in but not admin -> redirect to their dashboard
             if (session.role === "manager") redirect("/manager/dashboard");
             if (session.role === "customer") redirect("/customer/dashboard");
-            if (session.role === "employee") redirect("/unauthorized"); // No dashboard for employee
+            if (session.role === "employee") redirect("/employee/dashboard");
         }
         redirect("/login");
     }

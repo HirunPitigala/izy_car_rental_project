@@ -35,12 +35,14 @@ export const booking = mysqlTable("booking", {
 	customerPhoneNumber2: varchar("customer_phone_number2", { length: 15 }),
 	customerLicenseNo: varchar("customer_license_no", { length: 50 }),
 	customerNicNo: varchar("customer_nic_no", { length: 20 }),
+	customerEmail: varchar("customer_email", { length: 100 }),
 	customerDrivingLicencePdf: varchar("customer_driving_licence_pdf", { length: 255 }),
 	customerIdPdf: varchar("customer_id_pdf", { length: 255 }),
 
 	// Location & Pricing (Restored from reservation)
 	pickupLocation: varchar("pickup_location", { length: 255 }),
 	dropoffLocation: varchar("dropoff_location", { length: 255 }),
+	returnTrip: boolean("return_trip").default(false),
 	distance: decimal({ precision: 10, scale: 2 }),
 	totalFare: decimal("total_fare", { precision: 10, scale: 2 }),
 	bookingStatus: varchar("booking_status", { length: 30 }).default("PENDING"),
@@ -298,3 +300,33 @@ export const passwordResetTokens = mysqlTable("password_reset_tokens", {
 		primaryKey({ columns: [table.id], name: "password_reset_tokens_id" }),
 		unique("token").on(table.token),
 	]);
+
+export const pickupRequests = mysqlTable("pickup_requests", {
+	id: int("id").autoincrement().notNull(),
+	customerId: int("customer_id").references(() => users.id).notNull(),
+	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId).notNull(),
+	driverId: int("driver_id").references(() => driver.driverId),
+	// Locations
+	pickupLocation: varchar("pickup_location", { length: 255 }).notNull(),
+	dropLocation: varchar("drop_location", { length: 255 }).notNull(),
+	// Timing
+	pickupTime: datetime("pickup_time").notNull(),
+	returnTime: datetime("return_time"),
+	// Trip details
+	isReturnTrip: boolean("is_return_trip").default(false),
+	travelers: int("travelers").notNull(),
+	luggageCount: int("luggage_count").default(0),
+	distanceKm: decimal("distance_km", { precision: 10, scale: 2 }).notNull(),
+	price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+	// Customer contact
+	customerFullName: varchar("customer_full_name", { length: 100 }).notNull(),
+	customerPhone: varchar("customer_phone", { length: 20 }).notNull(),
+	// Booking lifecycle
+	status: varchar("status", { length: 20 }).default("PENDING").notNull(),
+	rejectionReason: text("rejection_reason"),
+	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+	primaryKey({ columns: [table.id], name: "pickup_requests_pk" }),
+	index("pr_customer_id_idx").on(table.customerId),
+	index("pr_vehicle_id_idx").on(table.vehicleId),
+]);

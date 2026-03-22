@@ -1,7 +1,7 @@
-export type ServiceCategory = "PICKME" | "WEDDING" | "AIRPORT" | "NORMAL";
+export type ServiceCategory = "PICKUP" | "WEDDING" | "AIRPORT" | "NORMAL";
 
 const MULTIPLIERS: Record<ServiceCategory, number> = {
-    PICKME: 1.2,
+    PICKUP: 1.2,
     WEDDING: 1.5,
     AIRPORT: 1.3,
     NORMAL: 1.0,

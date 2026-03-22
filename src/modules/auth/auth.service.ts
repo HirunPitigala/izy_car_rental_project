@@ -4,7 +4,7 @@ import { validatePassword } from "@/lib/passwordUtils";
 import { generateToken } from "@/lib/token";
 import { sendVerificationEmail, sendPasswordResetEmail } from "@/lib/email";
 import { encrypt } from "@/lib/auth"; // We will duplicate/move this logic later to keep it self-contained or import from shared
-import { LoginDto, RegisterCustomerDto, RegisterManagerDto } from "./auth.dto";
+import { LoginDto, RegisterCustomerDto, RegisterManagerDto, RegisterEmployeeDto } from "./auth.dto";
 import { randomBytes } from "crypto";
 
 export class AuthService {
@@ -165,6 +165,51 @@ export class AuthService {
         await sendVerificationEmail(email, token);
 
         return { success: true, message: "Manager registered successfully." };
+    }
+
+    async registerEmployee(dto: RegisterEmployeeDto) {
+        const { email, password, confirmPassword } = dto;
+
+        if (password !== confirmPassword) {
+            throw new Error("Passwords do not match");
+        }
+
+        const { isValid, errors } = validatePassword(password, email);
+        if (!isValid) {
+            throw new Error(errors[0]);
+        }
+
+        const existingUser = await authRepository.findUserByEmail(email);
+        if (existingUser) {
+            throw new Error("Email already exists");
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const employeeId = await authRepository.createEmployee({
+            name: "New Employee",
+            email,
+            password: hashedPassword,
+            phone: "", 
+        });
+
+        const userId = await authRepository.createUser({
+            email,
+            passwordHash: hashedPassword,
+            role: "employee",
+            relatedId: employeeId,
+            name: "New Employee",
+            status: "active",
+            emailVerified: false,
+        });
+
+        const token = generateToken();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+        await authRepository.saveVerificationToken(userId, token, expiresAt);
+        await sendVerificationEmail(email, token);
+
+        return { success: true, message: "Employee registered successfully." };
     }
 
     async forgotPassword(email: string) {

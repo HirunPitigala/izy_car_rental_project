@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, ChevronRight, Search, Loader2, ArrowLeft, Filter } from "lucide-react";
+import { Plus, ChevronRight, Search, Truck } from "lucide-react";
 import VehicleTable, { Vehicle } from "@/components/admin/VehicleTable";
 import { useState, useEffect } from "react";
 import { getVehiclesByCategory } from "@/lib/actions/vehicleActions";
 
-export default function PickupServicePage() {
+export default function PickupsAdminPage() {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -19,7 +19,7 @@ export default function PickupServicePage() {
                 setVehicles(result.data as any);
             }
         } catch (error) {
-            console.error("Error fetching Pickup Service vehicles:", error);
+            console.error("Error fetching Pickups vehicles:", error);
         } finally {
             setLoading(false);
         }
@@ -45,13 +45,16 @@ export default function PickupServicePage() {
                         <ChevronRight className="h-4 w-4" />
                         <Link href="/admin/vehicles" className="transition-colors hover:text-[#0f0f0f]">Vehicles</Link>
                         <ChevronRight className="h-4 w-4" />
-                        <span className="font-medium text-[#0f0f0f]">Pickup Service</span>
+                        <span className="font-medium text-[#0f0f0f]">Pickups</span>
                     </nav>
 
                     <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <div className="flex items-center">
-                                <h1 className="text-2xl font-black tracking-tight text-[#0f0f0f]">Pickup Service </h1>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-emerald-50 rounded-lg">
+                                    <Truck className="h-5 w-5 text-emerald-600" />
+                                </div>
+                                <h1 className="text-2xl font-black tracking-tight text-[#0f0f0f]">Pickups Fleet</h1>
                             </div>
                             <p className="mt-2 text-gray-500">Manage and oversee all vehicles assigned to the Pickup Service.</p>
                         </div>
@@ -72,11 +75,11 @@ export default function PickupServicePage() {
                         <input
                             type="text"
                             placeholder="Search by brand, model or plate number..."
-                            className="w-full rounded-2xl border border-gray-100 bg-white pl-12 pr-4 py-3.5 text-sm outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-400/5 transition-all shadow-sm"
+                            className="w-full rounded-2xl border border-gray-100 bg-white pl-12 pr-4 py-3.5 text-sm outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5 transition-all shadow-sm"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400 group-focus-within:text-yellow-500 transition-colors" />
+                         <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     </div>
                 </div>
 
@@ -85,16 +88,12 @@ export default function PickupServicePage() {
                     <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[2.5rem] border border-dashed border-gray-200 shadow-sm">
                         <div className="relative">
                             <div className="h-16 w-16 rounded-full border-4 border-gray-50"></div>
-                            <div className="absolute top-0 h-16 w-16 rounded-full border-4 border-yellow-400 border-t-transparent animate-spin"></div>
+                            <div className="absolute top-0 h-16 w-16 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
                         </div>
                         <p className="mt-6 text-gray-400 font-bold tracking-tight">Synchronizing Fleet Data...</p>
                     </div>
                 ) : (
-                    <VehicleTable
-                        vehicles={filteredVehicles}
-                        onRefresh={fetchVehicles}
-                        editPath="/admin/vehicles/pickup-service"
-                    />
+                    <VehicleTable vehicles={filteredVehicles} onRefresh={fetchVehicles} editPath="/admin/vehicles/pickup-service" />
                 )}
             </main>
         </div>

@@ -9,9 +9,10 @@ interface VehicleFormProps {
     mode: "add" | "edit";
     defaultValues?: any;
     redirectPath?: string;
+    defaultCategory?: string;
 }
 
-export default function VehicleForm({ mode, defaultValues, redirectPath = "/admin/vehicles/rent-a-car" }: VehicleFormProps) {
+export default function VehicleForm({ mode, defaultValues, redirectPath = "/admin/vehicles/rent-a-car", defaultCategory = "Rent a Car" }: VehicleFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState(
@@ -32,7 +33,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
             minRentalPeriod: 1,
             maxRentalPeriod: 30,
             status: "AVAILABLE",
-            serviceCategory: "Rent a Car",
+            serviceCategory: defaultCategory,
             description: "",
             image: "",
             chassisNumber: "",

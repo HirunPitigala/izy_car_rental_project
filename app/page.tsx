@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { DollarSign, MapPin, Shield, CheckCircle2, Star, ArrowRight } from "lucide-react";
+import { DollarSign, MapPin, Shield, CheckCircle2, ArrowRight } from "lucide-react";
 
 export default function Home() {
   return (
@@ -18,10 +18,7 @@ export default function Home() {
 
         <div className="relative z-10 container-custom flex h-full items-center">
           <div className="max-w-2xl">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-md border border-white/20">
-              <span className="flex h-2 w-2 rounded-full bg-[#dc2626]" />
-              Sri Lankas #1 Car Rental Service
-            </div>
+
             <h1 className="mb-6 text-2xl font-extrabold leading-[1.1] text-white">
               Drive Your <br />
               <span className="text-[#dc2626]">Dream Journey.</span>
@@ -37,27 +34,6 @@ export default function Home() {
                 Book Now
                 <ArrowRight className="h-5 w-5" />
               </Link>
-              <Link
-                href="/wedding"
-                className="h-14 px-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/30 flex items-center text-base font-bold text-white transition-all hover:bg-white/20 active:scale-[0.98]"
-              >
-                Wedding Hire
-              </Link>
-            </div>
-
-            <div className="mt-12 flex items-center gap-8">
-              <div className="flex -space-x-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-10 w-10 rounded-full border-2 border-white bg-gray-200" />
-                ))}
-              </div>
-              <div className="text-sm text-gray-300">
-                <p className="font-bold text-white">500+ Happy Clients</p>
-                <div className="flex items-center gap-1 text-[#dc2626]">
-                  {[1, 2, 3, 4, 5].map((i) => <Star key={i} className="h-3 w-3 fill-current" />)}
-                  <span className="ml-1 text-xs text-gray-400 opacity-80">(4.9/5 Rating)</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -157,14 +133,8 @@ export default function Home() {
 
               <div className="mt-12 flex gap-4">
                 <Link
-                  href="/about"
-                  className="h-14 px-8 rounded-xl bg-[#0f0f0f] flex items-center text-base font-bold text-white transition-all hover:bg-[#262626]"
-                >
-                  Learn More
-                </Link>
-                <Link
                   href="/contact"
-                  className="h-14 px-8 rounded-xl border border-gray-200 flex items-center text-base font-bold text-gray-600 transition-all hover:bg-gray-100"
+                  className="h-14 px-10 rounded-xl bg-[#0f0f0f] flex items-center text-base font-bold text-white transition-all hover:bg-[#262626] active:scale-[0.98] shadow-xl shadow-gray-200/20"
                 >
                   Contact Us
                 </Link>

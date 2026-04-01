@@ -42,7 +42,6 @@ const customerNavItems: NavItem[] = [
     { label: 'Wedding Car Rental', href: '/wedding' },
     { label: 'Airport Rental', href: '/airport' },
     { label: 'Pickup Service', href: '/pickup-service' },
-    { label: 'My Airport Bookings', href: '/airport/bookings' },
 ];
 
 const employeeNavItems: NavItem[] = [

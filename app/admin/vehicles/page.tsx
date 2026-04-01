@@ -22,10 +22,10 @@ const categories = [
     },
     {
         name: "Airport pickups",
-        description: "Long-term corporate and individual leasing options.",
+        description: "Airport pickup and drop-off vehicle rental services.",
         icon: Key,
-        href: "#",
-        active: false,
+        href: "/admin/vehicles/airport-rental",
+        active: true,
         color: "bg-purple-50 text-purple-600 border-purple-100 ring-purple-50",
     },
     {

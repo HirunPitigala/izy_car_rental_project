@@ -330,3 +330,31 @@ export const pickupRequests = mysqlTable("pickup_requests", {
 	index("pr_customer_id_idx").on(table.customerId),
 	index("pr_vehicle_id_idx").on(table.vehicleId),
 ]);
+
+export const airportBookings = mysqlTable("airport_bookings", {
+	id: int("id").autoincrement().notNull(),
+	customerId: int("customer_id").references(() => users.id).notNull(),
+	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId).notNull(),
+	// Airport Transfer Details
+	transferType: varchar("transfer_type", { length: 10 }).notNull(),   // PICKUP | DROP
+	airport: varchar("airport", { length: 30 }).notNull(),              // BANDARANAYAKE | MATTALA
+	transferDate: date("transfer_date", { mode: 'string' }).notNull(),
+	transferTime: varchar("transfer_time", { length: 8 }).notNull(),    // HH:MM
+	passengers: int("passengers").notNull(),
+	luggageCount: int("luggage_count").default(0),
+	// Customer Contact
+	customerFullName: varchar("customer_full_name", { length: 100 }).notNull(),
+	customerPhone: varchar("customer_phone", { length: 20 }).notNull(),
+	customerEmail: varchar("customer_email", { length: 100 }),
+	// Pickup/Drop Location (customer's address, not airport)
+	transferLocation: varchar("transfer_location", { length: 255 }).notNull(),
+	// Lifecycle
+	status: varchar("status", { length: 20 }).default("PENDING"),
+	rejectionReason: text("rejection_reason"),
+	handledByEmployeeId: int("handled_by_employee_id").references(() => employee.employeeId),
+	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
+}, (table) => [
+	primaryKey({ columns: [table.id], name: "airport_bookings_pk" }),
+	index("ab_customer_id_idx").on(table.customerId),
+	index("ab_vehicle_id_idx").on(table.vehicleId),
+]);

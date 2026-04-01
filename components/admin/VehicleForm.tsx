@@ -135,6 +135,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
                         >
                             <option value="Rent a Car">Rent a Car</option>
                             <option value="Pickups">Pickups</option>
+                            <option value="Airport Rental">Airport Rental</option>
                             <option value="Trental" disabled>Trental (Coming Soon)</option>
                             <option value="Wind Car Rental" disabled>Wind Car Rental (Coming Soon)</option>
                         </select>

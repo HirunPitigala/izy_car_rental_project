@@ -24,6 +24,7 @@ const guestNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
     { label: 'Dashboard', href: '/admin/dashboard' },
     { label: 'Requested Bookings', href: '/admin/bookings/requested' },
+    { label: 'Airport Bookings', href: '/admin/bookings/airport-bookings' },
     { label: 'Vehicles', href: '/admin/vehicles' },
     { label: 'Reports', href: '/admin/reports' },
 ];
@@ -41,6 +42,12 @@ const customerNavItems: NavItem[] = [
     { label: 'Wedding Car Rental', href: '/wedding' },
     { label: 'Airport Rental', href: '/airport' },
     { label: 'Pickup Service', href: '/pickup-service' },
+    { label: 'My Airport Bookings', href: '/airport/bookings' },
+];
+
+const employeeNavItems: NavItem[] = [
+    { label: 'Pickup Requests', href: '/employee/pickup-requests' },
+    { label: 'Airport Requests', href: '/employee/airport-requests' },
 ];
 
 interface NavbarProps {
@@ -78,6 +85,9 @@ export default function Navbar({ session }: NavbarProps) {
                 break;
             case 'customer':
                 currentNavItems = customerNavItems;
+                break;
+            case 'employee':
+                currentNavItems = employeeNavItems;
                 break;
             default:
                 currentNavItems = [];

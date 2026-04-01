@@ -100,6 +100,7 @@ export async function saveVehicle(data: any) {
 
         revalidatePath("/admin/vehicles");
         revalidatePath("/admin/vehicles/rent-a-car");
+        revalidatePath("/admin/vehicles/airport-rental");
         return { success: true };
 
     } catch (error: any) {

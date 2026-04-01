@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { booking, checklist, notification, payment, manager, report, vehicle, review, vehicleBrand, vehicleModel, serviceCategory, employee, admin, pickupRequests, users } from "./schema";
+import { booking, checklist, notification, payment, manager, report, vehicle, review, vehicleBrand, vehicleModel, serviceCategory, employee, admin, pickupRequests, users, airportBookings } from "./schema";
 
 export const bookingRelations = relations(booking, ({ one, many }) => ({
 	serviceCategory: one(serviceCategory, {
@@ -105,5 +105,20 @@ export const pickupRequestRelations = relations(pickupRequests, ({ one }) => ({
 	vehicle: one(vehicle, {
 		fields: [pickupRequests.vehicleId],
 		references: [vehicle.vehicleId],
+	}),
+}));
+
+export const airportBookingRelations = relations(airportBookings, ({ one }) => ({
+	customer: one(users, {
+		fields: [airportBookings.customerId],
+		references: [users.id],
+	}),
+	vehicle: one(vehicle, {
+		fields: [airportBookings.vehicleId],
+		references: [vehicle.vehicleId],
+	}),
+	handledBy: one(employee, {
+		fields: [airportBookings.handledByEmployeeId],
+		references: [employee.employeeId],
 	}),
 }));

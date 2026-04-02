@@ -113,31 +113,31 @@ export default function RentVehicleCard({ vehicle, searchParams }: RentVehicleCa
                     </div>
                 </div>
 
-                <div className="border-t border-gray-50 pt-6 flex items-center justify-between">
-                    <div>
+                <div className="border-t border-gray-50 pt-6 mt-auto flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                                <Calculator className="w-3 h-3" />
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                <Calculator className="w-3 h-3 text-red-600" />
                                 Estimated Total
                             </span>
-                            <div className="flex items-baseline gap-1.5">
-                                <span className="text-2xl font-black text-red-600">LKR {pricing.totalPrice.toLocaleString()}</span>
+                            <div className="flex items-baseline gap-1.5 flex-wrap">
+                                <span className="text-xl md:text-2xl font-black text-[#0f0f0f]">LKR {pricing.totalPrice.toLocaleString()}</span>
                             </div>
-                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">
-                                {pricing.totalDays}D {pricing.remainingHours}H @ LKR {Number(vehicle.ratePerDay).toLocaleString()}/day
+                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-1">
+                                {pricing.totalDays}D {pricing.remainingHours}H • LKR {Number(vehicle.ratePerDay).toLocaleString()}/day
                             </p>
                         </div>
                     </div>
 
                     <Link
                         href={isAvailable ? `/rent/${vehicle.vehicleId}${searchParams ? `?${searchParams}` : ""}` : "#"}
-                        className={`inline-flex items-center gap-2 px-6 h-12 rounded-[14px] font-black text-xs uppercase tracking-widest transition-all ${isAvailable
+                        className={`inline-flex items-center justify-center gap-2 px-6 h-12 rounded-2xl font-black text-[10px] uppercase tracking-[0.1em] transition-all whitespace-nowrap ${isAvailable
                             ? "bg-[#0f0f0f] text-white hover:bg-red-600 shadow-xl shadow-gray-200 active:scale-95"
                             : "bg-gray-100 text-gray-400 cursor-not-allowed"
                             }`}
                     >
-                        {isAvailable ? "Reserve" : "Blocked"}
-                        {isAvailable && <ChevronRight className="w-4 h-4" />}
+                        {isAvailable ? "View Deal" : "Blocked"}
+                        {isAvailable && <ChevronRight className="w-3.5 h-3.5" />}
                     </Link>
                 </div>
             </div>

@@ -8,6 +8,7 @@ import {
     MapPin, Clock, ShieldCheck, CheckCircle2, AlertCircle,
     Phone, Mail, User as UserIcon, Loader2
 } from "lucide-react";
+import { validateAddress } from "@/lib/validation";
 import Link from "next/link";
 
 interface AirportVehicle {
@@ -91,7 +92,12 @@ function AirportDetailContent() {
         const e: FormErrors = {};
         if (!booking.customerFullName.trim()) e.customerFullName = "Full name is required.";
         if (!booking.customerPhone.trim()) e.customerPhone = "Phone number is required.";
-        if (!booking.transferLocation.trim()) e.transferLocation = "Pickup/drop address is required.";
+        
+        const addressVal = validateAddress(booking.transferLocation);
+        if (!addressVal.valid) {
+            e.transferLocation = addressVal.error;
+        }
+        
         setErrors(e);
         return Object.keys(e).length === 0;
     };
@@ -352,8 +358,16 @@ function AirportDetailContent() {
                                             type="text"
                                             placeholder="Your home / hotel address"
                                             value={booking.transferLocation}
-                                            onChange={e => { setBooking(p => ({ ...p, transferLocation: e.target.value })); setErrors(p => ({ ...p, transferLocation: undefined })); }}
-                                            className={`w-full h-12 bg-gray-50 border-2 rounded-2xl px-4 text-sm font-bold text-gray-900 outline-none transition-all ${errors.transferLocation ? "border-red-400" : "border-transparent focus:border-yellow-400"}`}
+                                            onChange={e => { 
+                                                setBooking(p => ({ ...p, transferLocation: e.target.value })); 
+                                                const val = validateAddress(e.target.value);
+                                                if (val.valid) {
+                                                    setErrors(p => ({ ...p, transferLocation: undefined }));
+                                                } else {
+                                                    setErrors(p => ({ ...p, transferLocation: val.error }));
+                                                }
+                                            }}
+                                            className={`w-full h-12 bg-gray-50 border-2 rounded-2xl px-4 text-sm font-bold text-gray-900 outline-none transition-all ${errors.transferLocation ? "border-red-400 focus:border-red-600" : "border-transparent focus:border-yellow-400"}`}
                                         />
                                         {errors.transferLocation && <p className="text-xs text-red-500 font-semibold mt-1">{errors.transferLocation}</p>}
                                     </div>

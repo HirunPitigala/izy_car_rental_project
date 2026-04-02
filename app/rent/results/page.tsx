@@ -72,31 +72,37 @@ function ResultsContent() {
     return (
         <div className="container mx-auto px-6 py-12">
             {/* Search Info Bar */}
-            <div className="bg-white rounded-3xl border border-gray-100 p-8 mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm">
-                <div className="flex items-center gap-8">
-                    <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 shadow-sm">
-                        <Calendar className="w-7 h-7" />
+            <div className="bg-white rounded-[2rem] border border-gray-100 p-6 md:p-8 mb-12 flex flex-col lg:flex-row lg:items-center justify-between gap-8 shadow-sm">
+                <div className="flex flex-wrap items-center gap-6 md:gap-10">
+                    <div className="w-12 h-12 bg-red-50 rounded-2xl flex-shrink-0 flex items-center justify-center text-red-600 shadow-sm">
+                        <Calendar className="w-6 h-6" />
                     </div>
-                    <div className="flex gap-12">
-                        <div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Pick-up</p>
-                            <p className="text-sm font-black text-[#0f0f0f]">{startDate || "N/A"}</p>
-                            <p className="text-xs font-bold text-gray-400 mt-1">{startTime || "08:00"}</p>
+                    <div className="flex flex-wrap items-center gap-8 md:gap-16">
+                        <div className="min-w-fit">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pick-up Session</p>
+                            <div className="flex items-center gap-3">
+                                <p className="text-sm font-black text-[#0f0f0f]">{startDate || "N/A"}</p>
+                                <span className="w-1 h-1 rounded-full bg-gray-200" />
+                                <p className="text-xs font-bold text-gray-500">{startTime || "08:00"}</p>
+                            </div>
                         </div>
-                        <div className="h-12 w-px bg-gray-100 hidden md:block" />
-                        <div>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2">Return</p>
-                            <p className="text-sm font-black text-[#0f0f0f]">{endDate || "N/A"}</p>
-                            <p className="text-xs font-bold text-gray-400 mt-1">{endTime || "18:00"}</p>
+                        <div className="h-10 w-px bg-gray-100 hidden md:block" />
+                        <div className="min-w-fit">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Return Session</p>
+                            <div className="flex items-center gap-3">
+                                <p className="text-sm font-black text-[#0f0f0f]">{endDate || "N/A"}</p>
+                                <span className="w-1 h-1 rounded-full bg-gray-200" />
+                                <p className="text-xs font-bold text-gray-500">{endTime || "18:00"}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <Link
                     href="/rent"
-                    className="h-14 px-8 rounded-2xl border border-[#0f0f0f] text-xs font-black uppercase tracking-widest text-[#0f0f0f] hover:bg-[#0f0f0f] hover:text-white flex items-center gap-3 transition-all"
+                    className="h-12 px-6 rounded-xl border border-gray-100 bg-gray-50 text-[10px] font-black uppercase tracking-widest text-[#0f0f0f] hover:bg-[#0f0f0f] hover:text-white flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95 whitespace-nowrap"
                 >
-                    <Filter className="w-4 h-4" />
+                    <Filter className="w-3.5 h-3.5" />
                     Modify Search
                 </Link>
             </div>

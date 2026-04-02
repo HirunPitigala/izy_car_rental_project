@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { createBooking } from "@/lib/actions/bookingActions";
 import { getVehicleById } from "@/lib/actions/vehicleActions";
-import { validateNIC } from "@/lib/validation";
+import { validateNIC, validateAddress } from "@/lib/validation";
 
 interface BookingFormProps {
     searchParams: any;
@@ -82,18 +82,33 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
         fetchVehicle();
     }, [searchParams.vehicleId]);
 
+    const hirerAddressValidation = validateAddress(formData.address);
+    const guaranteeAddressValidation = validateAddress(formData.guaranteeAddress);
+
     const nextStep = () => {
-        if (step === 1 && formData.nicNo) {
-            const nicResult = validateNIC(formData.nicNo);
-            if (!nicResult.valid) {
-                setError(`Hirer NIC: ${nicResult.error}`);
+        if (step === 1) {
+            if (formData.nicNo) {
+                const nicResult = validateNIC(formData.nicNo);
+                if (!nicResult.valid) {
+                    setError(`Hirer NIC: ${nicResult.error}`);
+                    return;
+                }
+            }
+            if (!hirerAddressValidation.valid) {
+                setError(`Hirer Address: ${hirerAddressValidation.error}`);
                 return;
             }
         }
-        if (step === 2 && formData.guaranteeNicNo) {
-            const gNicResult = validateNIC(formData.guaranteeNicNo);
-            if (!gNicResult.valid) {
-                setError(`Guarantor NIC: ${gNicResult.error}`);
+        if (step === 2) {
+            if (formData.guaranteeNicNo) {
+                const gNicResult = validateNIC(formData.guaranteeNicNo);
+                if (!gNicResult.valid) {
+                    setError(`Guarantor NIC: ${gNicResult.error}`);
+                    return;
+                }
+            }
+            if (!guaranteeAddressValidation.valid) {
+                setError(`Guarantor Address: ${guaranteeAddressValidation.error}`);
                 return;
             }
         }
@@ -236,11 +251,14 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
                                 <input
                                     type="text"
                                     required
-                                    className="w-full h-16 bg-gray-50 border border-gray-100 rounded-2xl px-6 outline-none focus:border-red-600 focus:bg-white transition-all font-bold text-[#0f0f0f] placeholder:text-gray-300"
+                                    className={`w-full h-16 bg-gray-50 border rounded-2xl px-6 outline-none focus:bg-white transition-all font-bold text-[#0f0f0f] placeholder:text-gray-300 ${formData.address && !hirerAddressValidation.valid ? "border-red-400 focus:border-red-600" : "border-gray-100 focus:border-red-600"}`}
                                     value={formData.address}
                                     onChange={e => setFormData({ ...formData, address: e.target.value })}
                                     placeholder="Current residential address"
                                 />
+                                {formData.address && !hirerAddressValidation.valid && (
+                                    <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mt-2 ml-1">{hirerAddressValidation.error}</p>
+                                )}
                             </div>
                             <div className="space-y-3">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Contact Number</label>
@@ -378,10 +396,14 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
                                 <input
                                     type="text"
                                     required
-                                    className="w-full h-16 bg-gray-50 border border-gray-100 rounded-2xl px-6 outline-none focus:border-red-600 focus:bg-white transition-all font-bold text-[#0f0f0f] placeholder:text-gray-300"
+                                    className={`w-full h-16 bg-gray-50 border rounded-2xl px-6 outline-none focus:bg-white transition-all font-bold text-[#0f0f0f] placeholder:text-gray-300 ${formData.guaranteeAddress && !guaranteeAddressValidation.valid ? "border-red-400 focus:border-red-600" : "border-gray-100 focus:border-red-600"}`}
                                     value={formData.guaranteeAddress}
                                     onChange={e => setFormData({ ...formData, guaranteeAddress: e.target.value })}
+                                    placeholder="Enter guarantor's address"
                                 />
+                                {formData.guaranteeAddress && !guaranteeAddressValidation.valid && (
+                                    <p className="text-[10px] font-black text-red-600 uppercase tracking-widest mt-2 ml-1">{guaranteeAddressValidation.error}</p>
+                                )}
                             </div>
                         </div>
 

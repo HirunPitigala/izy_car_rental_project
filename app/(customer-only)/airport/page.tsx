@@ -8,17 +8,21 @@ import {
 } from "lucide-react";
 
 interface FormState {
-    transferType: "PICKUP" | "DROP";
-    airport: "BANDARANAYAKE" | "MATTALA";
-    transferDate: string;
-    transferTime: string;
+    transferType: "pickup" | "drop";
+    airport: "katunayaka" | "mattala";
+    pickupDate: string;
+    pickupTime: string;
+    dropDate: string;
+    dropTime: string;
     passengers: number;
     luggageCount: number;
 }
 
 interface FormErrors {
-    transferDate?: string;
-    transferTime?: string;
+    pickupDate?: string;
+    pickupTime?: string;
+    dropDate?: string;
+    dropTime?: string;
     passengers?: string;
     luggageCount?: string;
 }
@@ -29,10 +33,12 @@ export default function AirportLandingPage() {
     const today = new Date().toISOString().split("T")[0];
 
     const [form, setForm] = useState<FormState>({
-        transferType: "PICKUP",
-        airport: "BANDARANAYAKE",
-        transferDate: "",
-        transferTime: "",
+        transferType: "pickup",
+        airport: "katunayaka",
+        pickupDate: "",
+        pickupTime: "",
+        dropDate: "",
+        dropTime: "",
         passengers: 1,
         luggageCount: 0,
     });
@@ -40,9 +46,16 @@ export default function AirportLandingPage() {
 
     const validate = (): boolean => {
         const e: FormErrors = {};
-        if (!form.transferDate) e.transferDate = "Please select a date.";
-        else if (form.transferDate < today) e.transferDate = "Date cannot be in the past.";
-        if (!form.transferTime) e.transferTime = "Please select a time.";
+        if (form.transferType === "pickup") {
+            if (!form.pickupDate) e.pickupDate = "Please select a pickup date.";
+            else if (form.pickupDate < today) e.pickupDate = "Date cannot be in the past.";
+            if (!form.pickupTime) e.pickupTime = "Please select a pickup time.";
+        } else {
+            if (!form.dropDate) e.dropDate = "Please select a drop date.";
+            else if (form.dropDate < today) e.dropDate = "Date cannot be in the past.";
+            if (!form.dropTime) e.dropTime = "Please select a drop time.";
+        }
+        
         if (form.passengers < 1) e.passengers = "At least 1 passenger required.";
         if (form.luggageCount < 0) e.luggageCount = "Cannot be negative.";
         setErrors(e);
@@ -55,8 +68,10 @@ export default function AirportLandingPage() {
         const params = new URLSearchParams({
             transferType: form.transferType,
             airport: form.airport,
-            transferDate: form.transferDate,
-            transferTime: form.transferTime,
+            pickupDate: form.pickupDate,
+            pickupTime: form.pickupTime,
+            dropDate: form.dropDate,
+            dropTime: form.dropTime,
             passengers: String(form.passengers),
             luggage: String(form.luggageCount),
         });
@@ -107,11 +122,11 @@ export default function AirportLandingPage() {
                             </label>
                             <select
                                 value={form.transferType}
-                                onChange={e => set("transferType", e.target.value as "PICKUP" | "DROP")}
+                                onChange={e => set("transferType", e.target.value as "pickup" | "drop")}
                                 className="w-full h-14 bg-gray-50 border-2 border-transparent focus:border-yellow-400 rounded-2xl px-5 font-bold text-gray-700 outline-none transition-all"
                             >
-                                <option value="PICKUP">Airport Pickup</option>
-                                <option value="DROP">Airport Drop</option>
+                                <option value="pickup">Airport Pickup</option>
+                                <option value="drop">Airport Drop</option>
                             </select>
                         </div>
 
@@ -122,42 +137,72 @@ export default function AirportLandingPage() {
                             </label>
                             <select
                                 value={form.airport}
-                                onChange={e => set("airport", e.target.value as "BANDARANAYAKE" | "MATTALA")}
+                                onChange={e => set("airport", e.target.value as "katunayaka" | "mattala")}
                                 className="w-full h-14 bg-gray-50 border-2 border-transparent focus:border-yellow-400 rounded-2xl px-5 font-bold text-gray-700 outline-none transition-all"
                             >
-                                <option value="BANDARANAYAKE">BIA — Bandaranayake (Colombo)</option>
-                                <option value="MATTALA">HRI — Mattala (Hambantota)</option>
+                                <option value="katunayaka">BIA — Katunayaka (Colombo)</option>
+                                <option value="mattala">HRI — Mattala (Hambantota)</option>
                             </select>
                         </div>
 
-                        {/* Transfer Date */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-yellow-500" /> Transfer Date
-                            </label>
-                            <input
-                                type="date"
-                                min={today}
-                                value={form.transferDate}
-                                onChange={e => { set("transferDate", e.target.value); setErrors(prev => ({ ...prev, transferDate: undefined })); }}
-                                className={`w-full h-14 bg-gray-50 border-2 rounded-2xl px-5 font-bold text-gray-700 outline-none transition-all ${errors.transferDate ? "border-red-400" : "border-transparent focus:border-yellow-400"}`}
-                            />
-                            {errors.transferDate && <p className="text-xs text-red-500 font-semibold">{errors.transferDate}</p>}
-                        </div>
-
-                        {/* Transfer Time */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                <Clock className="w-4 h-4 text-yellow-500" /> Transfer Time
-                            </label>
-                            <input
-                                type="time"
-                                value={form.transferTime}
-                                onChange={e => { set("transferTime", e.target.value); setErrors(prev => ({ ...prev, transferTime: undefined })); }}
-                                className={`w-full h-14 bg-gray-50 border-2 rounded-2xl px-5 font-bold text-gray-700 outline-none transition-all ${errors.transferTime ? "border-red-400" : "border-transparent focus:border-yellow-400"}`}
-                            />
-                            {errors.transferTime && <p className="text-xs text-red-500 font-semibold">{errors.transferTime}</p>}
-                        </div>
+                        {/* Conditional Date & Time fields */}
+                        {form.transferType === "pickup" ? (
+                            <>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Calendar className="w-4 h-4 text-yellow-500" /> Pickup Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        min={today}
+                                        value={form.pickupDate}
+                                        onChange={e => { set("pickupDate", e.target.value); setErrors(prev => ({ ...prev, pickupDate: undefined })); }}
+                                        className={`w-full h-14 bg-gray-50 border-2 rounded-2xl px-5 font-bold text-gray-700 outline-none transition-all ${errors.pickupDate ? "border-red-400" : "border-transparent focus:border-yellow-400"}`}
+                                    />
+                                    {errors.pickupDate && <p className="text-xs text-red-500 font-semibold">{errors.pickupDate}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-yellow-500" /> Pickup Time
+                                    </label>
+                                    <input
+                                        type="time"
+                                        value={form.pickupTime}
+                                        onChange={e => { set("pickupTime", e.target.value); setErrors(prev => ({ ...prev, pickupTime: undefined })); }}
+                                        className={`w-full h-14 bg-gray-50 border-2 rounded-2xl px-5 font-bold text-gray-700 outline-none transition-all ${errors.pickupTime ? "border-red-400" : "border-transparent focus:border-yellow-400"}`}
+                                    />
+                                    {errors.pickupTime && <p className="text-xs text-red-500 font-semibold">{errors.pickupTime}</p>}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Calendar className="w-4 h-4 text-yellow-500" /> Drop Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        min={today}
+                                        value={form.dropDate}
+                                        onChange={e => { set("dropDate", e.target.value); setErrors(prev => ({ ...prev, dropDate: undefined })); }}
+                                        className={`w-full h-14 bg-gray-50 border-2 rounded-2xl px-5 font-bold text-gray-700 outline-none transition-all ${errors.dropDate ? "border-red-400" : "border-transparent focus:border-yellow-400"}`}
+                                    />
+                                    {errors.dropDate && <p className="text-xs text-red-500 font-semibold">{errors.dropDate}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-yellow-500" /> Drop Time
+                                    </label>
+                                    <input
+                                        type="time"
+                                        value={form.dropTime}
+                                        onChange={e => { set("dropTime", e.target.value); setErrors(prev => ({ ...prev, dropTime: undefined })); }}
+                                        className={`w-full h-14 bg-gray-50 border-2 rounded-2xl px-5 font-bold text-gray-700 outline-none transition-all ${errors.dropTime ? "border-red-400" : "border-transparent focus:border-yellow-400"}`}
+                                    />
+                                    {errors.dropTime && <p className="text-xs text-red-500 font-semibold">{errors.dropTime}</p>}
+                                </div>
+                            </>
+                        )}
 
                         {/* Passengers */}
                         <div className="space-y-2">

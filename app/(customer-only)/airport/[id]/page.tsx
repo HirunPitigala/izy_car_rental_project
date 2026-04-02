@@ -45,10 +45,12 @@ function AirportDetailContent() {
     const vehicleId = params.id as string;
 
     // Search context from previous page
-    const transferType = searchParams.get("transferType") || "PICKUP";
-    const airport = searchParams.get("airport") || "BANDARANAYAKE";
-    const transferDate = searchParams.get("transferDate") || "";
-    const transferTime = searchParams.get("transferTime") || "";
+    const transferType = searchParams.get("transferType") || "pickup";
+    const airport = searchParams.get("airport") || "katunayaka";
+    const pickupDate = searchParams.get("pickupDate") || "";
+    const pickupTime = searchParams.get("pickupTime") || "";
+    const dropDate = searchParams.get("dropDate") || "";
+    const dropTime = searchParams.get("dropTime") || "";
     const passengers = searchParams.get("passengers") || "1";
     const luggage = searchParams.get("luggage") || "0";
 
@@ -117,8 +119,10 @@ function AirportDetailContent() {
                     vehicle_id: vehicle.vehicleId,
                     transfer_type: transferType,
                     airport,
-                    transfer_date: transferDate,
-                    transfer_time: transferTime,
+                    pickupDate,
+                    pickupTime,
+                    dropDate,
+                    dropTime,
                     passengers: parseInt(passengers, 10),
                     luggage_count: parseInt(luggage, 10),
                     customer_full_name: booking.customerFullName,
@@ -145,8 +149,8 @@ function AirportDetailContent() {
     };
 
     const airportLabel =
-        airport === "BANDARANAYAKE"
-            ? "BIA — Bandaranayake (Colombo)"
+        airport === "katunayaka"
+            ? "BIA — Katunayaka (Colombo)"
             : "HRI — Mattala (Hambantota)";
 
     if (loadingVehicle) {
@@ -276,9 +280,13 @@ function AirportDetailContent() {
                             <h3 className="text-lg font-black text-gray-900 mb-5 tracking-tight">Transfer Summary</h3>
                             <div className="space-y-3">
                                 {[
-                                    { icon: <Plane className="w-4 h-4 text-gray-400" />, label: "Type", value: transferType === "PICKUP" ? "Airport Pickup" : "Airport Drop" },
+                                    { icon: <Plane className="w-4 h-4 text-gray-400" />, label: "Type", value: `Airport ${transferType}` },
                                     { icon: <MapPin className="w-4 h-4 text-gray-400" />, label: "Airport", value: airportLabel },
-                                    { icon: <Clock className="w-4 h-4 text-gray-400" />, label: "Date & Time", value: `${transferDate} at ${transferTime}` },
+                                    { 
+                                        icon: <Clock className="w-4 h-4 text-gray-400" />, 
+                                        label: "Date & Time", 
+                                        value: transferType === "pickup" ? `${pickupDate} at ${pickupTime}` : `${dropDate} at ${dropTime}`
+                                    },
                                     { icon: <Users className="w-4 h-4 text-gray-400" />, label: "Passengers", value: `${passengers} pax` },
                                     { icon: <Briefcase className="w-4 h-4 text-gray-400" />, label: "Luggage", value: `${luggage} bags` },
                                     { icon: <ShieldCheck className="w-4 h-4 text-gray-400" />, label: "Rate", value: `LKR ${parseFloat(vehicle.rentPerDay).toLocaleString()}` },
@@ -352,7 +360,7 @@ function AirportDetailContent() {
                                     {/* Pickup/Drop Address */}
                                     <div>
                                         <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-2">
-                                            <MapPin className="w-3.5 h-3.5" /> {transferType === "PICKUP" ? "Drop-off" : "Pickup"} Address *
+                                            <MapPin className="w-3.5 h-3.5" /> {transferType === "pickup" ? "Drop-off" : "Pickup"} Address *
                                         </label>
                                         <input
                                             type="text"

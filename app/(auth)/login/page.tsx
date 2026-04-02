@@ -40,7 +40,7 @@ export default function LoginPage() {
                 switch (data.role) {
                     case "admin": window.location.replace("/admin/dashboard"); break;
                     case "manager": window.location.replace("/manager/dashboard"); break;
-                    case "employee": window.location.replace("/employee/dashboard"); break;
+                    case "employee": window.location.replace("/"); break;
                     case "customer": window.location.replace("/"); break;
                     default: window.location.replace("/");
                 }

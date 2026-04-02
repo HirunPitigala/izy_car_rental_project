@@ -28,8 +28,10 @@ export async function POST(req: Request) {
             vehicle_id,
             transfer_type,
             airport,
-            transfer_date,
-            transfer_time,
+            pickupDate,
+            pickupTime,
+            dropDate,
+            dropTime,
             passengers,
             luggage_count,
             customer_full_name,
@@ -38,20 +40,15 @@ export async function POST(req: Request) {
             transfer_location,
         } = body;
 
-        if (!vehicle_id || !transfer_type || !airport || !transfer_date || !transfer_time || !transfer_location) {
-            return NextResponse.json(
-                { error: "Missing required fields." },
-                { status: 400 }
-            );
-        }
-
         const bookingData = {
             customerId: session.userId,
             vehicleId: parseInt(vehicle_id, 10),
-            transferType: String(transfer_type).toUpperCase() as "PICKUP" | "DROP",
-            airport: String(airport).toUpperCase() as "BANDARANAYAKE" | "MATTALA",
-            transferDate: transfer_date,
-            transferTime: transfer_time,
+            transferType: String(transfer_type).toLowerCase() as "pickup" | "drop",
+            airport: String(airport).toLowerCase() as "katunayaka" | "mattala",
+            pickupDate: pickupDate,
+            pickupTime: pickupTime,
+            dropDate: dropDate,
+            dropTime: dropTime,
             passengers: parseInt(passengers ?? "1", 10),
             luggageCount: parseInt(luggage_count ?? "0", 10),
             customerFullName: customer_full_name ?? session.user?.name ?? "Customer",

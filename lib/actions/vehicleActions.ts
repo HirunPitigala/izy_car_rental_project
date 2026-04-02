@@ -113,7 +113,7 @@ export async function saveVehicle(data: any) {
 // Fetch Actions (Updated for new Schema)
 // ----------------------------------------------------------------------------
 
-export async function getAvailableVehicles(startDate: string, startTime: string, endDate: string, endTime: string) {
+export async function getAvailableVehicles(startDate: string, startTime: string, endDate: string, endTime: string, category: string = "Rent a Car") {
     try {
         const start = `${startDate} ${startTime}:00`;
         const end = `${endDate} ${endTime}:00`;
@@ -167,11 +167,8 @@ export async function getAvailableVehicles(startDate: string, startTime: string,
             .where(
                 and(
                     eq(vehicle.status, "AVAILABLE"),
-                    // Ensure we're only looking at Rent a Car vehicles
-                    or(
-                        eq(serviceCategory.categoryName, "Rent a Car"),
-                        eq(serviceCategory.categoryName, "Rent-A-Car")
-                    ),
+                    // Filter by selected category
+                    eq(serviceCategory.categoryName, category),
                     blockedIds.length > 0 ? notInArray(vehicle.vehicleId, blockedIds) : undefined
                 )
             );

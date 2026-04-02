@@ -2,7 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { DollarSign, MapPin, Shield, CheckCircle2, ArrowRight } from "lucide-react";
 
-export default function Home() {
+import { getSession } from "@/lib/auth";
+
+export default async function Home() {
+  const session = await getSession();
+  const isEmployee = session?.role === "employee";
+
   return (
     <>
       {/* Hero Section */}
@@ -27,13 +32,23 @@ export default function Home() {
               From elegant wedding cars to reliable airport transfers, discover the perfect ride with our premium fleet and professional service.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link
-                href="/rent"
-                className="h-14 px-10 rounded-xl bg-[#dc2626] flex items-center gap-2 text-base font-bold text-white transition-all shadow-xl shadow-red-600/20 hover:bg-[#b91c1c] active:scale-[0.98]"
-              >
-                Book Now
-                <ArrowRight className="h-5 w-5" />
-              </Link>
+              {isEmployee ? (
+                <Link
+                  href="/employee/dashboard"
+                  className="h-14 px-10 rounded-xl bg-white flex items-center gap-2 text-base font-bold text-[#0f0f0f] transition-all shadow-xl shadow-white/5 hover:bg-gray-100 active:scale-[0.98]"
+                >
+                  Manage Requested Bookings
+                  <ArrowRight className="h-5 w-5" />
+                </Link>
+              ) : (
+                <Link
+                  href="/rent"
+                  className="h-14 px-10 rounded-xl bg-[#dc2626] flex items-center gap-2 text-base font-bold text-white transition-all shadow-xl shadow-red-600/20 hover:bg-[#b91c1c] active:scale-[0.98]"
+                >
+                  Book Now
+                  <ArrowRight className="h-5 w-5" />
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -115,30 +130,34 @@ export default function Home() {
                 IZY is more than just a car rental; we are your dedicated travel partner. Since our inception, we have focused on delivering excellence in transportation across Sri Lanka.
               </p>
 
-              <div className="space-y-6">
-                {[
-                  "Luxury Wedding Fleet for your special day",
-                  "Punctual & Professional Airport Transfers",
-                  "Experienced English-speaking chauffeurs",
-                  "24/7 Customer Support & Roadside Assistance"
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 text-[#dc2626]">
-                      <CheckCircle2 className="h-4 w-4" />
-                    </div>
-                    <span className="font-semibold text-[#0f0f0f]">{item}</span>
+              {!isEmployee && (
+                <>
+                  <div className="space-y-6">
+                    {[
+                      "Luxury Wedding Fleet for your special day",
+                      "Punctual & Professional Airport Transfers",
+                      "Experienced English-speaking chauffeurs",
+                      "24/7 Customer Support & Roadside Assistance"
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-red-100 text-[#dc2626]">
+                          <CheckCircle2 className="h-4 w-4" />
+                        </div>
+                        <span className="font-semibold text-[#0f0f0f]">{item}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              <div className="mt-12 flex gap-4">
-                <Link
-                  href="/contact"
-                  className="h-14 px-10 rounded-xl bg-[#0f0f0f] flex items-center text-base font-bold text-white transition-all hover:bg-[#262626] active:scale-[0.98] shadow-xl shadow-gray-200/20"
-                >
-                  Contact Us
-                </Link>
-              </div>
+                  <div className="mt-12 flex gap-4">
+                    <Link
+                      href="/contact"
+                      className="h-14 px-10 rounded-xl bg-[#0f0f0f] flex items-center text-base font-bold text-white transition-all hover:bg-[#262626] active:scale-[0.98] shadow-xl shadow-gray-200/20"
+                    >
+                      Contact Us
+                    </Link>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

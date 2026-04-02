@@ -28,10 +28,12 @@ function AirportAvailableContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    const transferType = searchParams.get("transferType") || "PICKUP";
-    const airport = searchParams.get("airport") || "BANDARANAYAKE";
-    const transferDate = searchParams.get("transferDate") || "";
-    const transferTime = searchParams.get("transferTime") || "";
+    const transferType = searchParams.get("transferType") || "pickup";
+    const airport = searchParams.get("airport") || "katunayaka";
+    const pickupDate = searchParams.get("pickupDate") || "";
+    const pickupTime = searchParams.get("pickupTime") || "";
+    const dropDate = searchParams.get("dropDate") || "";
+    const dropTime = searchParams.get("dropTime") || "";
     const passengers = searchParams.get("passengers") || "1";
     const luggage = searchParams.get("luggage") || "0";
 
@@ -44,9 +46,16 @@ function AirportAvailableContent() {
             setLoading(true);
             setError(null);
             try {
-                const res = await fetch(
-                    `/api/airport-rental/search?passengers=${passengers}&luggage=${luggage}`
-                );
+                const query = new URLSearchParams({
+                    passengers,
+                    luggage,
+                    transferType,
+                    pickupDate,
+                    pickupTime,
+                    dropDate,
+                    dropTime
+                });
+                const res = await fetch(`/api/airport-rental/search?${query.toString()}`);
                 const data = await res.json();
                 if (res.ok && data.success) {
                     setVehicles(data.data);
@@ -63,16 +72,18 @@ function AirportAvailableContent() {
     }, [passengers, luggage]);
 
     const airportLabel =
-        airport === "BANDARANAYAKE"
-            ? "BIA — Bandaranayake (Colombo)"
+        airport === "katunayaka"
+            ? "BIA — Katunayaka (Colombo)"
             : "HRI — Mattala (Hambantota)";
 
     const handleBookNow = (vehicleId: number) => {
         const params = new URLSearchParams({
             transferType,
             airport,
-            transferDate,
-            transferTime,
+            pickupDate,
+            pickupTime,
+            dropDate,
+            dropTime,
             passengers,
             luggage,
         });
@@ -97,7 +108,7 @@ function AirportAvailableContent() {
                         <div className="p-2 bg-yellow-50 rounded-xl"><Plane className="w-4 h-4 text-yellow-500" /></div>
                         <div>
                             <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Type</p>
-                            <p className="text-sm font-black text-gray-900">{transferType === "PICKUP" ? "Airport Pickup" : "Airport Drop"}</p>
+                            <p className="text-sm font-black text-gray-900 capitalize">Airport {transferType}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -111,7 +122,11 @@ function AirportAvailableContent() {
                         <div className="p-2 bg-yellow-50 rounded-xl"><Calendar className="w-4 h-4 text-yellow-500" /></div>
                         <div>
                             <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Date &amp; Time</p>
-                            <p className="text-sm font-black text-gray-900">{transferDate} {transferTime}</p>
+                            <p className="text-sm font-black text-gray-900">
+                                {transferType === "pickup" 
+                                    ? `${pickupDate} ${pickupTime}` 
+                                    : `${dropDate} ${dropTime}`}
+                            </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">

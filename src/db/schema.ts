@@ -1,4 +1,4 @@
-import { mysqlTable, primaryKey, unique, int, varchar, index, text, date, datetime, decimal, check, boolean, customType } from "drizzle-orm/mysql-core"
+import { mysqlTable, primaryKey, unique, int, varchar, index, text, date, datetime, decimal, check, boolean, customType, mysqlEnum, time } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 // Custom blob type for binary storage (PDFs, etc.)
@@ -336,10 +336,12 @@ export const airportBookings = mysqlTable("airport_bookings", {
 	customerId: int("customer_id").references(() => users.id).notNull(),
 	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId).notNull(),
 	// Airport Transfer Details
-	transferType: varchar("transfer_type", { length: 10 }).notNull(),   // PICKUP | DROP
-	airport: varchar("airport", { length: 30 }).notNull(),              // BANDARANAYAKE | MATTALA
-	transferDate: date("transfer_date", { mode: 'string' }).notNull(),
-	transferTime: varchar("transfer_time", { length: 8 }).notNull(),    // HH:MM
+	transferType: mysqlEnum("transfer_type", ["pickup", "drop"]).notNull(),
+	airport: mysqlEnum("airport", ["katunayaka", "mattala"]).notNull(),
+	pickupDate: datetime("pickup_date"),
+	pickupTime: time("pickup_time"),
+	dropDate: datetime("drop_date"),
+	dropTime: time("drop_time"),
 	passengers: int("passengers").notNull(),
 	luggageCount: int("luggage_count").default(0),
 	// Customer Contact
@@ -349,7 +351,8 @@ export const airportBookings = mysqlTable("airport_bookings", {
 	// Pickup/Drop Location (customer's address, not airport)
 	transferLocation: varchar("transfer_location", { length: 255 }).notNull(),
 	// Lifecycle
-	status: varchar("status", { length: 20 }).default("PENDING"),
+	status: varchar("status", { length: 20 }).default("requested"),
+	bookingType: varchar("booking_type", { length: 30 }).default("airport_rental"),
 	rejectionReason: text("rejection_reason"),
 	handledByEmployeeId: int("handled_by_employee_id").references(() => employee.employeeId),
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),

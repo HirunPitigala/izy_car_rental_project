@@ -8,7 +8,8 @@ import {
     users,
     employee,
 } from "@/src/db/schema";
-import { eq, and, gte } from "drizzle-orm";
+import { eq, and, gte, sql, or, notInArray } from "drizzle-orm";
+import { getAvailableVehicles } from "@/lib/actions/vehicleActions";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -22,10 +23,12 @@ export interface AirportSearchParams {
 export interface AirportBookingData {
     customerId: number;
     vehicleId: number;
-    transferType: "PICKUP" | "DROP";
-    airport: "BANDARANAYAKE" | "MATTALA";
-    transferDate: string;     // YYYY-MM-DD
-    transferTime: string;     // HH:MM
+    transferType: "pickup" | "drop";
+    airport: "katunayaka" | "mattala";
+    pickupDate?: string;
+    pickupTime?: string;
+    dropDate?: string;
+    dropTime?: string;
     passengers: number;
     luggageCount: number;
     customerFullName: string;
@@ -45,41 +48,33 @@ export interface ValidationError {
 
 /**
  * Return available "Airport Rental" vehicles that satisfy passenger & luggage needs.
+ * Reuses the standard availability filtering logic from vehicleActions.
  */
 export async function searchAvailableAirportVehicles(
     passengers: number,
-    luggageCount: number
+    luggageCount: number,
+    startDate?: string,
+    startTime?: string,
+    endDate?: string,
+    endTime?: string
 ) {
-    const results = await db
-        .select({
-            vehicleId: vehicle.vehicleId,
-            brand: vehicleBrand.brandName,
-            model: vehicleModel.modelName,
-            plateNumber: vehicle.plateNumber,
-            seatingCapacity: vehicle.seatingCapacity,
-            luggageCapacity: vehicle.luggageCapacity,
-            transmission: vehicle.transmission,
-            fuelType: vehicle.fuelType,
-            rentPerDay: vehicle.rentPerDay,
-            pricePerKm: vehicle.pricePerKm,
-            image: vehicle.vehicleImage,
-            description: vehicle.description,
-            status: vehicle.status,
-        })
-        .from(vehicle)
-        .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
-        .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-        .innerJoin(serviceCategory, eq(vehicle.categoryId, serviceCategory.categoryId))
-        .where(
-            and(
-                eq(serviceCategory.categoryName, "Airport Rental"),
-                eq(vehicle.status, "AVAILABLE"),
-                gte(vehicle.seatingCapacity, passengers),
-                gte(vehicle.luggageCapacity, luggageCount)
-            )
-        );
+    // If no dates provided, use a far future range or current day for simple listing.
+    const startD = startDate || new Date().toISOString().split('T')[0];
+    const startT = startTime || "00:00";
+    const endD = endDate || startD;
+    const endT = endTime || "23:59";
 
-    return results;
+    const result = await getAvailableVehicles(startD, startT, endD, endT, "Airport Rental");
+    
+    if (result.success && result.data) {
+        // Further filter by seating and luggage capacity for airport specifics
+        return result.data.filter(v => 
+            v.seatingCapacity >= passengers && 
+            v.luggageCapacity >= luggageCount
+        );
+    }
+    
+    return [];
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -89,23 +84,21 @@ export async function searchAvailableAirportVehicles(
 export function validateAirportBooking(data: AirportBookingData): ValidationError[] {
     const errors: ValidationError[] = [];
 
-    if (!["PICKUP", "DROP"].includes(data.transferType)) {
-        errors.push({ field: "transferType", message: "Transfer type must be PICKUP or DROP." });
+    if (!["pickup", "drop"].includes(data.transferType)) {
+        errors.push({ field: "transferType", message: "Transfer type must be pickup or drop." });
     }
-    if (!["BANDARANAYAKE", "MATTALA"].includes(data.airport)) {
+    if (!["katunayaka", "mattala"].includes(data.airport)) {
         errors.push({ field: "airport", message: "Invalid airport selection." });
     }
-    if (!data.transferDate) {
-        errors.push({ field: "transferDate", message: "Transfer date is required." });
+
+    if (data.transferType === "pickup") {
+        if (!data.pickupDate) errors.push({ field: "pickupDate", message: "Pickup date is required." });
+        if (!data.pickupTime) errors.push({ field: "pickupTime", message: "Pickup time is required." });
     } else {
-        const today = new Date().toISOString().split("T")[0];
-        if (data.transferDate < today) {
-            errors.push({ field: "transferDate", message: "Transfer date cannot be in the past." });
-        }
+        if (!data.dropDate) errors.push({ field: "dropDate", message: "Drop date is required." });
+        if (!data.dropTime) errors.push({ field: "dropTime", message: "Drop time is required." });
     }
-    if (!data.transferTime) {
-        errors.push({ field: "transferTime", message: "Transfer time is required." });
-    }
+
     if (!data.passengers || data.passengers <= 0) {
         errors.push({ field: "passengers", message: "Passengers must be at least 1." });
     }
@@ -135,15 +128,18 @@ export async function createAirportBooking(data: AirportBookingData) {
         vehicleId: data.vehicleId,
         transferType: data.transferType,
         airport: data.airport,
-        transferDate: data.transferDate,
-        transferTime: data.transferTime,
+        pickupDate: data.pickupDate ? new Date(data.pickupDate) : null,
+        pickupTime: data.pickupTime ?? null,
+        dropDate: data.dropDate ? new Date(data.dropDate) : null,
+        dropTime: data.dropTime ?? null,
         passengers: data.passengers,
         luggageCount: data.luggageCount ?? 0,
         customerFullName: data.customerFullName,
         customerPhone: data.customerPhone,
         customerEmail: data.customerEmail ?? null,
         transferLocation: data.transferLocation,
-        status: "PENDING",
+        status: "requested",
+        bookingType: "airport_rental",
     });
 
     return (result as any).insertId as number;
@@ -152,14 +148,16 @@ export async function createAirportBooking(data: AirportBookingData) {
 /**
  * Fetch all airport bookings filtered by status (for employee/admin).
  */
-export async function getAirportBookingsByStatus(status = "PENDING") {
+export async function getAirportBookingsByStatus(status = "requested") {
     return db
         .select({
             id: airportBookings.id,
             transferType: airportBookings.transferType,
             airport: airportBookings.airport,
-            transferDate: airportBookings.transferDate,
-            transferTime: airportBookings.transferTime,
+            pickupDate: airportBookings.pickupDate,
+            pickupTime: airportBookings.pickupTime,
+            dropDate: airportBookings.dropDate,
+            dropTime: airportBookings.dropTime,
             passengers: airportBookings.passengers,
             luggageCount: airportBookings.luggageCount,
             customerFullName: airportBookings.customerFullName,
@@ -197,8 +195,10 @@ export async function getAllAirportBookings() {
             id: airportBookings.id,
             transferType: airportBookings.transferType,
             airport: airportBookings.airport,
-            transferDate: airportBookings.transferDate,
-            transferTime: airportBookings.transferTime,
+            pickupDate: airportBookings.pickupDate,
+            pickupTime: airportBookings.pickupTime,
+            dropDate: airportBookings.dropDate,
+            dropTime: airportBookings.dropTime,
             passengers: airportBookings.passengers,
             luggageCount: airportBookings.luggageCount,
             customerFullName: airportBookings.customerFullName,
@@ -253,8 +253,10 @@ export async function getCustomerAirportBookings(customerId: number) {
             id: airportBookings.id,
             transferType: airportBookings.transferType,
             airport: airportBookings.airport,
-            transferDate: airportBookings.transferDate,
-            transferTime: airportBookings.transferTime,
+            pickupDate: airportBookings.pickupDate,
+            pickupTime: airportBookings.pickupTime,
+            dropDate: airportBookings.dropDate,
+            dropTime: airportBookings.dropTime,
             passengers: airportBookings.passengers,
             luggageCount: airportBookings.luggageCount,
             transferLocation: airportBookings.transferLocation,

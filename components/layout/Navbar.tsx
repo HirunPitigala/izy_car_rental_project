@@ -24,7 +24,6 @@ const guestNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
     { label: 'Dashboard', href: '/admin/dashboard' },
     { label: 'Requested Bookings', href: '/admin/bookings/requested' },
-    { label: 'Airport Bookings', href: '/admin/bookings/airport-bookings' },
     { label: 'Vehicles', href: '/admin/vehicles' },
     { label: 'Reports', href: '/admin/reports' },
 ];
@@ -120,7 +119,6 @@ export default function Navbar({ session }: NavbarProps) {
                                     }`}
                             >
                                 <span className="flex items-center gap-2">
-                                    {item.label === 'Requested Bookings' && <ClipboardList className="h-4 w-4" />}
                                     {item.label}
                                 </span>
                                 {isActive(item.href) && (

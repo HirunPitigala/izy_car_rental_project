@@ -160,6 +160,7 @@ export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" 
             .where(eq(booking.bookingId, bookingId));
 
         revalidatePath("/admin/bookings/requested");
+        revalidatePath("/employee/bookings/requested");
         return { success: true };
     } catch (error) {
         console.error("Error updating booking status:", error);

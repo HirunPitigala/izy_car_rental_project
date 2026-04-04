@@ -176,6 +176,8 @@ export async function markWeddingInquiryContacted(bookingId: number) {
             .where(eq(booking.bookingId, bookingId));
 
         revalidatePath("/admin/bookings/wedding-requests");
+        revalidatePath("/admin/bookings/requested");
+        revalidatePath("/employee/bookings/requested");
         return { success: true };
     } catch (error: any) {
         console.error("Error updating wedding inquiry:", error);

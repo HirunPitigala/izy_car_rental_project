@@ -23,6 +23,7 @@ export async function updatePickupStatus(id: number, status: 'ACCEPTED' | 'REJEC
     try {
         await pickupService.updatePickupRequestStatus(id, status, reason);
         revalidatePath('/admin/bookings/requested');
+        revalidatePath('/employee/bookings/requested');
         return { success: true };
     } catch (error: any) {
         console.error('Error updating pickup status:', error);

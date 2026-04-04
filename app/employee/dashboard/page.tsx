@@ -10,10 +10,6 @@ import {
     ArrowRight, Star
 } from "lucide-react";
 
-// ──────────────────────────────────────────────────────────────
-// Types
-// ──────────────────────────────────────────────────────────────
-
 interface BaseBooking {
     id: number;
     status: string;
@@ -96,8 +92,8 @@ export default function EmployeeDashboardPage() {
             switch (type) {
                 case "rent": endpoint = "/api/bookings"; break;
                 case "pickup": endpoint = "/api/pickup/bookings"; break;
-                case "wedding": 
-                    endpoint = "/api/wedding"; 
+                case "wedding":
+                    endpoint = "/api/wedding";
                     body = { id }; // Wedding only has 'contacted' action in its current API
                     break;
                 case "airport": endpoint = "/api/airport-rental/bookings"; break;
@@ -146,7 +142,7 @@ export default function EmployeeDashboardPage() {
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Employee Portal / Management</p>
                         </div>
                     </div>
-                    <button 
+                    <button
                         onClick={fetchData}
                         className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-sm font-bold text-gray-600 transition-all border border-gray-100"
                     >
@@ -163,11 +159,10 @@ export default function EmployeeDashboardPage() {
                         <button
                             key={s.label}
                             onClick={() => setActiveTab(s.tab as any)}
-                            className={`p-6 rounded-[2.5rem] border transition-all text-left relative overflow-hidden group ${
-                                activeTab === s.tab 
-                                ? "bg-white border-gray-200 shadow-xl shadow-gray-200/50 scale-[1.02]" 
-                                : "bg-gray-50/50 border-transparent hover:bg-white hover:border-gray-100"
-                            }`}
+                            className={`p-6 rounded-[2.5rem] border transition-all text-left relative overflow-hidden group ${activeTab === s.tab
+                                    ? "bg-white border-gray-200 shadow-xl shadow-gray-200/50 scale-[1.02]"
+                                    : "bg-gray-50/50 border-transparent hover:bg-white hover:border-gray-100"
+                                }`}
                         >
                             <div className="flex items-center justify-between relative z-10">
                                 <div className={`p-3 rounded-2xl ${s.color} text-white`}>
@@ -247,7 +242,7 @@ export default function EmployeeDashboardPage() {
                                                     <div>
                                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Date / Time</p>
                                                         <p className="text-xs font-bold text-gray-900">
-                                                            {req.rentalDate || req.pickupTime || req.pickupDate || req.eventDate ? 
+                                                            {req.rentalDate || req.pickupTime || req.pickupDate || req.eventDate ?
                                                                 new Date(req.rentalDate || req.pickupTime || req.pickupDate || req.eventDate).toLocaleDateString() : "—"}
                                                         </p>
                                                         <p className="text-[10px] text-gray-400 font-bold">{req.transferTime || req.pickupTime?.split(' ')[1] || "—"}</p>

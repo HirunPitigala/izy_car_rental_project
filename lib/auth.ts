@@ -27,7 +27,7 @@ export function logDebug(message: string) {
         const timestamp = new Date().toISOString();
         const LOG_FILE = path.join(process.cwd(), "auth_debug.log");
         fs.appendFileSync(LOG_FILE, `[${timestamp}] ${message}\n`);
-    } catch (e) {
+    } catch (e: any) {
         // Ignore logging errors
     }
 }

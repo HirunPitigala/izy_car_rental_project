@@ -60,7 +60,7 @@ export default function PickupsAdminPage() {
                         </div>
 
                         <Link
-                            href="/admin/vehicles/pickup-service/add"
+                            href="/admin/vehicles/add?category=Pickups"
                             className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#0f0f0f] px-6 text-sm font-bold text-white shadow-xl shadow-gray-200 transition-all hover:bg-[#262626] active:scale-95"
                         >
                             <Plus className="h-5 w-5" />

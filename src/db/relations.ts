@@ -1,26 +1,58 @@
 import { relations } from "drizzle-orm/relations";
-import { booking, checklist, notification, payment, manager, report, vehicle, review, vehicleBrand, vehicleModel, serviceCategory, employee, admin, pickupRequests, users, airportBookings } from "./schema";
+import { booking, inspection, inspectionItems, damageReports, item, notification, payment, manager, report, vehicle, review, vehicleBrand, vehicleModel, serviceCategory, employee, admin, pickupRequests, users, airportBookings } from "./schema";
 
 export const bookingRelations = relations(booking, ({ one, many }) => ({
 	serviceCategory: one(serviceCategory, {
 		fields: [booking.serviceCategoryId],
 		references: [serviceCategory.categoryId],
 	}),
+	vehicle: one(vehicle, {
+		fields: [booking.vehicleId],
+		references: [vehicle.vehicleId],
+	}),
+	user: one(users, {
+		fields: [booking.userId],
+		references: [users.id],
+	}),
 	payments: many(payment),
-	checklists: many(checklist),
+	inspections: many(inspection),
 	notifications: many(notification),
 	reviews: many(review),
 }));
 
-export const checklistRelations = relations(checklist, ({ one }) => ({
+export const inspectionRelations = relations(inspection, ({ one, many }) => ({
 	booking: one(booking, {
-		fields: [checklist.bookingId],
+		fields: [inspection.bookingId],
 		references: [booking.bookingId],
 	}),
 	employee: one(employee, {
-		fields: [checklist.employeeId],
+		fields: [inspection.employeeId],
 		references: [employee.employeeId],
 	}),
+	items: many(inspectionItems),
+	damageReports: many(damageReports),
+}));
+
+export const inspectionItemsRelations = relations(inspectionItems, ({ one }) => ({
+	inspection: one(inspection, {
+		fields: [inspectionItems.inspectionId],
+		references: [inspection.inspectionId],
+	}),
+	item: one(item, {
+		fields: [inspectionItems.itemId],
+		references: [item.itemId],
+	}),
+}));
+
+export const damageReportsRelations = relations(damageReports, ({ one }) => ({
+	inspection: one(inspection, {
+		fields: [damageReports.inspectionId],
+		references: [inspection.inspectionId],
+	}),
+}));
+
+export const itemRelations = relations(item, ({ many }) => ({
+	inspectionItems: many(inspectionItems),
 }));
 
 export const notificationRelations = relations(notification, ({ one }) => ({

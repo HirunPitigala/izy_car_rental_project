@@ -8,9 +8,8 @@ export default async function CustomerOnlyLayout({
 }) {
     const session = await getSession();
 
-    // If an employee attempts to access customer booking routes, redirect to dashboard
     if (session?.role === "employee") {
-        redirect("/employee/dashboard");
+        redirect("/employee");
     }
 
     return <>{children}</>;

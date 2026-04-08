@@ -102,9 +102,9 @@ export default function EmployeeRequestedBookingsPage() {
         } else if (category === "airport") {
             try {
                 // Reusing matching API for airport bookings
-                const res = await fetch("/api/airport-rental/admin");
+                const res = await fetch("/api/airport-rental/bookings?status=PENDING");
                 const data = await res.json();
-                if (res.ok && data.success) setAirportBookings(data.data.filter((b: any) => b.status === "PENDING").reverse());
+                if (res.ok && data.success) setAirportBookings(data.data.reverse());
             } catch (e) { console.error(e); }
         } else if (category === "wedding") {
             const res = await getWeddingCarInquiries();
@@ -160,10 +160,10 @@ export default function EmployeeRequestedBookingsPage() {
     const handleAirportAction = async (id: number, status: "ACCEPTED" | "REJECTED", reason?: string) => {
         setActionLoading(id);
         try {
-            const res = await fetch(`/api/airport-rental/admin/${id}`, {
+            const res = await fetch(`/api/airport-rental/bookings`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status, rejectionReason: reason })
+                body: JSON.stringify({ id, status, rejection_reason: reason })
             });
             if (res.ok) fetchData("airport");
             setShowRejectModal(null);
@@ -180,7 +180,7 @@ export default function EmployeeRequestedBookingsPage() {
                 <main className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
                     <div className="mb-10">
                         <nav className="mb-3 flex items-center gap-2 text-sm text-gray-400">
-                            <Link href="/employee/dashboard" className="transition-colors hover:text-[#0f0f0f]">Employee</Link>
+                            <Link href="/employee" className="transition-colors hover:text-[#0f0f0f]">Employee</Link>
                             <ChevronRight className="h-4 w-4" />
                             <span className="font-medium text-[#0f0f0f]">Bookings</span>
                         </nav>
@@ -220,7 +220,7 @@ export default function EmployeeRequestedBookingsPage() {
             <div className="flex justify-between items-start">
                 <div>
                     <nav className="mb-3 flex items-center gap-2 text-sm text-gray-400">
-                        <Link href="/employee/dashboard" className="transition-colors hover:text-[#0f0f0f]">Employee</Link>
+                        <Link href="/employee" className="transition-colors hover:text-[#0f0f0f]">Employee</Link>
                         <ChevronRight className="h-4 w-4" />
                         <button onClick={() => setSelectedCategory(null)} className="transition-colors hover:text-[#0f0f0f]">Requested Bookings</button>
                         <ChevronRight className="h-4 w-4" />

@@ -15,31 +15,33 @@ interface VehicleFormProps {
 export default function VehicleForm({ mode, defaultValues, redirectPath = "/admin/vehicles/rent-a-car", defaultCategory = "Rent a Car" }: VehicleFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState(
-        defaultValues || {
-            brand: "",
-            model: "",
-            plateNumber: "",
-            seatingCapacity: 4,
-            passengerCapacity: 4,
-            transmissionType: "Automatic",
-            fuelType: "Petrol",
-            luggageCapacity: 2,
-            rentPerHour: "",
-            rentPerDay: "",
-            rentPerMonth: "",
-            maxMileagePerDay: "",
-            extraMileageCharge: "",
-            minRentalPeriod: 1,
-            maxRentalPeriod: 30,
-            status: "AVAILABLE",
-            serviceCategory: defaultCategory,
-            description: "",
-            image: "",
-            chassisNumber: "",
-            pricePerKm: "",
-        }
-    );
+    const [formData, setFormData] = useState(() => {
+        const initial = defaultValues || {};
+        return {
+            brand: initial.brand || "",
+            model: initial.model || "",
+            plateNumber: initial.plateNumber || "",
+            seatingCapacity: initial.seatingCapacity ?? 4,
+            passengerCapacity: initial.passengerCapacity ?? 4,
+            transmissionType: initial.transmissionType || "Automatic",
+            fuelType: initial.fuelType || "Petrol",
+            luggageCapacity: initial.luggageCapacity ?? 2,
+            rentPerHour: initial.rentPerHour?.toString() || "",
+            rentPerDay: initial.rentPerDay?.toString() || "",
+            rentPerMonth: initial.rentPerMonth?.toString() || "",
+            maxMileagePerDay: initial.maxMileagePerDay?.toString() || "",
+            extraMileageCharge: initial.extraMileageCharge?.toString() || "",
+            minRentalPeriod: initial.minRentalPeriod ?? 1,
+            maxRentalPeriod: initial.maxRentalPeriod ?? 30,
+            status: initial.status || "AVAILABLE",
+            serviceCategory: initial.serviceCategory || defaultCategory,
+            description: initial.description || "",
+            image: initial.image || "",
+            chassisNumber: initial.chassisNumber || "",
+            pricePerKm: initial.pricePerKm?.toString() || "",
+            vehicleId: initial.vehicleId, // Keep original if edit
+        };
+    });
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];

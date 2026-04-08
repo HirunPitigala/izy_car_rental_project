@@ -89,7 +89,7 @@ export default function WeddingCarsAdminPage() {
                                 View Inquiries
                             </Link>
                             <Link
-                                href="/admin/vehicles/wedding-cars/add"
+                                href="/admin/vehicles/add?category=Wedding Car Rental"
                                 className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#0f0f0f] px-6 text-sm font-bold text-white shadow-xl shadow-gray-200 transition-all hover:bg-[#262626] active:scale-95"
                             >
                                 <Plus className="h-5 w-5" />
@@ -128,7 +128,7 @@ export default function WeddingCarsAdminPage() {
                         <h2 className="text-xl font-bold text-gray-400 mb-2">No Wedding Cars Found</h2>
                         <p className="text-gray-400 mb-6">Add vehicles to the wedding car rental list to get started.</p>
                         <Link
-                            href="/admin/vehicles/wedding-cars/add"
+                            href="/admin/vehicles/add?category=Wedding Car Rental"
                             className="inline-flex h-12 items-center gap-2 rounded-2xl bg-[#0f0f0f] px-6 text-sm font-bold text-white"
                         >
                             <Plus className="h-5 w-5" />

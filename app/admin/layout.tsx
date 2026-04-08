@@ -14,10 +14,10 @@ export default async function AdminLayout({
     if (!session || session.role !== "admin") {
         logDebug(`AdminLayout: Redirecting to login. Reason: ${!session ? "No session" : "Wrong role: " + session.role}`);
         if (session) {
-            // Logged in but not admin -> redirect to their dashboard
+            if (session.role === "admin") redirect("/admin/dashboard");
             if (session.role === "manager") redirect("/manager/dashboard");
             if (session.role === "customer") redirect("/customer/dashboard");
-            if (session.role === "employee") redirect("/employee/dashboard");
+            if (session.role === "employee") redirect("/employee/bookings/requested");
         }
         redirect("/login");
     }

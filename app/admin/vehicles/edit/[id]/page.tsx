@@ -13,7 +13,7 @@ export default function EditVehiclePage({ params }: { params: Promise<{ id: stri
     useEffect(() => {
         const fetchVehicle = async () => {
             try {
-                const res = await fetch(`/api/admin/vehicles/${resolvedParams.id}`);
+                const res = await fetch(`/api/vehicles/${resolvedParams.id}`);
                 if (res.ok) {
                     const data = await res.json();
                     setVehicle(data);

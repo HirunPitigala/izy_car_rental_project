@@ -29,6 +29,8 @@ export interface Vehicle {
     serviceCategory: string;
     image: string | null;
     description: string | null;
+    chassisNumber?: string;
+    pricePerKm?: string;
 }
 
 interface VehicleTableProps {
@@ -46,7 +48,7 @@ export default function VehicleTable({ vehicles, onRefresh, editPath = "/admin/v
 
         setIsDeleting(id);
         try {
-            const res = await fetch(`/api/admin/vehicles/${id}`, {
+            const res = await fetch(`/api/vehicles/${id}`, {
                 method: "DELETE",
             });
 
@@ -170,7 +172,7 @@ export default function VehicleTable({ vehicles, onRefresh, editPath = "/admin/v
                                                     <Eye className="h-4 w-4" />
                                                 </button>
                                                 <Link
-                                                    href={`${editPath}/${vehicle.vehicleId}/edit`}
+                                                    href={`/admin/vehicles/edit/${vehicle.vehicleId}`}
                                                     className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-all hover:bg-gray-50 hover:text-[#0f0f0f] shadow-sm active:scale-95"
                                                     title="Edit Vehicle"
                                                 >

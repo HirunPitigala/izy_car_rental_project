@@ -1,4 +1,4 @@
-import { mysqlTable, primaryKey, unique, int, varchar, index, text, date, datetime, decimal, check, boolean, customType, mysqlEnum, time } from "drizzle-orm/mysql-core"
+import { mysqlTable, primaryKey, unique, int, varchar, index, text, date, datetime, decimal, check, boolean, customType, mysqlEnum, time, float } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 // Custom blob type for binary storage (PDFs, etc.)
@@ -78,18 +78,44 @@ export const booking = mysqlTable("booking", {
 		index("vehicle_id_idx").on(table.vehicleId),
 	]);
 
-export const checklist = mysqlTable("checklist", {
-	checklistId: int("checklist_id").autoincrement().notNull(),
-	bookingId: int("booking_id").references(() => booking.bookingId),
-	inspectionDate: date("inspection_date", { mode: 'string' }),
-	inspectionType: varchar("inspection_type", { length: 50 }),
-	remarks: text(),
+export const inspection = mysqlTable("inspection", {
+	inspectionId: int("inspection_id").autoincrement().notNull(),
+	bookingId: int("booking_id").references(() => booking.bookingId).notNull(),
 	employeeId: int("employee_id").references(() => employee.employeeId),
+	inspectionType: mysqlEnum("inspection_type", ["BEFORE", "AFTER"]).notNull(),
+	inspectionDate: datetime("inspection_date").default(sql`CURRENT_TIMESTAMP`),
+	overallRemarks: text("overall_remarks"),
 },
 	(table) => [
 		index("booking_id_idx").on(table.bookingId),
 		index("employee_id_idx").on(table.employeeId),
-		primaryKey({ columns: [table.checklistId], name: "checklist_checklist_id" }),
+		primaryKey({ columns: [table.inspectionId], name: "inspection_pk" }),
+	]);
+
+export const inspectionItems = mysqlTable("inspection_items", {
+	id: int("id").autoincrement().notNull(),
+	inspectionId: int("inspection_id").references(() => inspection.inspectionId, { onDelete: "cascade" }).notNull(),
+	itemId: int("item_id").references(() => item.itemId).notNull(),
+	status: mysqlEnum("status", ["OK", "NOT_OK"]).notNull(),
+	remarks: text("remarks"),
+},
+	(table) => [
+		index("inspection_id_idx").on(table.inspectionId),
+		index("item_id_idx").on(table.itemId),
+		primaryKey({ columns: [table.id], name: "inspection_items_pk" }),
+	]);
+
+export const damageReports = mysqlTable("damage_reports", {
+	damageId: int("damage_id").autoincrement().notNull(),
+	inspectionId: int("inspection_id").references(() => inspection.inspectionId, { onDelete: "cascade" }).notNull(),
+	damageType: mysqlEnum("damage_type", ["SMALL_MARK", "SCRATCH", "DENT", "CRACK"]).notNull(),
+	xPosition: float("x_position").notNull(),
+	yPosition: float("y_position").notNull(),
+	notes: text("notes"),
+},
+	(table) => [
+		index("inspection_id_idx").on(table.inspectionId),
+		primaryKey({ columns: [table.damageId], name: "damage_reports_pk" }),
 	]);
 
 export const driver = mysqlTable("driver", {
@@ -351,7 +377,7 @@ export const airportBookings = mysqlTable("airport_bookings", {
 	// Pickup/Drop Location (customer's address, not airport)
 	transferLocation: varchar("transfer_location", { length: 255 }).notNull(),
 	// Lifecycle
-	status: varchar("status", { length: 20 }).default("requested"),
+	status: varchar("status", { length: 20 }).default("PENDING"),
 	bookingType: varchar("booking_type", { length: 30 }).default("airport_rental"),
 	rejectionReason: text("rejection_reason"),
 	handledByEmployeeId: int("handled_by_employee_id").references(() => employee.employeeId),

@@ -113,7 +113,7 @@ export default function EmployeePickupRequestsPage() {
                 {/* Header */}
                 <div className="mb-8">
                     <nav className="mb-4 flex items-center gap-2 text-sm text-gray-400">
-                        <Link href="/employee/dashboard" className="hover:text-[#0f0f0f] transition-colors">Employee</Link>
+                        <Link href="/employee" className="hover:text-[#0f0f0f] transition-colors">Employee</Link>
                         <ChevronRight className="h-4 w-4" />
                         <span className="font-medium text-[#0f0f0f]">Pickup Requests</span>
                     </nav>

@@ -34,7 +34,7 @@ export default async function Home() {
             <div className="flex flex-wrap gap-4">
               {isEmployee ? (
                 <Link
-                  href="/employee/dashboard"
+                  href="/employee"
                   className="h-14 px-10 rounded-xl bg-white flex items-center gap-2 text-base font-bold text-[#0f0f0f] transition-all shadow-xl shadow-white/5 hover:bg-gray-100 active:scale-[0.98]"
                 >
                   Manage Requested Bookings

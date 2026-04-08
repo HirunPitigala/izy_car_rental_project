@@ -41,7 +41,10 @@ export default function VehicleDetailModal({ vehicle, isOpen, onClose }: Vehicle
                                 {vehicle.status || "AVAILABLE"}
                             </span>
                         </div>
-                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">{vehicle.plateNumber}</p>
+                        <div className="flex items-center gap-4 mt-1">
+                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-none border-r border-gray-200 pr-4">Plate: <span className="text-gray-900">{vehicle.plateNumber}</span></p>
+                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest leading-none">Chassis: <span className="text-gray-900">{vehicle.chassisNumber || "NOT RECOREDED"}</span></p>
+                        </div>
                     </div>
                     <button
                         onClick={onClose}
@@ -55,11 +58,11 @@ export default function VehicleDetailModal({ vehicle, isOpen, onClose }: Vehicle
                 <div className="flex-1 overflow-y-auto p-8">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                         {/* Left Column: Image and Status */}
-                        <div className="lg:col-span-5 space-y-6">
+                        <div className="lg:col-span-4 space-y-6">
                             <div className="aspect-[4/3] w-full overflow-hidden rounded-[2.5rem] bg-gray-50 border border-gray-100 shadow-inner">
                                 {vehicle.image ? (
                                     <img
-                                        src={vehicle.image.startsWith('data:') ? vehicle.image : `data:image/jpeg;base64,${vehicle.image}`}
+                                        src={vehicle.image.startsWith('data:') || vehicle.image.startsWith('http') ? vehicle.image : `data:image/jpeg;base64,${vehicle.image}`}
                                         alt={vehicle.model}
                                         className="h-full w-full object-cover"
                                     />
@@ -71,63 +74,82 @@ export default function VehicleDetailModal({ vehicle, isOpen, onClose }: Vehicle
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-4">
                                 <div className="rounded-2xl border border-gray-100 p-4 bg-[#fcfcfc] shadow-sm">
-                                    <p className="text-xs text-gray-400 uppercase font-black tracking-widest mb-1 text-center">CATEGORY</p>
-                                    <p className="text-sm font-bold text-blue-600 text-center uppercase tracking-tight">{vehicle.serviceCategory}</p>
+                                    <p className="text-xs text-gray-400 uppercase font-black tracking-widest mb-1">SERVICE CATEGORY</p>
+                                    <p className="text-sm font-bold text-blue-600 uppercase tracking-tight">{vehicle.serviceCategory}</p>
                                 </div>
                                 <div className="rounded-2xl border border-gray-100 p-4 bg-[#fcfcfc] shadow-sm">
-                                    <p className="text-xs text-gray-400 uppercase font-black tracking-widest mb-1 text-center">TRANSMISSION</p>
-                                    <p className="text-sm font-bold text-indigo-600 text-center uppercase tracking-tight">{vehicle.transmissionType}</p>
+                                    <p className="text-xs text-gray-400 uppercase font-black tracking-widest mb-1">TRANSMISSION TYPE</p>
+                                    <p className="text-sm font-bold text-indigo-600 uppercase tracking-tight">{vehicle.transmissionType}</p>
+                                </div>
+                                <div className="rounded-2xl border border-gray-100 p-4 bg-[#fcfcfc] shadow-sm">
+                                    <p className="text-xs text-gray-400 uppercase font-black tracking-widest mb-1">FUEL TYPE</p>
+                                    <p className="text-sm font-bold text-emerald-600 uppercase tracking-tight">{vehicle.fuelType}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Right Column: Specs and Pricing */}
-                        <div className="lg:col-span-7 space-y-8">
+                        <div className="lg:col-span-8 space-y-8">
                             {/* Specs Grid */}
                             <div>
                                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-5 flex items-center gap-2">
-                                    <div className="h-1 w-4 bg-yellow-400 rounded-full" /> Core Specifications
+                                    <div className="h-1 w-4 bg-yellow-400 rounded-full" /> Technical Configuration
                                 </h3>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                                    <SpecItem icon={User} label="Seating" value={`${vehicle.seatingCapacity} Passengers`} bgColor="bg-blue-50" iconColor="text-blue-600" />
-                                    <SpecItem icon={Settings} label="Gearbox" value={vehicle.transmissionType} bgColor="bg-indigo-50" iconColor="text-indigo-600" />
-                                    <SpecItem icon={Fuel} label="Fuel" value={vehicle.fuelType} bgColor="bg-emerald-50" iconColor="text-emerald-600" />
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-6">
+                                    <SpecItem icon={User} label="Seating" value={`${vehicle.seatingCapacity} Seats`} bgColor="bg-blue-50" iconColor="text-blue-600" />
+                                    <SpecItem icon={User} label="Passengers" value={`${vehicle.passengerCapacity || vehicle.seatingCapacity} Cap`} bgColor="bg-blue-50" iconColor="text-blue-600" />
                                     <SpecItem icon={Briefcase} label="Luggage" value={`${vehicle.luggageCapacity} Items`} bgColor="bg-amber-50" iconColor="text-amber-600" />
-                                    <SpecItem icon={Calendar} label="Min Rent" value={`${vehicle.minRentalPeriod || 1} Day(s)`} bgColor="bg-rose-50" iconColor="text-rose-600" />
-                                    <SpecItem icon={Milestone} label="Max KMs" value={`${vehicle.maxMileagePerDay || '--'} / Day`} bgColor="bg-slate-50" iconColor="text-slate-600" />
+                                    
+                                    <SpecItem icon={Calendar} label="Min Period" value={`${vehicle.minRentalPeriod || 1} Day(s)`} bgColor="bg-rose-50" iconColor="text-rose-600" />
+                                    <SpecItem icon={Calendar} label="Max Period" value={`${vehicle.maxRentalPeriod || 30} Day(s)`} bgColor="bg-rose-50" iconColor="text-rose-600" />
+                                    <SpecItem icon={Milestone} label="Daily Limit" value={`${vehicle.maxMileagePerDay || '--'} KM / Day`} bgColor="bg-slate-50" iconColor="text-slate-600" />
                                 </div>
                             </div>
 
                             {/* Pricing Section */}
                             <div>
                                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-5 flex items-center gap-2">
-                                    <div className="h-1 w-4 bg-emerald-400 rounded-full" /> Rental Rates
+                                    <div className="h-1 w-4 bg-emerald-400 rounded-full" /> Financial Overview
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <PriceCard label="Hourly" amount={rentPerHour} icon={Clock} accentColor="text-blue-600" />
                                     <PriceCard label="Daily" amount={rentPerDay} icon={Calendar} accentColor="text-emerald-600" destaque />
                                     <PriceCard label="Monthly" amount={rentPerMonth} icon={Briefcase} accentColor="text-indigo-600" />
                                 </div>
-                                {parseFloat(vehicle.extraMileageCharge || "0") > 0 && (
-                                    <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-white rounded-xl shadow-sm">
-                                                <Coins className="h-4 w-4 text-slate-500" />
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                    {parseFloat(vehicle.extraMileageCharge || "0") > 0 && (
+                                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-white rounded-xl shadow-sm">
+                                                    <Coins className="h-4 w-4 text-slate-500" />
+                                                </div>
+                                                <span className="text-sm font-bold text-slate-600">Extra KM Charge</span>
                                             </div>
-                                            <span className="text-sm font-bold text-slate-600">Extra Mileage Charge</span>
+                                            <span className="text-sm font-black text-slate-900">LKR {parseFloat(vehicle.extraMileageCharge || "0").toLocaleString()}</span>
                                         </div>
-                                        <span className="text-sm font-black text-slate-900">LKR {parseFloat(vehicle.extraMileageCharge || "0").toLocaleString()} / KM</span>
-                                    </div>
-                                )}
+                                    )}
+                                    {vehicle.serviceCategory === "Pickups" && vehicle.pricePerKm && (
+                                        <div className="p-4 rounded-2xl bg-yellow-50/50 border border-yellow-100 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-white rounded-xl shadow-sm">
+                                                    <Milestone className="h-4 w-4 text-yellow-600" />
+                                                </div>
+                                                <span className="text-sm font-bold text-yellow-700">Price Per KM</span>
+                                            </div>
+                                            <span className="text-sm font-black text-gray-900">LKR {parseFloat(vehicle.pricePerKm).toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="pt-6 border-t border-gray-100">
-                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-3">Vehicle Description</h3>
+                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-3">Vehicle Remarks</h3>
                                 <div className="p-5 rounded-[2rem] bg-gray-50/50 border border-gray-100">
                                     <p className="text-sm text-gray-600 leading-relaxed italic">
-                                        "{vehicle.description || "The administrator hasn't provided a description for this premium vehicle yet."}"
+                                        "{vehicle.description || "The administrator hasn't provided extra remarks for this configuration."}"
                                     </p>
                                 </div>
                             </div>
@@ -136,20 +158,12 @@ export default function VehicleDetailModal({ vehicle, isOpen, onClose }: Vehicle
                 </div>
 
                 {/* Footer */}
-                <div className="px-8 py-6 border-t border-gray-100 bg-white flex justify-end gap-4">
+                <div className="px-8 py-6 border-t border-gray-100 bg-white flex justify-end">
                     <button
                         onClick={onClose}
-                        className="h-12 px-8 rounded-2xl text-sm font-bold text-gray-500 bg-gray-50 hover:bg-gray-100 transition-all active:scale-95"
+                        className="h-12 px-12 rounded-2xl text-sm font-bold text-white bg-[#0f0f0f] hover:bg-[#262626] shadow-xl shadow-gray-200 transition-all active:scale-95"
                     >
                         Dismiss
-                    </button>
-                    <button
-                        onClick={() => {
-                            window.location.href = `/admin/vehicles/rent-a-car/edit/${vehicle.vehicleId}`;
-                        }}
-                        className="h-12 px-8 rounded-2xl text-sm font-bold text-white bg-[#0f0f0f] hover:bg-[#262626] shadow-xl shadow-gray-200 transition-all active:scale-95"
-                    >
-                        Edit Configuration
                     </button>
                 </div>
             </div>

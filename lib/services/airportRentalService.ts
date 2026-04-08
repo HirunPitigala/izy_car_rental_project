@@ -138,7 +138,7 @@ export async function createAirportBooking(data: AirportBookingData) {
         customerPhone: data.customerPhone,
         customerEmail: data.customerEmail ?? null,
         transferLocation: data.transferLocation,
-        status: "requested",
+        status: "PENDING",
         bookingType: "airport_rental",
     });
 
@@ -148,7 +148,7 @@ export async function createAirportBooking(data: AirportBookingData) {
 /**
  * Fetch all airport bookings filtered by status (for employee/admin).
  */
-export async function getAirportBookingsByStatus(status = "requested") {
+export async function getAirportBookingsByStatus(status = "PENDING") {
     return db
         .select({
             id: airportBookings.id,

@@ -44,8 +44,7 @@ const customerNavItems: NavItem[] = [
 ];
 
 const employeeNavItems: NavItem[] = [
-    { label: 'Dashboard', href: '/employee/dashboard' },
-    { label: 'Requested Bookings', href: '/employee/bookings/requested' },
+    { label: 'Requested Bookings', href: '/employee' },
 ];
 
 interface NavbarProps {

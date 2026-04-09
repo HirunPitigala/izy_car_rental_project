@@ -1,12 +1,13 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { booking, vehicle, vehicleBrand, vehicleModel } from "@/src/db/schema";
+import { booking, vehicle, vehicleBrand, vehicleModel, users } from "@/src/db/schema";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { validateNIC } from "@/lib/validation";
 import { v4 as uuidv4 } from "uuid";
+import { sendNotification, notifyAdmins } from "./notificationActions";
 
 // Helper to upload file to Cloudinary
 async function saveFileToCloudinary(file: File | null, folder: string): Promise<string | null> {
@@ -105,12 +106,15 @@ export async function createBooking(formData: FormData) {
             guaranteeNicPdf: gNicPath,
             guaranteeLicensePdf: gLicensePath,
             totalFare: totalFare,
-            bookingStatus: "PENDING",
+            status: "PENDING",
             terms1: true,
             terms2Confirmation: true,
         });
 
         revalidatePath("/admin/bookings/requested");
+
+        // Notify Admins
+        await notifyAdmins(`New Rent-a-Car booking request from ${customerFullName}`);
 
         return { success: true };
     } catch (error) {
@@ -120,7 +124,7 @@ export async function createBooking(formData: FormData) {
     }
 }
 
-export async function getPendingBookings() {
+export async function getPendingBookings(employeeId?: number) {
     try {
         const results = await db.select({
             bookingId: booking.bookingId,
@@ -131,7 +135,7 @@ export async function getPendingBookings() {
             rentalDate: booking.rentalDate,
             returnDate: booking.returnDate,
             totalFare: booking.totalFare,
-            status: booking.bookingStatus,
+            status: booking.status,
             rejectionReason: booking.rejectionReason,
             vehicle: {
                 brand: vehicleBrand.brandName,
@@ -143,7 +147,11 @@ export async function getPendingBookings() {
             .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
             .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-            .where(eq(booking.bookingStatus, "PENDING"))
+            .where(
+                employeeId 
+                    ? and(eq(booking.status, "PENDING"), eq(booking.assignedEmployeeId, employeeId))
+                    : eq(booking.status, "PENDING")
+            )
             .orderBy(booking.createdAt);
 
         return { success: true, data: results };
@@ -153,14 +161,41 @@ export async function getPendingBookings() {
     }
 }
 
-export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" | "REJECTED", formData?: FormData) {
+export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" | "REJECTED", formData?: FormData, assignedEmployeeId?: number) {
     try {
         await db.update(booking)
-            .set({ bookingStatus: status, rejectionReason: formData?.get("rejectionReason") as string })
+            .set({ 
+                status: status, 
+                rejectionReason: formData?.get("rejectionReason") as string,
+                assignedEmployeeId: assignedEmployeeId ?? undefined
+            })
             .where(eq(booking.bookingId, bookingId));
 
         revalidatePath("/admin/bookings/requested");
         revalidatePath("/employee/bookings/requested");
+
+        // Handle Notifications
+        if (status === "ACCEPTED") {
+            // Find current booking for userId and description
+            const [b] = await db.select().from(booking).where(eq(booking.bookingId, bookingId));
+            if (b) {
+                // 1. Notify Customer
+                if (b.userId) {
+                    await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been ACCEPTED.`, bookingId);
+                }
+                // 2. Notify Assigned Employee
+                if (assignedEmployeeId) {
+                    // Find actual userId of the employee
+                    const [empUser] = await db.select({ id: users.userId })
+                        .from(users)
+                        .where(eq(users.relatedId, assignedEmployeeId));
+                    if (empUser) {
+                        await sendNotification(empUser.id, `You have been assigned to handle Rent-a-Car booking #${bookingId}.`, bookingId);
+                    }
+                }
+            }
+        }
+
         return { success: true };
     } catch (error) {
         console.error("Error updating booking status:", error);

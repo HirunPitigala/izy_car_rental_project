@@ -27,10 +27,8 @@ export class AuthRepository {
         return record;
     }
 
-    async markEmailVerified(userId: number) {
-        await db.update(users)
-            .set({ emailVerified: true, emailVerifiedAt: new Date() })
-            .where(eq(users.id, userId));
+    async markEmailVerified(_userId: number) {
+        // email_verified / email_verified_at columns do not exist in the database — no-op
     }
 
     async deleteToken(id: number) {
@@ -73,7 +71,7 @@ export class AuthRepository {
     }
 
     async updateUserPassword(userId: number, hash: string) {
-        await db.update(users).set({ passwordHash: hash }).where(eq(users.id, userId));
+        await db.update(users).set({ passwordHash: hash }).where(eq(users.userId, userId));
     }
 
     async deleteResetTokenById(id: number) {

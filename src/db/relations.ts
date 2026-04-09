@@ -12,12 +12,16 @@ export const bookingRelations = relations(booking, ({ one, many }) => ({
 	}),
 	user: one(users, {
 		fields: [booking.userId],
-		references: [users.id],
+		references: [users.userId],
 	}),
 	payments: many(payment),
 	inspections: many(inspection),
 	notifications: many(notification),
 	reviews: many(review),
+	assignedEmployee: one(employee, {
+		fields: [booking.assignedEmployeeId],
+		references: [employee.employeeId],
+	}),
 }));
 
 export const inspectionRelations = relations(inspection, ({ one, many }) => ({
@@ -63,6 +67,10 @@ export const notificationRelations = relations(notification, ({ one }) => ({
 	admin: one(admin, {
 		fields: [notification.adminId],
 		references: [admin.adminId],
+	}),
+	user: one(users, {
+		fields: [notification.userId],
+		references: [users.userId],
 	}),
 }));
 
@@ -132,18 +140,22 @@ export const serviceCategoryRelations = relations(serviceCategory, ({ many }) =>
 export const pickupRequestRelations = relations(pickupRequests, ({ one }) => ({
 	customer: one(users, {
 		fields: [pickupRequests.customerId],
-		references: [users.id],
+		references: [users.userId],
 	}),
 	vehicle: one(vehicle, {
 		fields: [pickupRequests.vehicleId],
 		references: [vehicle.vehicleId],
+	}),
+	assignedEmployee: one(employee, {
+		fields: [pickupRequests.assignedEmployeeId],
+		references: [employee.employeeId],
 	}),
 }));
 
 export const airportBookingRelations = relations(airportBookings, ({ one }) => ({
 	customer: one(users, {
 		fields: [airportBookings.customerId],
-		references: [users.id],
+		references: [users.userId],
 	}),
 	vehicle: one(vehicle, {
 		fields: [airportBookings.vehicleId],

@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { UserSession } from '@/lib/auth';
 import UserProfile from './UserProfile';
 import { Bell, ClipboardList, Menu, X } from 'lucide-react';
+import NotificationBadge from '../notifications/NotificationBadge';
 
 interface NavItem {
     label: string;
@@ -132,15 +133,7 @@ export default function Navbar({ session }: NavbarProps) {
                     <div className="hidden items-center gap-4 lg:flex">
                         {session ? (
                             <div className="flex items-center gap-5">
-                                {session.role === 'admin' && (
-                                    <button className="relative rounded-full p-2 text-gray-500 transition-all hover:bg-gray-100 hover:text-[#0f0f0f]">
-                                        <Bell className="h-5 w-5" />
-                                        <span className="absolute right-2 top-2 flex h-2 w-2">
-                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                                            <span className="relative inline-flex h-2 w-2 rounded-full bg-red-600"></span>
-                                        </span>
-                                    </button>
-                                )}
+                                <NotificationBadge />
                                 {session.role === 'admin' && (
                                     <div className="relative group">
                                         <button className="h-10 px-5 rounded-[10px] bg-[#0f0f0f] text-sm font-semibold text-white transition-all hover:bg-[#262626] active:scale-[0.98]">

@@ -10,6 +10,7 @@ import {
 } from "@/src/db/schema";
 import { eq, and, gte, sql, or, notInArray } from "drizzle-orm";
 import { getAvailableVehicles } from "@/lib/actions/vehicleActions";
+import { SERVICE_CATEGORIES } from "@/lib/constants";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -33,7 +34,7 @@ export interface AirportBookingData {
     luggageCount: number;
     customerFullName: string;
     customerPhone: string;
-    customerEmail?: string;
+
     transferLocation: string; // customer's address
 }
 
@@ -64,7 +65,7 @@ export async function searchAvailableAirportVehicles(
     const endD = endDate || startD;
     const endT = endTime || "23:59";
 
-    const result = await getAvailableVehicles(startD, startT, endD, endT, "Airport Rental");
+    const result = await getAvailableVehicles(startD, startT, endD, endT, SERVICE_CATEGORIES.AIRPORT_RENTAL);
     
     if (result.success && result.data) {
         // Further filter by seating and luggage capacity for airport specifics
@@ -136,7 +137,7 @@ export async function createAirportBooking(data: AirportBookingData) {
         luggageCount: data.luggageCount ?? 0,
         customerFullName: data.customerFullName,
         customerPhone: data.customerPhone,
-        customerEmail: data.customerEmail ?? null,
+
         transferLocation: data.transferLocation,
         status: "PENDING",
         bookingType: "airport_rental",
@@ -148,7 +149,7 @@ export async function createAirportBooking(data: AirportBookingData) {
 /**
  * Fetch all airport bookings filtered by status (for employee/admin).
  */
-export async function getAirportBookingsByStatus(status = "PENDING") {
+export async function getAirportBookingsByStatus(status = "PENDING", employeeId?: number) {
     return db
         .select({
             id: airportBookings.id,
@@ -162,7 +163,7 @@ export async function getAirportBookingsByStatus(status = "PENDING") {
             luggageCount: airportBookings.luggageCount,
             customerFullName: airportBookings.customerFullName,
             customerPhone: airportBookings.customerPhone,
-            customerEmail: airportBookings.customerEmail,
+
             transferLocation: airportBookings.transferLocation,
             status: airportBookings.status,
             rejectionReason: airportBookings.rejectionReason,
@@ -180,9 +181,13 @@ export async function getAirportBookingsByStatus(status = "PENDING") {
         .leftJoin(vehicle, eq(airportBookings.vehicleId, vehicle.vehicleId))
         .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
         .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-        .leftJoin(users, eq(airportBookings.customerId, users.id))
+        .leftJoin(users, eq(airportBookings.customerId, users.userId))
         .leftJoin(employee, eq(airportBookings.handledByEmployeeId, employee.employeeId))
-        .where(eq(airportBookings.status, status))
+        .where(
+            employeeId 
+                ? and(eq(airportBookings.status, status), eq(airportBookings.handledByEmployeeId, employeeId))
+                : eq(airportBookings.status, status)
+        )
         .orderBy(airportBookings.createdAt);
 }
 
@@ -203,7 +208,7 @@ export async function getAllAirportBookings() {
             luggageCount: airportBookings.luggageCount,
             customerFullName: airportBookings.customerFullName,
             customerPhone: airportBookings.customerPhone,
-            customerEmail: airportBookings.customerEmail,
+
             transferLocation: airportBookings.transferLocation,
             status: airportBookings.status,
             rejectionReason: airportBookings.rejectionReason,
@@ -220,7 +225,7 @@ export async function getAllAirportBookings() {
         .leftJoin(vehicle, eq(airportBookings.vehicleId, vehicle.vehicleId))
         .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
         .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-        .leftJoin(users, eq(airportBookings.customerId, users.id))
+        .leftJoin(users, eq(airportBookings.customerId, users.userId))
         .leftJoin(employee, eq(airportBookings.handledByEmployeeId, employee.employeeId))
         .orderBy(airportBookings.createdAt);
 }

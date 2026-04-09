@@ -28,7 +28,7 @@ interface AirportVehicle {
 interface BookingFormState {
     customerFullName: string;
     customerPhone: string;
-    customerEmail: string;
+
     transferLocation: string;
 }
 
@@ -59,7 +59,7 @@ function AirportDetailContent() {
     const [booking, setBooking] = useState<BookingFormState>({
         customerFullName: "",
         customerPhone: "",
-        customerEmail: "",
+
         transferLocation: "",
     });
     const [errors, setErrors] = useState<FormErrors>({});
@@ -127,7 +127,7 @@ function AirportDetailContent() {
                     luggage_count: parseInt(luggage, 10),
                     customer_full_name: booking.customerFullName,
                     customer_phone: booking.customerPhone,
-                    customer_email: booking.customerEmail || undefined,
+
                     transfer_location: booking.transferLocation,
                 }),
             });
@@ -343,19 +343,7 @@ function AirportDetailContent() {
                                         {errors.customerPhone && <p className="text-xs text-red-500 font-semibold mt-1">{errors.customerPhone}</p>}
                                     </div>
 
-                                    {/* Email */}
-                                    <div>
-                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-2">
-                                            <Mail className="w-3.5 h-3.5" /> Email (optional)
-                                        </label>
-                                        <input
-                                            type="email"
-                                            placeholder="john@example.com"
-                                            value={booking.customerEmail}
-                                            onChange={e => setBooking(p => ({ ...p, customerEmail: e.target.value }))}
-                                            className="w-full h-12 bg-gray-50 border-2 border-transparent focus:border-yellow-400 rounded-2xl px-4 text-sm font-bold text-gray-900 outline-none transition-all"
-                                        />
-                                    </div>
+
 
                                     {/* Pickup/Drop Address */}
                                     <div>

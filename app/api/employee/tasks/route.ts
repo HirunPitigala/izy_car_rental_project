@@ -16,9 +16,9 @@ export async function GET() {
     // PENDING, ACCEPTED, PICKED_UP, RETURNED
     const bookings = await db.query.booking.findMany({
       where: or(
-        eq(booking.bookingStatus, "ACCEPTED"),
-        eq(booking.bookingStatus, "PICKED_UP"),
-        eq(booking.bookingStatus, "RETURNED")
+        eq(booking.status, "ACCEPTED"),
+        eq(booking.status, "PICKED_UP"),
+        eq(booking.status, "RETURNED")
       ),
       with: {
         vehicle: true,
@@ -37,7 +37,7 @@ export async function GET() {
         status = "COMPLETED";
       } else if (hasBefore) {
           // If has BEFORE, it could be ACTIVE or PENDING_RETURN
-          if (b.bookingStatus === "RETURNED") {
+          if (b.status === "RETURNED") {
               status = "PENDING_RETURN";
           } else {
               status = "ACTIVE";

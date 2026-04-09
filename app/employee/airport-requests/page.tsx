@@ -18,7 +18,7 @@ interface AirportBookingRequest {
     luggageCount: number | null;
     customerFullName: string;
     customerPhone: string;
-    customerEmail: string | null;
+
     transferLocation: string;
     status: string | null;
     rejectionReason: string | null;
@@ -250,12 +250,7 @@ export default function EmployeeAirportRequestsPage() {
                                                     <Phone className="h-3.5 w-3.5 text-gray-400" />
                                                     <span className="font-medium">{req.customerPhone}</span>
                                                 </div>
-                                                {req.customerEmail && (
-                                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                        <AlertCircle className="h-3.5 w-3.5 text-gray-400" />
-                                                        <span className="font-medium">{req.customerEmail}</span>
-                                                    </div>
-                                                )}
+
                                             </div>
 
                                             {req.status === "REJECTED" && req.rejectionReason && (

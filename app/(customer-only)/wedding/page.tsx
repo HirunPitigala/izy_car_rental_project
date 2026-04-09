@@ -30,6 +30,7 @@ export default function WeddingRentalPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [userId, setUserId] = useState<number | null>(null);
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -39,6 +40,15 @@ export default function WeddingRentalPage() {
     });
 
     useEffect(() => {
+        async function fetchSession() {
+            const res = await fetch('/api/auth/session');
+            const data = await res.json();
+            if (data.session?.userId) {
+                setUserId(data.session.userId);
+            }
+        }
+        fetchSession();
+
         async function fetchCars() {
             setLoading(true);
             const result = await getWeddingCars();
@@ -63,6 +73,7 @@ export default function WeddingRentalPage() {
 
         const result = await createWeddingCarInquiry({
             vehicleId: selectedCar,
+            userId: userId!,
             customerName: formData.fullName,
             email: formData.email,
             phone: formData.phone,

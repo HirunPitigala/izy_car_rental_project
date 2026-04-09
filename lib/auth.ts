@@ -1,5 +1,5 @@
 
-import { db } from "@/lib/db";
+import { db } from "@/src/db";
 import { users } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
@@ -113,7 +113,7 @@ export const getSession = cache(async (): Promise<UserSession | null> => {
         } else {
             try {
                 logDebug(`getSession: Fetching user ${userId} from DB...`);
-                const [u] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, userId));
+                const [u] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.userId, userId));
                 if (u) {
                     logDebug("getSession: User found in DB");
                     userData = { name: u.name, email: u.email };

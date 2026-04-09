@@ -16,7 +16,7 @@ export async function POST(req: Request) {
         const body = await req.json();
 
         // Basic validation
-        if (!body.email || !body.password || !body.confirmPassword) {
+        if (!body.name || !body.email || !body.password || !body.confirmPassword) {
             return NextResponse.json(
                 { error: "All fields are required" },
                 { status: 400 }
@@ -24,6 +24,7 @@ export async function POST(req: Request) {
         }
 
         const result = await authService.registerEmployee({
+            name: body.name,
             email: body.email,
             password: body.password,
             confirmPassword: body.confirmPassword

@@ -15,6 +15,7 @@ import {
     getWeddingCarInquiries,
     markWeddingInquiryContacted
 } from "@/lib/actions/weddingActions";
+import { getAllEmployees } from "@/lib/actions/employeeActions";
 import {
     Check,
     X,
@@ -29,7 +30,8 @@ import {
     Truck,
     Key,
     Wind,
-    MessageSquare
+    MessageSquare,
+    Briefcase
 } from "lucide-react";
 
 // --- Categories Configuration ---
@@ -73,10 +75,12 @@ export default function RequestedBookingsPage() {
     const [pickupBookings, setPickupBookings] = useState<any[]>([]);
     const [airportBookings, setAirportBookings] = useState<any[]>([]);
     const [weddingBookings, setWeddingBookings] = useState<any[]>([]);
+    const [employees, setEmployees] = useState<any[]>([]);
 
     // Shared states
     const [actionLoading, setActionLoading] = useState<number | null>(null);
     const [viewingDetails, setViewingDetails] = useState<any>(null);
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("");
     const [showRejectModal, setShowRejectModal] = useState<number | null>(null);
     const [rejectionReason, setRejectionReason] = useState("");
 
@@ -86,6 +90,12 @@ export default function RequestedBookingsPage() {
 
     // Initial Fetch
     useEffect(() => {
+        const loadEmployees = async () => {
+            const res = await getAllEmployees();
+            if (res.success) setEmployees(res.data || []);
+        };
+        loadEmployees();
+
         if (selectedCategory) {
             fetchData(selectedCategory);
         }
@@ -117,7 +127,7 @@ export default function RequestedBookingsPage() {
         setActionLoading(id);
         const formData = new FormData();
         if (reason) formData.append("rejectionReason", reason);
-        const result = await updateBookingStatus(id, status, formData);
+        const result = await updateBookingStatus(id, status, formData, selectedEmployeeId ? parseInt(selectedEmployeeId) : undefined);
         if (result.success) {
             fetchData("rent-a-car");
             setShowRejectModal(null);
@@ -137,7 +147,7 @@ export default function RequestedBookingsPage() {
     // --- PICKUP ACTIONS ---
     const handlePickupAction = async (id: number, status: "ACCEPTED" | "REJECTED", reason?: string) => {
         setActionLoading(id);
-        const result = await updatePickupStatus(id, status, reason);
+        const result = await updatePickupStatus(id, status, reason, selectedEmployeeId ? parseInt(selectedEmployeeId) : undefined);
         if (result.success) {
             fetchData("pickups");
             setShowRejectModal(null);
@@ -159,10 +169,15 @@ export default function RequestedBookingsPage() {
     const handleAirportAction = async (id: number, status: "ACCEPTED" | "REJECTED", reason?: string) => {
         setActionLoading(id);
         try {
-            const res = await fetch(`/api/airport-rental/admin/${id}`, {
+            const res = await fetch(`/api/airport-rental/bookings`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status, rejectionReason: reason })
+                body: JSON.stringify({ 
+                    id, 
+                    status, 
+                    rejection_reason: reason,
+                    employeeId: selectedEmployeeId ? parseInt(selectedEmployeeId) : undefined
+                })
             });
             if (res.ok) fetchData("airport");
             setShowRejectModal(null);
@@ -317,14 +332,26 @@ export default function RequestedBookingsPage() {
 
             {/* DETAIL MODALS (REUSING COMPONENT LOGIC) */}
             {viewingDetails && (
-                <DetailModal category={selectedCategory} data={viewingDetails} onClose={() => setViewingDetails(null)} onApprove={() => {
-                    if (selectedCategory === "rent-a-car") handleRentAction(viewingDetails.bookingId, "ACCEPTED");
-                    else if (selectedCategory === "pickups") handlePickupAction(viewingDetails.id, "ACCEPTED");
-                    else if (selectedCategory === "airport") handleAirportAction(viewingDetails.id, "ACCEPTED");
-                }} onReject={() => setShowRejectModal(selectedCategory === "rent-a-car" ? viewingDetails.bookingId : viewingDetails.id)} onAction={() => {
-                    if (selectedCategory === "wedding") handleWeddingAction(viewingDetails.bookingId);
-                    setViewingDetails(null);
-                }} onViewDocs={selectedCategory === "rent-a-car" ? viewDocs : undefined} />
+                <DetailModal 
+                    category={selectedCategory} 
+                    data={viewingDetails} 
+                    employees={employees}
+                    selectedEmployeeId={selectedEmployeeId}
+                    onEmployeeChange={setSelectedEmployeeId}
+                    onClose={() => { setViewingDetails(null); setSelectedEmployeeId(""); }} 
+                    onApprove={() => {
+                        if (selectedCategory === "rent-a-car") handleRentAction(viewingDetails.bookingId, "ACCEPTED");
+                        else if (selectedCategory === "pickups") handlePickupAction(viewingDetails.id, "ACCEPTED");
+                        else if (selectedCategory === "airport") handleAirportAction(viewingDetails.id, "ACCEPTED");
+                    }} 
+                    onReject={() => setShowRejectModal(selectedCategory === "rent-a-car" ? viewingDetails.bookingId : viewingDetails.id)} 
+                    onAction={() => {
+                        if (selectedCategory === "wedding") handleWeddingAction(viewingDetails.bookingId);
+                        setViewingDetails(null);
+                        setSelectedEmployeeId("");
+                    }} 
+                    onViewDocs={selectedCategory === "rent-a-car" ? viewDocs : undefined} 
+                />
             )}
 
             {/* DOCS MODAL FOR RENT-A-CAR */}
@@ -471,7 +498,7 @@ function WeddingCard({ booking, onDetails, onContacted }: any) {
     );
 }
 
-function DetailModal({ category, data, onClose, onApprove, onReject, onAction, onViewDocs }: any) {
+function DetailModal({ category, data, employees, selectedEmployeeId, onEmployeeChange, onClose, onApprove, onReject, onAction, onViewDocs }: any) {
     return (
         <div className="fixed inset-0 bg-[#0f0f0f]/80 backdrop-blur-md z-50 flex items-center justify-center p-6 lg:p-12 animate-in fade-in duration-300">
             <div className="bg-white w-full max-w-5xl max-h-full rounded-[3rem] overflow-hidden flex flex-col shadow-2xl">
@@ -539,11 +566,44 @@ function DetailModal({ category, data, onClose, onApprove, onReject, onAction, o
 
                     {category === "rent-a-car" && onViewDocs && (
                         <section>
-                            <h4 className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-3"><FileText className="w-4 h-4" /> Documents</h4>
-                            <button onClick={() => onViewDocs(data.bookingId)} className="w-full h-14 bg-white border border-gray-100 rounded-2xl flex items-center justify-center gap-3 hover:border-red-600 transition-all shadow-sm">
+                            <h4 className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
+                                <FileText className="w-4 h-4" /> Documents
+                            </h4>
+                            <button 
+                                onClick={() => onViewDocs(data.bookingId)} 
+                                className="w-full h-14 bg-white border border-gray-100 rounded-2xl flex items-center justify-center gap-3 hover:border-red-600 transition-all shadow-sm"
+                            >
                                 <Eye className="w-4 h-4 text-red-600" />
                                 <span className="text-[10px] font-black uppercase tracking-widest">View All Files</span>
                             </button>
+                        </section>
+                    )}
+
+                    {category !== "wedding" && (
+                        <section className="bg-gray-50 rounded-[2rem] p-8 border border-gray-100">
+                            <h4 className="text-[10px] font-black text-[#0f0f0f] uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                                <Briefcase className="w-4 h-4 text-red-600" /> Assign Employee
+                            </h4>
+                            <div className="space-y-4">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest pl-1">Select an employee to handle this booking</p>
+                                <select
+                                    value={selectedEmployeeId}
+                                    onChange={(e) => onEmployeeChange(e.target.value)}
+                                    className="w-full h-14 bg-white border border-gray-100 rounded-2xl px-6 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-600/20 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="">Select Employee...</option>
+                                    {employees.map((emp: any) => (
+                                        <option key={emp.employeeId} value={emp.employeeId}>
+                                            {emp.name} ({emp.email})
+                                        </option>
+                                    ))}
+                                </select>
+                                {employees.length === 0 && (
+                                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-tight pl-1 italic">
+                                        No registered employees found. Please register employees first.
+                                    </p>
+                                )}
+                            </div>
                         </section>
                     )}
                 </div>
@@ -554,7 +614,13 @@ function DetailModal({ category, data, onClose, onApprove, onReject, onAction, o
                     ) : (
                         <>
                             <button onClick={onReject} className="h-14 px-8 border border-red-100 bg-white text-red-600 font-black rounded-3xl hover:bg-red-600 hover:text-white transition-all text-xs uppercase tracking-widest">Reject</button>
-                            <button onClick={onApprove} className="h-14 px-12 bg-[#0f0f0f] text-white font-black rounded-3xl hover:bg-green-600 transition-all text-xs uppercase tracking-widest">Approve Booking</button>
+                            <button 
+                                onClick={onApprove} 
+                                disabled={!selectedEmployeeId}
+                                className="h-14 px-12 bg-[#0f0f0f] text-white font-black rounded-3xl hover:bg-green-600 transition-all text-xs uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#0f0f0f]"
+                            >
+                                Approve Booking
+                            </button>
                         </>
                     )}
                 </div>

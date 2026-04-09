@@ -6,6 +6,7 @@ import {
     calculateFare,
     estimateDistance,
 } from "@/lib/services/pickupService";
+import { notifyAdmins } from "@/lib/actions/notificationActions";
 
 /**
  * POST /api/pickup/book
@@ -94,6 +95,9 @@ export async function POST(req: Request) {
 
         // ── Persist ───────────────────────────────────────────
         const bookingId = await createPickupBooking(bookingData);
+
+        // ── Notify Admins ─────────────────────────────────────
+        await notifyAdmins(`New Pickup request from ${bookingData.customerFullName} (${bookingData.pickupLocation} -> ${bookingData.dropLocation})`, bookingId);
 
         return NextResponse.json(
             { success: true, bookingId, distanceKm, price },

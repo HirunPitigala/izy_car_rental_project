@@ -4,6 +4,7 @@ import {
     validateAirportBooking,
     createAirportBooking,
 } from "@/lib/services/airportRentalService";
+import { notifyAdmins } from "@/lib/actions/notificationActions";
 
 /**
  * POST /api/airport-rental/book
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
             luggage_count,
             customer_full_name,
             customer_phone,
-            customer_email,
+
             transfer_location,
         } = body;
 
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
             luggageCount: parseInt(luggage_count ?? "0", 10),
             customerFullName: customer_full_name ?? session.user?.name ?? "Customer",
             customerPhone: customer_phone ?? "",
-            customerEmail: customer_email ?? undefined,
+
             transferLocation: transfer_location,
         };
 
@@ -63,6 +64,10 @@ export async function POST(req: Request) {
         }
 
         const bookingId = await createAirportBooking(bookingData);
+        
+        // Notify Admins
+        await notifyAdmins(`New Airport Transfer request from ${bookingData.customerFullName} for ${bookingData.airport}`, bookingId);
+        
         return NextResponse.json({ success: true, bookingId }, { status: 201 });
     } catch (error: any) {
         console.error("[POST /api/airport-rental/book]", error);

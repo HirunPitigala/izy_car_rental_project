@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
     CheckCircle2,
     Calendar,
@@ -20,6 +21,12 @@ function StatusContent() {
     const endDate = searchParams.get("rental_end_date");
     const totalPrice = searchParams.get("totalPrice");
 
+    const [reference, setReference] = useState("—");
+
+    useEffect(() => {
+        setReference(`IZR-${Math.random().toString(36).substr(2, 9).toUpperCase()}`);
+    }, []);
+
     return (
         <div className="max-w-4xl mx-auto py-20 px-6">
             <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-100 overflow-hidden text-center">
@@ -32,7 +39,7 @@ function StatusContent() {
                     </div>
 
                     <h1 className="text-4xl font-black text-[#0f0f0f] mb-4 uppercase tracking-tight">Booking Requested</h1>
-                    <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-xs mb-12">Reference: <span className="text-[#0f0f0f]">IZR-{Math.random().toString(36).substr(2, 9).toUpperCase()}</span></p>
+                    <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-xs mb-12">Reference: <span className="text-[#0f0f0f]">{reference}</span></p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16 text-left">
                         <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">

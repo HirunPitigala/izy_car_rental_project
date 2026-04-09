@@ -79,6 +79,7 @@ export default function EmployeeRequestedBookingsPage() {
     const [viewingDetails, setViewingDetails] = useState<any>(null);
     const [showRejectModal, setShowRejectModal] = useState<number | null>(null);
     const [rejectionReason, setRejectionReason] = useState("");
+    const [employeeId, setEmployeeId] = useState<number | null>(null);
 
     // Rent-A-Car specific
     const [viewingDocs, setViewingDocs] = useState(false);
@@ -86,27 +87,38 @@ export default function EmployeeRequestedBookingsPage() {
 
     // Initial Fetch
     useEffect(() => {
-        if (selectedCategory) {
-            fetchData(selectedCategory);
-        }
-    }, [selectedCategory]);
+        const fetchSession = async () => {
+            const res = await fetch("/api/auth/session");
+            const data = await res.json();
+            if (data.session?.relatedId) {
+                setEmployeeId(data.session.relatedId);
+            }
+        };
+        fetchSession();
 
-    const fetchData = async (category: string) => {
+        if (selectedCategory && employeeId) {
+            fetchData(selectedCategory, employeeId);
+        }
+    }, [selectedCategory, employeeId]);
+
+    const fetchData = async (category: string, empId: number) => {
         setLoading(true);
         if (category === "rent-a-car") {
-            const res = await getPendingBookings();
+            const res = await getPendingBookings(empId);
             if (res.success) setRentBookings(res.data || []);
         } else if (category === "pickups") {
-            const res = await getPendingPickups();
+            const res = await getPendingPickups(empId);
             if (res.success) setPickupBookings(res.data || []);
         } else if (category === "airport") {
             try {
-                // Reusing matching API for airport bookings
-                const res = await fetch("/api/airport-rental/bookings?status=PENDING");
+                const res = await fetch(`/api/airport-rental/bookings?status=PENDING&employeeId=${empId}`);
                 const data = await res.json();
                 if (res.ok && data.success) setAirportBookings(data.data.reverse());
             } catch (e) { console.error(e); }
         } else if (category === "wedding") {
+            // Wedding inquiries don't have assignment yet in schema logic, 
+            // but if we want to filter them, we'd need to add assignedEmployeeId to wedding inquiries too.
+            // For now, let's keep it as is or hide it if we want strict assignment.
             const res = await getWeddingCarInquiries();
             if (res.success && res.data) setWeddingBookings(res.data.filter((b: any) => b.status === "WEDDING_INQUIRY") || []);
         }
@@ -119,8 +131,8 @@ export default function EmployeeRequestedBookingsPage() {
         const formData = new FormData();
         if (reason) formData.append("rejectionReason", reason);
         const result = await updateBookingStatus(id, status, formData);
-        if (result.success) {
-            fetchData("rent-a-car");
+        if (result.success && employeeId) {
+            fetchData("rent-a-car", employeeId);
             setShowRejectModal(null);
             setRejectionReason("");
             setViewingDetails(null);
@@ -139,8 +151,8 @@ export default function EmployeeRequestedBookingsPage() {
     const handlePickupAction = async (id: number, status: "ACCEPTED" | "REJECTED", reason?: string) => {
         setActionLoading(id);
         const result = await updatePickupStatus(id, status, reason);
-        if (result.success) {
-            fetchData("pickups");
+        if (result.success && employeeId) {
+            fetchData("pickups", employeeId);
             setShowRejectModal(null);
             setRejectionReason("");
             setViewingDetails(null);
@@ -152,7 +164,7 @@ export default function EmployeeRequestedBookingsPage() {
     const handleWeddingAction = async (id: number) => {
         setActionLoading(id);
         const result = await markWeddingInquiryContacted(id);
-        if (result.success) fetchData("wedding");
+        if (result.success && employeeId) fetchData("wedding", employeeId);
         setActionLoading(null);
     };
 
@@ -165,7 +177,7 @@ export default function EmployeeRequestedBookingsPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id, status, rejection_reason: reason })
             });
-            if (res.ok) fetchData("airport");
+            if (res.ok && employeeId) fetchData("airport", employeeId);
             setShowRejectModal(null);
             setRejectionReason("");
             setViewingDetails(null);

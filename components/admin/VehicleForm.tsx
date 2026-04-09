@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Upload, X, Save, ArrowLeft, Info, Gauge, Zap, Coins, Clock, Calendar, Scale } from "lucide-react";
 import { saveVehicle } from "@/lib/actions/vehicleActions";
+import { SERVICE_CATEGORIES } from "@/lib/constants";
+
 
 interface VehicleFormProps {
     mode: "add" | "edit";
@@ -12,7 +14,7 @@ interface VehicleFormProps {
     defaultCategory?: string;
 }
 
-export default function VehicleForm({ mode, defaultValues, redirectPath = "/admin/vehicles/rent-a-car", defaultCategory = "Rent a Car" }: VehicleFormProps) {
+export default function VehicleForm({ mode, defaultValues, redirectPath = "/admin/vehicles/rent-a-car", defaultCategory = SERVICE_CATEGORIES.RENT_A_CAR }: VehicleFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState(() => {
@@ -135,11 +137,10 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
                             value={formData.serviceCategory}
                             onChange={(e) => setFormData({ ...formData, serviceCategory: e.target.value })}
                         >
-                            <option value="Rent a Car">Rent a Car</option>
-                            <option value="Pickups">Pickups</option>
-                            <option value="Airport Rental">Airport Rental</option>
-                            <option value="Trental" disabled>Trental (Coming Soon)</option>
-                            <option value="Wind Car Rental" disabled>Wind Car Rental (Coming Soon)</option>
+                            <option value={SERVICE_CATEGORIES.RENT_A_CAR}>{SERVICE_CATEGORIES.RENT_A_CAR}</option>
+                            <option value={SERVICE_CATEGORIES.PICKUPS}>{SERVICE_CATEGORIES.PICKUPS}</option>
+                            <option value={SERVICE_CATEGORIES.AIRPORT_RENTAL}>{SERVICE_CATEGORIES.AIRPORT_RENTAL}</option>
+                            <option value={SERVICE_CATEGORIES.WEDDING_CAR_RENTAL}>{SERVICE_CATEGORIES.WEDDING_CAR_RENTAL}</option>
                         </select>
                     </FormGroup>
                 </div>

@@ -21,7 +21,7 @@ export class AuthService {
 
             // Try to find if this admin is in the DB to get their actual ID
             const dbUser = await authRepository.findUserByEmail(email);
-            const userId = dbUser?.id || 0;
+            const userId = dbUser?.userId || 0;
             const relatedId = dbUser?.relatedId || 0;
 
             const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
@@ -51,13 +51,8 @@ export class AuthService {
             return { success: false, error: "Account is disabled", status: 403 };
         }
 
-        // Bypass verification for admins even if stored in DB
-        if (user.role !== "admin" && !user.emailVerified) {
-            return { success: false, error: "Please verify your email address before logging in.", status: 403 };
-        }
-
         const role = user.role as "admin" | "manager" | "employee" | "customer";
-        const userId = user.id;
+        const userId = user.userId;
         const relatedId = user.relatedId || undefined;
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
@@ -97,7 +92,6 @@ export class AuthService {
             role: "customer",
             name: "New Customer",
             status: "active",
-            emailVerified: false,
         });
 
         const token = generateToken();
@@ -155,7 +149,6 @@ export class AuthService {
             relatedId: managerId,
             name: "New Manager",
             status: "active",
-            emailVerified: false,
         });
 
         const token = generateToken();
@@ -168,7 +161,7 @@ export class AuthService {
     }
 
     async registerEmployee(dto: RegisterEmployeeDto) {
-        const { email, password, confirmPassword } = dto;
+        const { name, email, password, confirmPassword } = dto;
 
         if (password !== confirmPassword) {
             throw new Error("Passwords do not match");
@@ -187,7 +180,7 @@ export class AuthService {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const employeeId = await authRepository.createEmployee({
-            name: "New Employee",
+            name,
             email,
             password: hashedPassword,
             phone: "", 
@@ -198,9 +191,8 @@ export class AuthService {
             passwordHash: hashedPassword,
             role: "employee",
             relatedId: employeeId,
-            name: "New Employee",
-            status: "active",
-            emailVerified: false,
+            name,
+            status: "inactive",
         });
 
         const token = generateToken();
@@ -223,8 +215,8 @@ export class AuthService {
         const token = randomBytes(32).toString("hex");
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-        await authRepository.deleteResetToken(user.id);
-        await authRepository.saveResetToken(user.id, token, expiresAt);
+        await authRepository.deleteResetToken(user.userId);
+        await authRepository.saveResetToken(user.userId, token, expiresAt);
         await sendPasswordResetEmail(email, token);
 
         return { success: true, message: "If an account exists with this email, you will receive a password reset link shortly." };

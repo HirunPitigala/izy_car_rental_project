@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { pickupRequests, vehicle, vehicleBrand, vehicleModel, serviceCategory, users } from "@/src/db/schema";
 import { eq, and, gte } from "drizzle-orm";
+import { SERVICE_CATEGORIES } from "@/lib/constants";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -94,7 +95,7 @@ export async function searchAvailablePickupVehicles(
         .innerJoin(serviceCategory, eq(vehicle.categoryId, serviceCategory.categoryId))
         .where(
             and(
-                eq(serviceCategory.categoryName, "Pickups"),
+                eq(serviceCategory.categoryName, SERVICE_CATEGORIES.PICKUPS),
                 eq(vehicle.status, "AVAILABLE"),
                 gte(vehicle.seatingCapacity, travelers)
             )
@@ -117,15 +118,10 @@ export interface ValidationError {
  */
 export function validatePickupBooking(data: PickupBookingData): ValidationError[] {
     const errors: ValidationError[] = [];
-    const now = new Date();
-
     if (data.travelers <= 0) {
         errors.push({ field: "travelers", message: "Traveler count must be at least 1." });
     }
 
-    // Allow up to 10 minutes in the past to account for timezone
-    // differences between the client's datetime-local input (no TZ suffix)
-    // and the server's UTC clock (e.g. user in UTC+5:30).
     const gracePeriodMs = 10 * 60 * 1000;
     if (data.pickupTime.getTime() < Date.now() - gracePeriodMs) {
         errors.push({ field: "pickupTime", message: "Pickup time must be in the future." });
@@ -190,7 +186,7 @@ export async function createPickupBooking(data: PickupBookingData) {
 /**
  * Fetch all pickup requests with the given status (default: PENDING).
  */
-export async function getPickupRequestsByStatus(status = "PENDING") {
+export async function getPickupRequestsByStatus(status = "PENDING", employeeId?: number) {
     return db
         .select({
             id: pickupRequests.id,
@@ -218,8 +214,12 @@ export async function getPickupRequestsByStatus(status = "PENDING") {
         .leftJoin(vehicle, eq(pickupRequests.vehicleId, vehicle.vehicleId))
         .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
         .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-        .leftJoin(users, eq(pickupRequests.customerId, users.id))
-        .where(eq(pickupRequests.status, status))
+        .leftJoin(users, eq(pickupRequests.customerId, users.userId))
+        .where(
+            employeeId 
+                ? and(eq(pickupRequests.status, status), eq(pickupRequests.assignedEmployeeId, employeeId))
+                : eq(pickupRequests.status, status)
+        )
         .orderBy(pickupRequests.createdAt);
 }
 
@@ -229,13 +229,15 @@ export async function getPickupRequestsByStatus(status = "PENDING") {
 export async function updatePickupRequestStatus(
     id: number,
     status: "ACCEPTED" | "REJECTED",
-    rejectionReason?: string
+    rejectionReason?: string,
+    assignedEmployeeId?: number
 ) {
     await db
         .update(pickupRequests)
         .set({
             status,
             rejectionReason: status === "REJECTED" ? (rejectionReason ?? null) : null,
+            assignedEmployeeId: assignedEmployeeId ?? undefined
         })
         .where(eq(pickupRequests.id, id));
 }

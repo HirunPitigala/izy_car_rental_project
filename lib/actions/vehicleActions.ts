@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { vehicle, vehicleBrand, vehicleModel, serviceCategory, booking } from "@/src/db/schema";
 import { eq, sql, desc, and, ne, notInArray, or, lt, gt, lte, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { SERVICE_CATEGORIES } from "@/lib/constants";
 
 // ----------------------------------------------------------------------------
 // Helper Functions (Internal)
@@ -113,7 +114,7 @@ export async function saveVehicle(data: any) {
 // Fetch Actions (Updated for new Schema)
 // ----------------------------------------------------------------------------
 
-export async function getAvailableVehicles(startDate: string, startTime: string, endDate: string, endTime: string, category: string = "Rent a Car") {
+export async function getAvailableVehicles(startDate: string, startTime: string, endDate: string, endTime: string, category: string = SERVICE_CATEGORIES.RENT_A_CAR) {
     try {
         const start = `${startDate} ${startTime}:00`;
         const end = `${endDate} ${endTime}:00`;
@@ -126,8 +127,8 @@ export async function getAvailableVehicles(startDate: string, startTime: string,
             .where(
                 and(
                     or(
-                        eq(booking.bookingStatus, 'PENDING'),
-                        eq(booking.bookingStatus, 'ACCEPTED')
+                        eq(booking.status, 'PENDING'),
+                        eq(booking.status, 'ACCEPTED')
                     ),
                     sql`${booking.rentalDate} < ${end}`,
                     sql`${booking.returnDate} > ${start}`

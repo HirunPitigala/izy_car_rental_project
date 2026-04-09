@@ -1,15 +1,18 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { vehicle, vehicleBrand, vehicleModel, serviceCategory, booking, notification } from "@/src/db/schema";
+import { vehicle, vehicleBrand, vehicleModel, serviceCategory, booking, notification, users } from "@/src/db/schema";
 import { eq, desc, and, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { notifyAdmins, sendNotification } from "./notificationActions";
+
+import { SERVICE_CATEGORIES } from "@/lib/constants";
 
 // ----------------------------------------------------------------------------
 // Helper: Get or create "Wedding Car Rental" category
 // ----------------------------------------------------------------------------
 async function getWeddingCategoryId(): Promise<number> {
-    const categoryName = "Wedding Car Rental";
+    const categoryName = SERVICE_CATEGORIES.WEDDING_CAR_RENTAL;
     const [existing] = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, categoryName));
     if (existing) return existing.categoryId;
 
@@ -42,7 +45,7 @@ export async function getWeddingCars() {
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
             .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
             .innerJoin(serviceCategory, eq(vehicle.categoryId, serviceCategory.categoryId))
-            .where(eq(serviceCategory.categoryName, "Wedding Car Rental"))
+            .where(eq(serviceCategory.categoryName, SERVICE_CATEGORIES.WEDDING_CAR_RENTAL))
             .orderBy(desc(vehicle.vehicleId));
 
         return { success: true, data: vehicles };
@@ -90,6 +93,7 @@ export async function getWeddingCarById(id: number) {
 
 export async function createWeddingCarInquiry(data: {
     vehicleId: number;
+    userId: number;
     customerName: string;
     email: string;
     phone: string;
@@ -103,6 +107,7 @@ export async function createWeddingCarInquiry(data: {
         // Insert inquiry into booking table
         const [result] = await (db.insert(booking) as any).values({
             vehicleId: data.vehicleId,
+            userId: data.userId,
             serviceCategoryId: weddingCategoryId,
             customerFullName: data.customerName,
             customerPhoneNumber1: data.phone,
@@ -113,20 +118,15 @@ export async function createWeddingCarInquiry(data: {
             message: data.message || null, // Use the new message column
             customerLicenseNo: "N/A",
             customerNicNo: "N/A",
-            bookingStatus: "WEDDING_INQUIRY",
+            status: "WEDDING_INQUIRY",
             terms1: true,
             terms2Confirmation: true,
         });
 
         const bookingId = (result as any).insertId;
 
-        // Create notification for admin
-        await db.insert(notification).values({
-            bookingId: bookingId,
-            message: `New wedding car inquiry from ${data.customerName} for event on ${data.eventDate}`,
-            notificationDate: new Date().toISOString().slice(0, 19).replace('T', ' '),
-            status: "UNREAD"
-        });
+        // Notify Admins
+        await notifyAdmins(`New wedding car inquiry from ${data.customerName} for event on ${data.eventDate}`, bookingId);
 
         revalidatePath("/admin/bookings/wedding-requests");
         return { success: true };
@@ -146,7 +146,7 @@ export async function getWeddingCarInquiries() {
             eventDate: booking.rentalDate,
             pickupLocation: booking.pickupLocation,
             message: booking.message, // Use the new message column
-            status: booking.bookingStatus,
+            status: booking.status,
             createdAt: booking.createdAt,
             vehicle: {
                 brand: vehicleBrand.brandName,
@@ -159,7 +159,7 @@ export async function getWeddingCarInquiries() {
             .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
             .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-            .where(eq(booking.bookingStatus, "WEDDING_INQUIRY"))
+            .where(eq(booking.status, "WEDDING_INQUIRY"))
             .orderBy(desc(booking.createdAt));
 
         return { success: true, data: results };
@@ -172,8 +172,14 @@ export async function getWeddingCarInquiries() {
 export async function markWeddingInquiryContacted(bookingId: number) {
     try {
         await db.update(booking)
-            .set({ bookingStatus: "WEDDING_CONTACTED" })
+            .set({ status: "WEDDING_CONTACTED" })
             .where(eq(booking.bookingId, bookingId));
+
+        // Notify Customer
+        const [b] = await db.select().from(booking).where(eq(booking.bookingId, bookingId));
+        if (b && b.userId) {
+            await sendNotification(b.userId, `Your wedding car inquiry (#${bookingId}) has been processed and you will be contacted shortly.`, bookingId);
+        }
 
         revalidatePath("/admin/bookings/wedding-requests");
         revalidatePath("/admin/bookings/requested");

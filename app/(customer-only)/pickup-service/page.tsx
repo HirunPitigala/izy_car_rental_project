@@ -251,12 +251,12 @@ export default function PickupServicePage() {
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Pickup Location</label>
                                 <div className="relative">
-                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-emerald-500" />
                                     <input
                                         type="text"
                                         required
                                         placeholder="e.g. Negombo Bus Stand"
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
                                         value={searchForm.pickupLocation}
                                         onChange={(e) => setSearchForm({ ...searchForm, pickupLocation: e.target.value })}
                                     />
@@ -265,12 +265,12 @@ export default function PickupServicePage() {
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Drop-Off Location</label>
                                 <div className="relative">
-                                    <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                     <input
                                         type="text"
                                         required
                                         placeholder="e.g. Katunayake Airport"
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
                                         value={searchForm.dropLocation}
                                         onChange={(e) => setSearchForm({ ...searchForm, dropLocation: e.target.value })}
                                     />
@@ -283,11 +283,11 @@ export default function PickupServicePage() {
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Pickup Date & Time</label>
                                 <div className="relative">
-                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-emerald-500" />
                                     <input
                                         type="datetime-local"
                                         required
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
                                         value={searchForm.pickupDatetime}
                                         onChange={(e) => setSearchForm({ ...searchForm, pickupDatetime: e.target.value })}
                                     />
@@ -308,7 +308,7 @@ export default function PickupServicePage() {
                                     <span className="font-bold text-sm">
                                         {searchForm.isReturnTrip ? "Return trip included" : "One-way trip"}
                                     </span>
-                                    <div className={`ml-auto w-10 h-6 rounded-full transition-all relative
+                                    <div className={`ml-auto w-10 h-6 rounded-full transition-all relative flex-shrink-0
                                         ${searchForm.isReturnTrip ? "bg-emerald-500" : "bg-gray-200"}`}>
                                         <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all
                                             ${searchForm.isReturnTrip ? "left-5" : "left-1"}`} />
@@ -319,18 +319,20 @@ export default function PickupServicePage() {
 
                         {/* Return datetime (conditional) */}
                         {searchForm.isReturnTrip && (
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Return Date & Time</label>
-                                <div className="relative">
-                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input
-                                        type="datetime-local"
-                                        required
-                                        min={searchForm.pickupDatetime || undefined}
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
-                                        value={searchForm.returnDatetime}
-                                        onChange={(e) => setSearchForm({ ...searchForm, returnDatetime: e.target.value })}
-                                    />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Return Date & Time</label>
+                                    <div className="relative">
+                                        <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <input
+                                            type="datetime-local"
+                                            required
+                                            min={searchForm.pickupDatetime || undefined}
+                                            className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                            value={searchForm.returnDatetime}
+                                            onChange={(e) => setSearchForm({ ...searchForm, returnDatetime: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -340,13 +342,13 @@ export default function PickupServicePage() {
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Travelers</label>
                                 <div className="relative">
-                                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-emerald-500" />
                                     <input
                                         type="number"
                                         min={1}
                                         max={20}
                                         required
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-bold text-gray-900"
+                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-bold text-gray-900"
                                         value={searchForm.travelers}
                                         onChange={(e) => setSearchForm({ ...searchForm, travelers: parseInt(e.target.value) })}
                                     />
@@ -355,12 +357,12 @@ export default function PickupServicePage() {
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Luggage Pieces</label>
                                 <div className="relative">
-                                    <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                     <input
                                         type="number"
                                         min={0}
                                         max={20}
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-bold text-gray-900"
+                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-bold text-gray-900"
                                         value={searchForm.luggageCount}
                                         onChange={(e) => setSearchForm({ ...searchForm, luggageCount: parseInt(e.target.value) || 0 })}
                                     />
@@ -556,12 +558,12 @@ export default function PickupServicePage() {
                                 <div className="space-y-2">
                                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Full Name</label>
                                     <div className="relative">
-                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                         <input
                                             type="text"
                                             required
                                             placeholder="Your full name"
-                                            className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                            className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
                                             value={bookingForm.customerFullName}
                                             onChange={(e) => setBookingForm({ ...bookingForm, customerFullName: e.target.value })}
                                         />
@@ -570,12 +572,12 @@ export default function PickupServicePage() {
                                 <div className="space-y-2">
                                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Phone Number</label>
                                     <div className="relative">
-                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                         <input
                                             type="tel"
                                             required
                                             placeholder="+94 77 XXX XXXX"
-                                            className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                            className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
                                             value={bookingForm.customerPhone}
                                             onChange={(e) => setBookingForm({ ...bookingForm, customerPhone: e.target.value })}
                                         />

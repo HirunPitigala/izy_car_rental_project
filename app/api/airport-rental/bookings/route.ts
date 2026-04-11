@@ -86,22 +86,22 @@ export async function PATCH(req: Request) {
             if (upperStatus === "ACCEPTED") {
                 // 1. Notify Customer — in-app + email
                 if (a.customerId) {
-                    try { await sendNotification(a.customerId, `Your Airport booking (#${id}) has been ACCEPTED.`, parseInt(id, 10)); }
+                    try { await sendNotification(a.customerId, `Your Airport booking (#${id}) has been ACCEPTED.`, parseInt(id, 10), "airport-transfer"); }
                     catch (e) { console.error("Notification error:", e); }
                     try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", parseInt(id, 10), "Airport Transfer", "ACCEPTED"); }
                     catch (e) { console.error("Email error:", e); }
                 }
-                // 2. Notify Assigned Employee
+                // 2. Notify Assigned Employee — serviceType enables navigation
                 if (employeeId) {
                     try {
                         const [empUser] = await db.select({ id: users.userId }).from(users).where(eq(users.relatedId, employeeId));
-                        if (empUser) await sendNotification(empUser.id, `You have been assigned to handle Airport booking #${id}.`, parseInt(id, 10));
+                        if (empUser) await sendNotification(empUser.id, `New Booking Assigned - Airport booking #${id}`, parseInt(id, 10), "airport-transfer");
                     } catch (e) { console.error("Employee notification error:", e); }
                 }
             } else if (upperStatus === "REJECTED") {
                 // Notify Customer — in-app + email
                 if (a.customerId) {
-                    try { await sendNotification(a.customerId, `Your Airport booking (#${id}) has been REJECTED.`, parseInt(id, 10)); }
+                    try { await sendNotification(a.customerId, `Your Airport booking (#${id}) has been REJECTED.`, parseInt(id, 10), "airport-transfer"); }
                     catch (e) { console.error("Notification error:", e); }
                     try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", parseInt(id, 10), "Airport Transfer", "REJECTED", rejection_reason ?? undefined); }
                     catch (e) { console.error("Email error:", e); }

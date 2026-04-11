@@ -183,7 +183,7 @@ export async function markWeddingInquiryContacted(bookingId: number) {
 
         revalidatePath("/admin/bookings/wedding-requests");
         revalidatePath("/admin/bookings/requested");
-        revalidatePath("/employee/bookings/requested");
+        revalidatePath("/employee/assigned");
         return { success: true };
     } catch (error: any) {
         console.error("Error updating wedding inquiry:", error);

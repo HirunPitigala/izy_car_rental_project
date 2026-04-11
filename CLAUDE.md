@@ -80,6 +80,7 @@ c:\SDP\car-rental\
 │   │   │   ├── available/page.tsx
 │   │   │   └── [id]/page.tsx
 │   │   └── pickup-service/page.tsx
+│   ├── unauthorized/page.tsx               # Shared unauthorized access page
 │   ├── admin/                              # Admin dashboard pages
 │   │   ├── layout.tsx                      # Role guard — redirects non-admins
 │   │   ├── dashboard/
@@ -105,13 +106,13 @@ c:\SDP\car-rental\
 │   │   │   ├── airport-bookings/page.tsx
 │   │   │   └── wedding-requests/page.tsx
 │   │   ├── employees/page.tsx
-│   │   ├── hello/page.tsx                  # Debug test route
-│   │   └── unauthorized/page.tsx
+│   │   └── hello/page.tsx                  # Debug test route
 │   ├── customer/
 │   │   ├── layout.tsx
 │   │   └── dashboard/page.tsx
 │   ├── manager/                            # Manager dashboard pages
-│   │   └── layout.tsx                      # Role guard
+│   │   ├── layout.tsx                      # Role guard
+│   │   └── dashboard/page.tsx
 │   ├── employee/                           # Employee dashboard pages
 │   │   ├── layout.tsx                      # Role guard
 │   │   ├── page.tsx
@@ -126,6 +127,7 @@ c:\SDP\car-rental\
 │       │   ├── admin/login/route.ts        # Hardcoded admin credential check
 │       │   ├── logout/route.ts
 │       │   ├── session/route.ts
+│       │   ├── verify/route.ts             # POST — token-based email verification
 │       │   ├── verify-email/route.ts
 │       │   ├── forgot-password/route.ts
 │       │   └── reset-password/route.ts
@@ -196,7 +198,7 @@ c:\SDP\car-rental\
 │       └── InspectionComparisonTable.tsx
 ├── lib/                                    # Server-side utilities and services
 │   ├── auth.ts                             # JWT encrypt/decrypt, getSession(), logDebug()
-│   ├── db.ts                               # Legacy Drizzle instance — DO NOT USE for new code
+│   ├── db.ts                               # Re-exports db + pool from @/src/db (safe to import)
 │   ├── email.ts                            # Nodemailer transporter + email functions
 │   ├── notificationBroker.ts               # Global EventEmitter singleton for SSE
 │   ├── cloudinary.ts                       # uploadToCloudinary(), uploadBase64ToCloudinary()
@@ -238,8 +240,8 @@ c:\SDP\car-rental\
 │   │   ├── bookingActions.ts               # createBooking, updateBookingStatus, getPendingBookings
 │   │   ├── pickupActions.ts                # getPendingPickups, updatePickupStatus
 │   │   ├── vehicleActions.ts               # saveVehicle, getAvailableVehicles, getVehicleById
-│   │   ├── weddingActions.ts               # createWeddingCarInquiry, markWeddingInquiryContacted
-│   │   ├── employeeActions.ts              # getAllEmployees
+│   │   ├── weddingActions.ts               # getWeddingCars, getWeddingCarById, createWeddingCarInquiry, markWeddingInquiryContacted, addVehicleToWeddingCategory, removeVehicleFromWeddingCategory, getNonWeddingVehicles
+│   │   ├── employeeActions.ts              # getAllEmployees, updateEmployeeStatus, deleteEmployee
 │   │   └── notificationActions.ts          # sendNotification, notifyAdmins
 │   └── services/                           # Business logic services
 │       ├── airportRentalService.ts          # searchAvailableAirportVehicles, createAirportBooking, updateAirportBookingStatus
@@ -264,12 +266,12 @@ c:\SDP\car-rental\
 
 | Table | Description |
 |-------|-------------|
-| `users` | Base user record (email, passwordHash, role, relatedId, name, phone) — **no** `email_verified` column |
+| `users` | Base user record (email, passwordHash, role, relatedId, name, phone, status, emailVerified, verificationToken, tokenExpiry) |
 | `admin` | Admin profile (name, email, password) |
 | `employee` | Employee profile (status: PENDING / ACTIVE) |
 | `manager` | Manager profile |
 | `driver` | Driver profile, linked to vehicle and admin |
-| `vehicle` | Rentable vehicles with pricing, capacity, status |
+| `vehicle` | Rentable vehicles with pricing, capacity, status, chassisNumber |
 | `vehicleBrand` | Vehicle brand lookup |
 | `vehicleModel` | Vehicle model lookup (belongs to brand) |
 | `serviceCategory` | Service category lookup (regular, airport, pickup, wedding) |
@@ -283,7 +285,7 @@ c:\SDP\car-rental\
 | `review` | Customer reviews (rating 1–5) linked to booking + vehicle |
 | `report` | Manager-generated summary reports |
 | `pickupRequests` | Pickup/delivery bookings (customerId, vehicleId, driverId, pickupLocation, dropLocation, pickupTime, returnTime, isReturnTrip, travelers, luggageCount, distanceKm, price, customerFullName, customerPhone, status, rejectionReason, assignedEmployeeId) |
-| `airportBookings` | Airport transfer bookings (customerId, vehicleId, transferType: pickup/drop, airport: katunayaka/mattala, pickupDate, pickupTime, dropDate, dropTime, passengers, luggageCount, customerFullName, customerPhone, transferLocation, status, rejectionReason, handledByEmployeeId) |
+| `airportBookings` | Airport transfer bookings (customerId, vehicleId, transferType: pickup/drop, airport: katunayaka/mattala, pickupDate, pickupTime, dropDate, dropTime, passengers, luggageCount, customerFullName, customerPhone, transferLocation, status, bookingType DEFAULT "airport_rental", rejectionReason, handledByEmployeeId) |
 | `emailVerificationTokens` | Email verification token store |
 | `passwordResetTokens` | Password reset token store |
 
@@ -313,13 +315,13 @@ TypeScript types: `lib/db/types.ts`
 
 **Key auth files:**
 - `lib/auth.ts` — `getSession()`, `encrypt()`, `decrypt()`, `logDebug()`; imports `db` from `@/src/db`
-- `src/modules/auth/auth.service.ts` — login/register logic; no email-verified gate (column absent from DB)
-- `src/modules/auth/auth.repository.ts` — DB queries; `markEmailVerified()` is a deliberate no-op
+- `src/modules/auth/auth.service.ts` — login/register logic; includes email verification and password reset flows
+- `src/modules/auth/auth.repository.ts` — DB queries; `markEmailVerified()` sets `emailVerified: true` and `status: "active"`
 - `src/modules/auth/auth.dto.ts` — `LoginDto`, `RegisterCustomerDto`, `RegisterManagerDto`, `RegisterEmployeeDto`
 
 Route protection is done at **layout level** (redirect if wrong role), not middleware.
 
-> **Important — single `db` instance:** Always import `db` from `@/src/db` (not `@/lib/db`). Using `@/lib/db` creates a second Drizzle instance whose table metadata is out of sync, causing `Unknown column` errors at runtime.
+> **Important — single `db` instance:** Always import `db` from `@/src/db`. `lib/db.ts` now re-exports from `@/src/db`, so both paths resolve to the same instance — but direct use of `@/src/db` is preferred to keep imports explicit.
 
 ## Notification System
 
@@ -409,7 +411,7 @@ Config file: `.env.local`
 7. **Session caching** — `getSession()` uses React `cache()` for per-request deduplication
 8. **Image uploads** — always go through `/api/upload` → Cloudinary, never local storage; `saveFileToCloudinary()` returns `null` on network failure (non-fatal)
 9. **Role-based redirects** — enforced in layout files, not middleware
-10. **Raw Drizzle** — always import `db` from `@/src/db` (canonical instance); `lib/db.ts` is legacy — do not use for new code
+10. **Raw Drizzle** — always import `db` from `@/src/db` (canonical instance); `lib/db.ts` re-exports from `@/src/db` and is safe but non-preferred
 11. **NotificationBroker** — stored on `global` so server actions and route handlers share the same EventEmitter instance across Next.js module contexts
 12. **Email notifications** — `sendBookingStatusEmail()` swallows its own errors; email failure never interrupts booking workflow
 13. **Pricing multipliers** — `lib/price-helper.ts`: PICKUP 1.2×, AIRPORT 1.3×, WEDDING 1.5×, NORMAL 1.0×
@@ -425,6 +427,15 @@ const bookings = await BookingRepo.getBookingsByUserId(userId);
 await BookingRepo.updateBooking(bookingId, { status: 'APPROVED' });
 ```
 
+**Bulk insert variants** (non-standard, inspection only):
+- `InspectionItemsRepo.createManyInspectionItems(data[])` — batch-insert checklist results
+- `DamageReportsRepo.createManyDamageReports(data[])` — batch-insert damage markers
+
+**Auth repository key methods** (`src/modules/auth/auth.repository.ts`):
+- `saveVerificationToken(userId, token, expiresAt)` / `findToken(token)` / `deleteToken(id)`
+- `saveResetToken(userId, token, expiresAt)` / `findResetToken(token)` / `deleteResetToken(userId)` / `deleteResetTokenById(id)`
+- `markEmailVerified(userId)` — sets `emailVerified: true`, `status: "active"`
+
 ## Bug Fixes Applied (errorfix branch)
 
 ### 1. Dual Drizzle instance — `Unknown column 'users.id'`
@@ -432,14 +443,13 @@ await BookingRepo.updateBooking(bookingId, { status: 'APPROVED' });
 - **Fix:** Changed `lib/auth.ts` to import `db` from `@/src/db`.
 - **Rule going forward:** Only ever import `db` from `@/src/db`.
 
-### 2. Schema/DB mismatch — `email_verified` / `email_verified_at`
-- **Root cause:** `src/db/schema.ts` declared `emailVerified` and `emailVerifiedAt` on the `users` table, but these columns do not exist in the actual MySQL database.
-- **Fix:** Removed both columns from `src/db/schema.ts`.
+### 2. Schema/DB mismatch — `email_verified_at`
+- **Root cause:** `src/db/schema.ts` declared `emailVerifiedAt` on the `users` table, but this column does not exist in the actual MySQL database.
+- **Fix:** Removed `emailVerifiedAt` from `src/db/schema.ts`. The `emailVerified` boolean column remains (exists in DB). New columns `verificationToken` and `tokenExpiry` were added directly to the `users` table for inline token storage alongside the `emailVerificationTokens` table.
+- **Current state of `users` table verification columns:** `emailVerified boolean DEFAULT false`, `verificationToken varchar(255)`, `tokenExpiry datetime`
 - **Downstream changes:**
-  - `auth.service.ts` — removed `!user.emailVerified` login gate and `emailVerified: false` from all `createUser()` calls
-  - `auth.repository.ts` — `markEmailVerified()` made a deliberate no-op
+  - `auth.repository.ts` — `markEmailVerified()` sets `emailVerified: true` and `status: "active"`
   - `lib/db/types.ts` — `User` / `NewUser` types auto-updated via `$inferSelect` / `$inferInsert`
-- **Note:** Email verification tokens still exist and the token flow still runs, but the users table no longer tracks a verified flag.
 
 ### 3. NotificationBroker singleton isolation
 - **Root cause:** Next.js compiles `"use server"` actions and API route handlers into separate bundles, each getting their own module instance. The old static-class singleton created two separate EventEmitter objects, so broker events fired from server actions were never received by the SSE route handler.

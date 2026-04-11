@@ -88,7 +88,7 @@ export default function RequestedBookingsPage() {
     const [viewingDocs, setViewingDocs] = useState(false);
     const [selectedDocs, setSelectedDocs] = useState<any>(null);
 
-    // Initial Fetch
+    // Initial Fetch & Deep Linking
     useEffect(() => {
         const loadEmployees = async () => {
             const res = await getAllEmployees();
@@ -96,12 +96,19 @@ export default function RequestedBookingsPage() {
         };
         loadEmployees();
 
+        const search = window.location.search;
+        const params = new URLSearchParams(search);
+        const cat = params.get("category");
+        if (cat && !selectedCategory) {
+            setSelectedCategory(cat);
+        }
+
         if (selectedCategory) {
-            fetchData(selectedCategory);
+            fetchData(selectedCategory, params.get("highlight"));
         }
     }, [selectedCategory]);
 
-    const fetchData = async (category: string) => {
+    const fetchData = async (category: string, highlightId?: string | null) => {
         setLoading(true);
         if (category === "rent-a-car") {
             const res = await getPendingBookings();
@@ -120,6 +127,42 @@ export default function RequestedBookingsPage() {
             if (res.success && res.data) setWeddingBookings(res.data.filter((b: any) => b.status === "WEDDING_INQUIRY") || []);
         }
         setLoading(false);
+        
+        // Handle Highlight Deep Link
+        if (highlightId) {
+            const id = parseInt(highlightId);
+            setTimeout(() => {
+                if (category === "rent-a-car") {
+                    setRentBookings(current => {
+                        const b = current.find((x: any) => x.bookingId === id);
+                        if (b) setViewingDetails(b);
+                        return current;
+                    });
+                } else if (category === "pickups") {
+                    setPickupBookings(current => {
+                        const b = current.find((x: any) => x.id === id);
+                        if (b) setViewingDetails(b);
+                        return current;
+                    });
+                } else if (category === "airport") {
+                    setAirportBookings(current => {
+                        const b = current.find((x: any) => x.id === id);
+                        if (b) setViewingDetails(b);
+                        return current;
+                    });
+                } else if (category === "wedding") {
+                    setWeddingBookings(current => {
+                        const b = current.find((x: any) => x.bookingId === id);
+                        if (b) setViewingDetails(b);
+                        return current;
+                    });
+                }
+                
+                // Clear the URL parameter so it doesn't stay stuck highlighted
+                const newUrl = window.location.pathname + "?category=" + category;
+                window.history.replaceState({}, document.title, newUrl);
+            }, 100);
+        }
     };
 
     // --- RENT-A-CAR ACTIONS ---

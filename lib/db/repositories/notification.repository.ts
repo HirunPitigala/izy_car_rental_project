@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db } from '@/lib/db';
+import { db } from '@/src/db';
 import { notification } from '@/src/db/schema';
 import type { Notification, NewNotification } from '../types';
 

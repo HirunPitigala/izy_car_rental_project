@@ -88,8 +88,8 @@ export async function createBooking(formData: FormData) {
             idPath
         });
 
-        // Insert into database
-        await db.insert(booking).values({
+        // Insert into database — capture insertId for notification
+        const [insertResult] = await (db.insert(booking) as any).values({
             userId: userId,
             vehicleId: vehicleId,
             serviceCategoryId: serviceCategoryId,
@@ -114,10 +114,16 @@ export async function createBooking(formData: FormData) {
             terms2Confirmation: true,
         });
 
+        const newBookingId: number | undefined = (insertResult as any)?.insertId;
+
         revalidatePath("/admin/bookings/requested");
 
-        // Notify Admins
-        await notifyAdmins(`New Rent-a-Car booking request from ${customerFullName}`);
+        // Notify Admins — include bookingId and serviceType for navigation
+        await notifyAdmins(
+            `New Rent-a-Car booking request from ${customerFullName}${newBookingId ? ` (#${newBookingId})` : ""}`,
+            newBookingId,
+            "rent-a-car"
+        );
 
         return { success: true };
     } catch (error) {
@@ -185,7 +191,7 @@ export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" 
             .where(eq(booking.bookingId, bookingId));
 
         revalidatePath("/admin/bookings/requested");
-        revalidatePath("/employee/bookings/requested");
+        revalidatePath("/employee/assigned");
 
         // Handle Notifications
         const [b] = await db.select().from(booking).where(eq(booking.bookingId, bookingId));
@@ -196,23 +202,23 @@ export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" 
             if (status === "ACCEPTED") {
                 // 1. Notify Customer — in-app + email
                 if (b.userId) {
-                    try { await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been ACCEPTED.`, bookingId); }
+                    try { await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been ACCEPTED.`, bookingId, "rent-a-car"); }
                     catch (e) { console.error("Notification error:", e); }
                     try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", bookingId, "Rent-a-Car", "ACCEPTED"); }
                     catch (e) { console.error("Email error:", e); }
                 }
-                // 2. Notify Assigned Employee
+                // 2. Notify Assigned Employee — serviceType enables navigation to booking detail
                 if (assignedEmployeeId) {
                     try {
                         const [empUser] = await db.select({ id: users.userId }).from(users).where(eq(users.relatedId, assignedEmployeeId));
-                        if (empUser) await sendNotification(empUser.id, `You have been assigned to handle Rent-a-Car booking #${bookingId}.`, bookingId);
+                        if (empUser) await sendNotification(empUser.id, `New Booking Assigned - Rent-a-Car booking #${bookingId}`, bookingId, "rent-a-car");
                     } catch (e) { console.error("Employee notification error:", e); }
                 }
             } else if (status === "REJECTED") {
                 // Notify Customer — in-app + email
                 if (b.userId) {
                     const reason = formData?.get("rejectionReason") as string | undefined;
-                    try { await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been REJECTED.`, bookingId); }
+                    try { await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been REJECTED.`, bookingId, "rent-a-car"); }
                     catch (e) { console.error("Notification error:", e); }
                     try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", bookingId, "Rent-a-Car", "REJECTED", reason ?? undefined); }
                     catch (e) { console.error("Email error:", e); }

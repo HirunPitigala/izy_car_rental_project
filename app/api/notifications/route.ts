@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { NotificationRepo } from "@/lib/db";
+import { NotificationRepo } from "@/lib/db/index";
 
 /**
  * GET /api/notifications

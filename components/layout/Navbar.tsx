@@ -25,6 +25,7 @@ const guestNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
     { label: 'Dashboard', href: '/admin/dashboard' },
     { label: 'Requested Bookings', href: '/admin/bookings/requested' },
+    { label: 'All Bookings', href: '/admin/bookings/all' },
     { label: 'Vehicles', href: '/admin/vehicles' },
     { label: 'Reports', href: '/admin/reports' },
 ];

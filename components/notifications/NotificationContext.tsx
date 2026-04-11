@@ -28,24 +28,49 @@ export function NotificationProvider({ children, session }: { children: ReactNod
     useEffect(() => {
         if (!session) return;
 
-        const eventSource = new EventSource("/api/notifications/stream");
+        let retryDelay = 1000;
+        let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+        let es: EventSource | null = null;
 
-        eventSource.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            const newNotif = {
-                id: Math.random().toString(36).substr(2, 9),
-                ...data
+        const connect = () => {
+            es = new EventSource("/api/notifications/stream");
+
+            es.onopen = () => {
+                retryDelay = 1000; // reset backoff on successful connection
             };
-            
-            setNotifications(prev => [newNotif, ...prev].slice(0, 20));
-            setShowToasts(prev => [...prev, newNotif]);
-            
-            setTimeout(() => {
-                setShowToasts(prev => prev.filter(t => t.id !== newNotif.id));
-            }, 5000);
+
+            es.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const newNotif = {
+                    id: Math.random().toString(36).substr(2, 9),
+                    ...data
+                };
+
+                setNotifications(prev => [newNotif, ...prev].slice(0, 20));
+                setShowToasts(prev => [...prev, newNotif]);
+
+                setTimeout(() => {
+                    setShowToasts(prev => prev.filter(t => t.id !== newNotif.id));
+                }, 5000);
+            };
+
+            // Exponential backoff on error — prevents reconnection storms that
+            // exhaust the DB connection pool when the server is under load.
+            es.onerror = () => {
+                es?.close();
+                retryTimeout = setTimeout(() => {
+                    retryDelay = Math.min(retryDelay * 2, 30000); // cap at 30 s
+                    connect();
+                }, retryDelay);
+            };
         };
 
-        return () => eventSource.close();
+        connect();
+
+        return () => {
+            es?.close();
+            if (retryTimeout) clearTimeout(retryTimeout);
+        };
     }, [session]);
 
     const clearToasts = (id: string) => setShowToasts(prev => prev.filter(t => t.id !== id));

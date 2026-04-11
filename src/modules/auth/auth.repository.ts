@@ -15,11 +15,15 @@ export class AuthRepository {
     }
 
     async saveVerificationToken(userId: number, token: string, expiresAt: Date) {
-        await db.insert(emailVerificationTokens).values({
-            userId,
-            token,
-            expiresAt,
-        });
+        await db.update(users).set({
+            verificationToken: token,
+            tokenExpiry: expiresAt,
+        }).where(eq(users.userId, userId));
+    }
+
+    async findUserByToken(token: string) {
+        const [user] = await db.select().from(users).where(eq(users.verificationToken, token)).limit(1);
+        return user;
     }
 
     async findToken(token: string) {
@@ -27,8 +31,15 @@ export class AuthRepository {
         return record;
     }
 
-    async markEmailVerified(_userId: number) {
-        // email_verified / email_verified_at columns do not exist in the database — no-op
+    async markEmailVerified(userId: number) {
+        await db.update(users)
+            .set({
+                emailVerified: true,
+                status: "active",
+                verificationToken: null,
+                tokenExpiry: null,
+            })
+            .where(eq(users.userId, userId));
     }
 
     async deleteToken(id: number) {

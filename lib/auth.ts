@@ -1,7 +1,4 @@
 
-import { db } from "@/src/db";
-import { users } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 
@@ -100,37 +97,12 @@ export const getSession = cache(async (): Promise<UserSession | null> => {
 
         logDebug(`getSession: Decoded session for role: ${role}, userId: ${userId}`);
 
-        // Fetch user data from DB using userId (primary key in users table)
-        let userData: { name: string | null; email: string | null } | undefined;
-
-        if (userId === 0 && role === 'admin') {
-            logDebug("getSession: System Admin bypass detected");
-            const adminEmail = process.env.ADMIN_EMAIL;
-            userData = {
-                name: "System Admin",
-                email: adminEmail || "admin@izycar.com"
-            };
-        } else {
-            try {
-                logDebug(`getSession: Fetching user ${userId} from DB...`);
-                const [u] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.userId, userId));
-                if (u) {
-                    logDebug("getSession: User found in DB");
-                    userData = { name: u.name, email: u.email };
-                } else if (role === 'admin') {
-                    logDebug("getSession: User NOT found in DB, but role is admin. Using fallback.");
-                    const adminEmail = process.env.ADMIN_EMAIL;
-                    userData = { name: "System Admin", email: adminEmail || "admin@izycar.com" };
-                }
-            } catch (dbError: any) {
-                logDebug(`getSession: Database error: ${dbError?.message}`);
-                console.error("getSession: Database error", dbError);
-                if (role === 'admin') {
-                    const adminEmail = process.env.ADMIN_EMAIL;
-                    userData = { name: "System Admin", email: adminEmail || "admin@izycar.com" };
-                }
-            }
-        }
+        // Read name/email from the JWT payload — embedded at login time.
+        // This avoids a DB round-trip on every request (critical for SSE connections).
+        const userData: { name: string | null; email: string | null } = {
+            name: decoded.name ?? null,
+            email: decoded.email ?? null,
+        };
 
         logDebug("getSession: Success. Returning session.");
         return {

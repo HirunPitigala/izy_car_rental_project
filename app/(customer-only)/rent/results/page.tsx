@@ -5,7 +5,6 @@ import { useState, useEffect, Suspense } from "react";
 import RentVehicleCard, { Vehicle } from "@/components/rent/RentVehicleCard";
 import { Loader2, AlertCircle, Filter, Calendar, Search } from "lucide-react";
 import Link from "next/link";
-import { mockVehicles } from "@/lib/mockVehicles";
 
 import { getAvailableVehicles } from "@/lib/actions/vehicleActions";
 
@@ -70,29 +69,29 @@ function ResultsContent() {
     }, [startDate, startTime, endDate, endTime]);
 
     return (
-        <div className="container mx-auto px-6 py-12">
+        <div className="container mx-auto px-4 sm:px-6 py-8">
             {/* Search Info Bar */}
-            <div className="bg-white rounded-[2rem] border border-gray-100 p-6 md:p-8 mb-12 flex flex-col lg:flex-row lg:items-center justify-between gap-8 shadow-sm">
-                <div className="flex flex-wrap items-center gap-6 md:gap-10">
-                    <div className="w-12 h-12 bg-red-50 rounded-2xl flex-shrink-0 flex items-center justify-center text-red-600 shadow-sm">
-                        <Calendar className="w-6 h-6" />
+            <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-5 mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5 shadow-sm">
+                <div className="flex flex-wrap items-center gap-4 md:gap-8">
+                    <div className="w-9 h-9 bg-red-50 rounded-lg shrink-0 flex items-center justify-center text-red-600">
+                        <Calendar className="w-4 h-4" />
                     </div>
-                    <div className="flex flex-wrap items-center gap-8 md:gap-16">
-                        <div className="min-w-fit">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Pick-up Session</p>
-                            <div className="flex items-center gap-3">
-                                <p className="text-sm font-black text-[#0f0f0f]">{startDate || "N/A"}</p>
-                                <span className="w-1 h-1 rounded-full bg-gray-200" />
-                                <p className="text-xs font-bold text-gray-500">{startTime || "08:00"}</p>
+                    <div className="flex flex-wrap items-center gap-6 md:gap-10">
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Pick-up</p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">{startDate || "N/A"}</p>
+                                <span className="text-gray-300 text-sm">·</span>
+                                <p className="text-xs font-medium text-gray-500 whitespace-nowrap">{startTime || "08:00"}</p>
                             </div>
                         </div>
                         <div className="h-10 w-px bg-gray-100 hidden md:block" />
-                        <div className="min-w-fit">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Return Session</p>
-                            <div className="flex items-center gap-3">
-                                <p className="text-sm font-black text-[#0f0f0f]">{endDate || "N/A"}</p>
-                                <span className="w-1 h-1 rounded-full bg-gray-200" />
-                                <p className="text-xs font-bold text-gray-500">{endTime || "18:00"}</p>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Return</p>
+                            <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">{endDate || "N/A"}</p>
+                                <span className="text-gray-300 text-sm">·</span>
+                                <p className="text-xs font-medium text-gray-500 whitespace-nowrap">{endTime || "18:00"}</p>
                             </div>
                         </div>
                     </div>
@@ -100,16 +99,16 @@ function ResultsContent() {
 
                 <Link
                     href="/rent"
-                    className="h-12 px-6 rounded-xl border border-gray-100 bg-gray-50 text-[10px] font-black uppercase tracking-widest text-[#0f0f0f] hover:bg-[#0f0f0f] hover:text-white flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95 whitespace-nowrap"
+                    className="h-9 px-4 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-900 hover:text-white flex items-center justify-center gap-1.5 transition-all whitespace-nowrap shrink-0"
                 >
                     <Filter className="w-3.5 h-3.5" />
                     Modify Search
                 </Link>
             </div>
 
-            <div className="mb-10">
-                <h2 className="text-3xl font-black text-[#0f0f0f] tracking-tight mb-2 uppercase">Available Vehicles</h2>
-                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Found <span className="text-red-600">{vehicles.length}</span> premium results for your selection</p>
+            <div className="mb-5">
+                <h2 className="text-xl font-bold text-gray-900 mb-1">Available Vehicles</h2>
+                <p className="text-sm text-gray-500">Found <span className="text-red-600 font-semibold">{vehicles.length}</span> vehicle{vehicles.length !== 1 ? "s" : ""} for your dates</p>
             </div>
 
             {loading ? (
@@ -122,11 +121,11 @@ function ResultsContent() {
                     <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center text-red-600 mx-auto mb-8 shadow-sm">
                         <AlertCircle className="w-10 h-10" />
                     </div>
-                    <h3 className="text-2xl font-black text-[#0f0f0f] mb-3 uppercase">Availability Error</h3>
+                    <h3 className="text-2xl font-black text-primary mb-3 uppercase">Availability Error</h3>
                     <p className="text-gray-500 font-medium mb-10 leading-relaxed">{error}</p>
                     <button
                         onClick={() => window.location.reload()}
-                        className="bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#0f0f0f] transition-all shadow-xl shadow-red-100"
+                        className="bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-primary transition-all shadow-xl shadow-red-100"
                     >
                         Retry Search
                     </button>
@@ -136,17 +135,17 @@ function ResultsContent() {
                     <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center text-gray-400 mx-auto mb-8">
                         <Search className="w-10 h-10" />
                     </div>
-                    <h3 className="text-2xl font-black text-[#0f0f0f] mb-3 uppercase">No Availability</h3>
+                    <h3 className="text-2xl font-black text-primary mb-3 uppercase">No Availability</h3>
                     <p className="text-gray-500 font-medium mb-10 leading-relaxed">We couldn't find any available vehicles for the selected dates. Try adjusting your schedule or contact our support team.</p>
                     <Link
                         href="/rent"
-                        className="inline-block bg-[#0f0f0f] text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red-600 transition-all shadow-xl shadow-gray-100"
+                        className="inline-block bg-primary text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red-600 transition-all shadow-xl shadow-gray-100"
                     >
                         Change Dates
                     </Link>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                     {vehicles.map((vehicle) => (
                         <RentVehicleCard
                             key={vehicle.vehicleId}
@@ -162,7 +161,7 @@ function ResultsContent() {
 
 export default function RentResultsPage() {
     return (
-        <div className="min-h-screen bg-[#fcfcfc]">
+        <div className="min-h-screen bg-gray-50">
             <Suspense fallback={
                 <div className="flex items-center justify-center min-h-screen">
                     <Loader2 className="w-12 h-12 text-red-600 animate-spin" />

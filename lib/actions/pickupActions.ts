@@ -3,6 +3,7 @@
 import * as pickupService from '@/lib/services/pickupService';
 import { revalidatePath } from 'next/cache';
 import { sendNotification } from './notificationActions';
+import { sendBookingStatusEmail } from "@/lib/email";
 import { db } from '@/lib/db';
 import { pickupRequests, users } from '@/src/db/schema';
 import { eq } from 'drizzle-orm';
@@ -29,21 +30,33 @@ export async function updatePickupStatus(id: number, status: 'ACCEPTED' | 'REJEC
         revalidatePath('/admin/bookings/requested');
         revalidatePath('/employee/bookings/requested');
 
-        if (status === 'ACCEPTED') {
-            const [p] = await db.select().from(pickupRequests).where(eq(pickupRequests.id, id));
-            if (p) {
-                // 1. Notify Customer
+        const [p] = await db.select().from(pickupRequests).where(eq(pickupRequests.id, id));
+        if (p) {
+            const [u] = await db.select({ email: users.email, name: users.name })
+                .from(users).where(eq(users.userId, p.customerId));
+
+            if (status === 'ACCEPTED') {
+                // 1. Notify Customer — in-app + email
                 if (p.customerId) {
-                    await sendNotification(p.customerId, `Your Pickup booking (#${id}) has been ACCEPTED.`, id);
+                    try { await sendNotification(p.customerId, `Your Pickup booking (#${id}) has been ACCEPTED.`, id); }
+                    catch (e) { console.error("Notification error:", e); }
+                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", id, "Pickup", "ACCEPTED"); }
+                    catch (e) { console.error("Email error:", e); }
                 }
                 // 2. Notify Assigned Employee
                 if (assignedEmployeeId) {
-                    const [empUser] = await db.select({ id: users.userId })
-                        .from(users)
-                        .where(eq(users.relatedId, assignedEmployeeId));
-                    if (empUser) {
-                        await sendNotification(empUser.id, `You have been assigned to handle Pickup booking #${id}.`, id);
-                    }
+                    try {
+                        const [empUser] = await db.select({ id: users.userId }).from(users).where(eq(users.relatedId, assignedEmployeeId));
+                        if (empUser) await sendNotification(empUser.id, `You have been assigned to handle Pickup booking #${id}.`, id);
+                    } catch (e) { console.error("Employee notification error:", e); }
+                }
+            } else if (status === 'REJECTED') {
+                // Notify Customer — in-app + email
+                if (p.customerId) {
+                    try { await sendNotification(p.customerId, `Your Pickup booking (#${id}) has been REJECTED.`, id); }
+                    catch (e) { console.error("Notification error:", e); }
+                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", id, "Pickup", "REJECTED", reason ?? undefined); }
+                    catch (e) { console.error("Email error:", e); }
                 }
             }
         }

@@ -2,19 +2,66 @@
 
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
     CheckCircle2,
     Calendar,
     Clock,
     ShieldCheck,
-    ArrowRight,
     Car,
-    FileText,
-    MapPin
+    Loader2,
+    ArrowLeft,
+    Phone,
 } from "lucide-react";
-import { Suspense } from "react";
 
+// ── Date formatter ─────────────────────────────────────────────────────────────
+function formatDate(dateStr: string | null): string {
+    if (!dateStr) return "—";
+    const d = new Date(dateStr + "T00:00:00");
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
+}
+
+// ── Status badge ───────────────────────────────────────────────────────────────
+function StatusPill({ label }: { label: string }) {
+    return (
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-[11px] font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            {label}
+        </span>
+    );
+}
+
+// ── Detail row ─────────────────────────────────────────────────────────────────
+function DetailRow({
+    icon: Icon,
+    label,
+    value,
+}: {
+    icon: React.ElementType;
+    label: string;
+    value: string;
+}) {
+    return (
+        <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Icon className="w-4 h-4 text-gray-500" />
+            </div>
+            <div className="min-w-0">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider leading-none mb-0.5">
+                    {label}
+                </p>
+                <p className="text-sm font-semibold text-gray-800 whitespace-nowrap">{value}</p>
+            </div>
+        </div>
+    );
+}
+
+// ── Main content ───────────────────────────────────────────────────────────────
 function StatusContent() {
     const searchParams = useSearchParams();
     const startDate = searchParams.get("rental_start_date");
@@ -28,110 +75,167 @@ function StatusContent() {
     }, []);
 
     return (
-        <div className="max-w-4xl mx-auto py-20 px-6">
-            <div className="bg-white rounded-[3rem] border border-gray-100 shadow-2xl shadow-gray-100 overflow-hidden text-center">
-                {/* Header Decoration */}
-                <div className="h-4 bg-red-600 w-full" />
+        <div className="max-w-2xl mx-auto px-4 py-12">
 
-                <div className="p-16">
-                    <div className="w-24 h-24 bg-green-50 rounded-[2.5rem] flex items-center justify-center text-green-600 mx-auto mb-10 shadow-xl shadow-green-100 animate-in zoom-in-50 duration-700">
-                        <CheckCircle2 className="w-12 h-12" />
+            {/* ── Success Banner ── */}
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-5">
+                {/* Top accent */}
+                <div className="h-1 bg-emerald-500 w-full" />
+
+                <div className="p-5 flex items-start gap-4">
+                    {/* Icon */}
+                    <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                     </div>
 
-                    <h1 className="text-4xl font-black text-[#0f0f0f] mb-4 uppercase tracking-tight">Booking Requested</h1>
-                    <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-xs mb-12">Reference: <span className="text-[#0f0f0f]">{reference}</span></p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16 text-left">
-                        <div className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 border-b border-gray-100 pb-2">Journey Details</p>
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                                        <Calendar className="w-5 h-5 text-red-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-tight">Rental Period</p>
-                                        <p className="text-sm font-black text-[#0f0f0f]">{startDate} — {endDate}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                                        <ShieldCheck className="w-5 h-5 text-red-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-tight">Protection Status</p>
-                                        <p className="text-sm font-black text-[#0f0f0f]">Comprehensive Coverage Included</p>
-                                    </div>
-                                </div>
-                            </div>
+                    {/* Text */}
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 flex-wrap mb-1">
+                            <h1 className="text-base font-bold text-gray-900">
+                                Booking Requested Successfully
+                            </h1>
+                            <StatusPill label="Under Review" />
                         </div>
-
-                        <div className="bg-[#0f0f0f] p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col justify-center">
-                            <Car className="absolute -right-10 -top-10 w-48 h-48 text-white/5" />
-                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Estimated Total</p>
-                            <p className="text-4xl font-black text-white mb-2">LKR {Number(totalPrice).toLocaleString()}</p>
-                            <p className="text-[10px] font-black text-green-500 uppercase tracking-widest flex items-center gap-2">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Payment on Approval
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="bg-red-50 p-10 rounded-[2.5rem] border border-red-100 mb-16 text-left flex items-start gap-6">
-                        <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0">
-                            <Clock className="w-7 h-7 text-red-600 animate-pulse" />
-                        </div>
-                        <div>
-                            <h3 className="font-black text-[#0f0f0f] uppercase tracking-tight text-lg mb-2">Pending Approval</h3>
-                            <p className="text-sm font-medium text-gray-600 leading-relaxed mb-4">
-                                Your booking is currently being reviewed by our administrative team. We typically approve requests within <strong>60 minutes</strong> during operational hours.
-                            </p>
-                            <div className="flex gap-6">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-red-600" />
-                                    <span className="text-[10px] font-black text-[#0f0f0f] uppercase tracking-widest">Identity Check</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-red-600" />
-                                    <span className="text-[10px] font-black text-[#0f0f0f] uppercase tracking-widest">Insurance Review</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                        <Link
-                            href="/rent"
-                            className="h-16 px-12 bg-[#0f0f0f] hover:bg-red-600 text-white font-black rounded-2xl transition-all shadow-xl shadow-gray-200 flex items-center justify-center gap-4 text-xs uppercase tracking-widest"
-                        >
-                            Return Home
-                        </Link>
-                        <button
-                            className="h-16 px-12 border border-gray-100 bg-white hover:bg-gray-50 text-[#0f0f0f] font-black rounded-2xl transition-all flex items-center justify-center gap-4 text-xs uppercase tracking-widest"
-                            onClick={() => window.print()}
-                        >
-                            <FileText className="w-4 h-4" />
-                            Print Confirmation
-                        </button>
+                        <p className="text-sm text-gray-500 leading-relaxed">
+                            Your request is under review. Our team will contact you within{" "}
+                            <span className="font-semibold text-gray-700">60 minutes</span> during
+                            business hours.
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-2 font-medium">
+                            Reference:{" "}
+                            <span className="font-semibold text-gray-600 tracking-wide">
+                                {reference}
+                            </span>
+                        </p>
                     </div>
                 </div>
+            </div>
+
+            {/* ── Booking Details Card ── */}
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-5">
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        Booking Details
+                    </p>
+                    <Car className="w-4 h-4 text-gray-300" />
+                </div>
+
+                <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <DetailRow
+                        icon={Calendar}
+                        label="Rental Period"
+                        value={`${formatDate(startDate)} — ${formatDate(endDate)}`}
+                    />
+                    <DetailRow
+                        icon={ShieldCheck}
+                        label="Protection"
+                        value="Comprehensive Coverage"
+                    />
+                    <DetailRow
+                        icon={Clock}
+                        label="Approval Time"
+                        value="Within 60 minutes"
+                    />
+                    <DetailRow
+                        icon={Phone}
+                        label="Contact Method"
+                        value="Phone Notification"
+                    />
+                </div>
+
+                {/* Price strip */}
+                <div className="bg-gray-50 border-t border-gray-100 px-5 py-4 flex items-center justify-between">
+                    <div>
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">
+                            Estimated Total
+                        </p>
+                        <p className="text-xl font-bold text-gray-900">
+                            LKR {Number(totalPrice || 0).toLocaleString()}
+                        </p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">
+                            Payment
+                        </p>
+                        <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5 justify-end">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Due on Approval
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── What Happens Next ── */}
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden mb-5">
+                <div className="px-5 py-4 border-b border-gray-100">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        What Happens Next
+                    </p>
+                </div>
+                <div className="p-5 space-y-4">
+                    {[
+                        {
+                            step: "01",
+                            title: "Document Verification",
+                            desc: "Our team reviews your NIC, license, and guarantor details.",
+                        },
+                        {
+                            step: "02",
+                            title: "Approval Notification",
+                            desc: "You will receive a phone call once your booking is approved.",
+                        },
+                        {
+                            step: "03",
+                            title: "Vehicle Collection",
+                            desc: "Visit our office on your pickup date with original documents.",
+                        },
+                    ].map(({ step, title, desc }) => (
+                        <div key={step} className="flex items-start gap-4">
+                            <span className="text-[10px] font-bold text-gray-300 w-6 flex-shrink-0 mt-0.5 tabular-nums">
+                                {step}
+                            </span>
+                            <div>
+                                <p className="text-sm font-semibold text-gray-800 mb-0.5">{title}</p>
+                                <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* ── Actions ── */}
+            <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                    href="/rent"
+                    className="flex-1 h-10 bg-gray-900 hover:bg-red-600 text-white font-semibold rounded-xl transition-all text-sm flex items-center justify-center gap-2 group"
+                >
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                    Back to Rentals
+                </Link>
+                <Link
+                    href="/"
+                    className="flex-1 h-10 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition-all text-sm flex items-center justify-center"
+                >
+                    Go to Home
+                </Link>
             </div>
         </div>
     );
 }
 
+// ── Page wrapper ───────────────────────────────────────────────────────────────
 export default function BookingStatusPage() {
     return (
-        <div className="min-h-screen bg-[#fcfcfc]">
-            <Suspense fallback={
-                <div className="flex items-center justify-center min-h-screen">
-                    <Loader2 className="w-12 h-12 text-red-600 animate-spin" />
-                </div>
-            }>
+        <div className="min-h-screen bg-gray-50">
+            <Suspense
+                fallback={
+                    <div className="flex items-center justify-center min-h-screen">
+                        <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
+                    </div>
+                }
+            >
                 <StatusContent />
             </Suspense>
         </div>
     );
 }
-
-import { Loader2 } from "lucide-react";

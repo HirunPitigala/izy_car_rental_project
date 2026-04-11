@@ -25,14 +25,15 @@ export class AuthService {
             const relatedId = dbUser?.relatedId || 0;
 
             const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-            const token = await encrypt({ userId, role, relatedId, expiresAt });
+            const name = dbUser?.name || "System Admin";
+            const token = await encrypt({ userId, role, relatedId, expiresAt, name, email: adminEmail });
 
             return {
                 success: true,
                 token,
                 role,
                 expiresAt,
-                user: { id: userId, role, email: adminEmail, name: dbUser?.name || "System Admin" }
+                user: { id: userId, role, email: adminEmail, name }
             };
         }
 
@@ -56,14 +57,15 @@ export class AuthService {
         const relatedId = user.relatedId || undefined;
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-        const token = await encrypt({ userId, role, relatedId, expiresAt });
+        const name = user.name || "User";
+        const token = await encrypt({ userId, role, relatedId, expiresAt, name, email: user.email });
 
         return {
             success: true,
             token,
             role,
             expiresAt,
-            user: { id: userId, role, email: user.email, name: user.name || "User" }
+            user: { id: userId, role, email: user.email, name }
         };
     }
 
@@ -91,7 +93,7 @@ export class AuthService {
             passwordHash: hashedPassword,
             role: "customer",
             name: "New Customer",
-            status: "active",
+            status: "pending",
         });
 
         const token = generateToken();
@@ -104,14 +106,25 @@ export class AuthService {
     }
 
     async verifyEmail(token: string) {
-        const record = await authRepository.findToken(token);
+        console.log("Starting email verification for token:", token);
 
-        if (!record || record.expiresAt < new Date()) {
-            throw new Error("Token expired or invalid");
+        const user = await authRepository.findUserByToken(token);
+
+        if (!user) {
+            console.error("Verification failed: Token not found in database");
+            throw new Error("Invalid verification token");
         }
 
-        await authRepository.markEmailVerified(record.userId);
-        await authRepository.deleteToken(record.id);
+        if (user.tokenExpiry && user.tokenExpiry < new Date()) {
+            console.error("Verification failed: Token expired for user:", user.email);
+            throw new Error("Verification link has expired");
+        }
+
+        console.log("User found for verification:", user.email);
+
+        await authRepository.markEmailVerified(user.userId);
+        
+        console.log("User successfully verified and activated:", user.email);
 
         return { success: true, message: "Email verified successfully" };
     }
@@ -148,7 +161,7 @@ export class AuthService {
             role: "manager",
             relatedId: managerId,
             name: "New Manager",
-            status: "active",
+            status: "pending",
         });
 
         const token = generateToken();
@@ -192,7 +205,7 @@ export class AuthService {
             role: "employee",
             relatedId: employeeId,
             name,
-            status: "inactive",
+            status: "pending",
         });
 
         const token = generateToken();

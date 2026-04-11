@@ -1,6 +1,6 @@
 "use server";
 
-import { db } from "@/lib/db";
+import { db } from "@/src/db";
 import { notification, users } from "@/src/db/schema";
 import { notificationBroker } from "@/lib/notificationBroker";
 import { eq, or } from "drizzle-orm";
@@ -34,14 +34,17 @@ export async function notifyAdmins(message: string, bookingId?: number) {
             .from(users)
             .where(or(eq(users.role, "admin"), eq(users.role, "manager")));
 
-        for (const adminUser of adminUsers) {
-            await db.insert(notification).values({
-                userId: adminUser.id,
-                bookingId,
-                message,
-                notificationDate: new Date().toISOString().slice(0, 19).replace('T', ' '),
-                status: "UNREAD"
-            });
+        if (adminUsers.length > 0) {
+            const notificationDate = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            await db.insert(notification).values(
+                adminUsers.map(u => ({
+                    userId: u.id,
+                    bookingId,
+                    message,
+                    notificationDate,
+                    status: "UNREAD" as const,
+                }))
+            );
         }
 
         // Trigger real-time broker for all admins

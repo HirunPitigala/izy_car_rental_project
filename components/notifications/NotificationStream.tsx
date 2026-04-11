@@ -16,18 +16,18 @@ export default function NotificationStream() {
     return (
         <>
             {/* Notification Toasts (Top Right) */}
-            <div className="fixed top-24 right-8 z-[100] flex flex-col gap-4 pointer-events-none">
+            <div className="fixed top-24 right-8 z-100 flex flex-col gap-4 pointer-events-none">
                 {showToasts.map((toast) => (
                     <div 
                         key={toast.id}
                         className="w-80 bg-white border border-gray-100 rounded-2xl p-4 shadow-2xl flex gap-4 animate-in slide-in-from-right fade-in duration-500 pointer-events-auto cursor-pointer hover:scale-[1.02] transition-all"
                         onClick={() => setShowPanel(true)}
                     >
-                        <div className="h-10 w-10 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <div className="h-10 w-10 bg-red-50 rounded-xl flex items-center justify-center shrink-0">
                             <Bell className="h-5 w-5 text-red-600" />
                         </div>
                         <div className="flex-1">
-                            <p className="text-xs font-black uppercase tracking-widest text-[#0f0f0f] mb-1">New Notification</p>
+                            <p className="text-xs font-black uppercase tracking-widest text-primary mb-1">New Notification</p>
                             <p className="text-[11px] font-medium text-gray-500 leading-relaxed">{toast.message}</p>
                         </div>
                         <button 
@@ -42,12 +42,12 @@ export default function NotificationStream() {
 
             {/* Notification Sidebar/Panel */}
             {showPanel && (
-                <div className="fixed inset-0 z-[110] flex justify-end">
-                    <div className="absolute inset-0 bg-[#0f0f0f]/40 backdrop-blur-sm" onClick={() => setShowPanel(false)} />
+                <div className="fixed inset-0 z-110 flex justify-end">
+                    <div className="absolute inset-0 bg-primary/40 backdrop-blur-sm" onClick={() => setShowPanel(false)} />
                     <div className="relative w-full max-w-sm bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
                         <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <div>
-                                <h2 className="text-xl font-black text-[#0f0f0f] uppercase tracking-tight">Inbox</h2>
+                                <h2 className="text-xl font-black text-primary uppercase tracking-tight">Inbox</h2>
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Real-time alerts & activities</p>
                             </div>
                             <button onClick={() => setShowPanel(false)} className="w-10 h-10 bg-white border border-gray-100 rounded-xl flex items-center justify-center hover:text-red-600 transition-colors"><X className="h-5 w-5" /></button>
@@ -65,7 +65,7 @@ export default function NotificationStream() {
                                             <span className="text-[9px] font-black text-red-600 uppercase tracking-[0.2em]">{n.bookingId ? `#BOOKING ${n.bookingId}` : 'ALERT'}</span>
                                             <span className="text-[9px] font-bold text-gray-400">{new Date(n.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
-                                        <p className="text-xs font-bold text-[#0f0f0f] leading-relaxed">{n.message}</p>
+                                        <p className="text-xs font-bold text-primary leading-relaxed">{n.message}</p>
                                     </div>
                                 ))
                             )}

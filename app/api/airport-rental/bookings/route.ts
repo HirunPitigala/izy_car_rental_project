@@ -5,6 +5,7 @@ import {
     updateAirportBookingStatus,
 } from "@/lib/services/airportRentalService";
 import { sendNotification } from "@/lib/actions/notificationActions";
+import { sendBookingStatusEmail } from "@/lib/email";
 import { db } from "@/lib/db";
 import { airportBookings, users } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
@@ -77,21 +78,33 @@ export async function PATCH(req: Request) {
         );
 
         // Handle Notifications
-        if (upperStatus === "ACCEPTED") {
-            const [a] = await db.select().from(airportBookings).where(eq(airportBookings.id, parseInt(id, 10)));
-            if (a) {
-                // 1. Notify Customer
+        const [a] = await db.select().from(airportBookings).where(eq(airportBookings.id, parseInt(id, 10)));
+        if (a) {
+            const [u] = await db.select({ email: users.email, name: users.name })
+                .from(users).where(eq(users.userId, a.customerId));
+
+            if (upperStatus === "ACCEPTED") {
+                // 1. Notify Customer — in-app + email
                 if (a.customerId) {
-                    await sendNotification(a.customerId, `Your Airport booking (#${id}) has been ACCEPTED.`, parseInt(id, 10));
+                    try { await sendNotification(a.customerId, `Your Airport booking (#${id}) has been ACCEPTED.`, parseInt(id, 10)); }
+                    catch (e) { console.error("Notification error:", e); }
+                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", parseInt(id, 10), "Airport Transfer", "ACCEPTED"); }
+                    catch (e) { console.error("Email error:", e); }
                 }
                 // 2. Notify Assigned Employee
                 if (employeeId) {
-                    const [empUser] = await db.select({ id: users.userId })
-                        .from(users)
-                        .where(eq(users.relatedId, employeeId));
-                    if (empUser) {
-                        await sendNotification(empUser.id, `You have been assigned to handle Airport booking #${id}.`, parseInt(id, 10));
-                    }
+                    try {
+                        const [empUser] = await db.select({ id: users.userId }).from(users).where(eq(users.relatedId, employeeId));
+                        if (empUser) await sendNotification(empUser.id, `You have been assigned to handle Airport booking #${id}.`, parseInt(id, 10));
+                    } catch (e) { console.error("Employee notification error:", e); }
+                }
+            } else if (upperStatus === "REJECTED") {
+                // Notify Customer — in-app + email
+                if (a.customerId) {
+                    try { await sendNotification(a.customerId, `Your Airport booking (#${id}) has been REJECTED.`, parseInt(id, 10)); }
+                    catch (e) { console.error("Notification error:", e); }
+                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", parseInt(id, 10), "Airport Transfer", "REJECTED", rejection_reason ?? undefined); }
+                    catch (e) { console.error("Email error:", e); }
                 }
             }
         }

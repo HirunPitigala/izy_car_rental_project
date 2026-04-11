@@ -1,13 +1,13 @@
 "use server";
 
-import { db } from "@/lib/db";
+import { db } from "@/src/db";
 import { booking, vehicle, vehicleBrand, vehicleModel, users } from "@/src/db/schema";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { eq, and } from "drizzle-orm";
 import { validateNIC } from "@/lib/validation";
-import { v4 as uuidv4 } from "uuid";
 import { sendNotification, notifyAdmins } from "./notificationActions";
+import { sendBookingStatusEmail } from "@/lib/email";
 
 // Helper to upload file to Cloudinary
 async function saveFileToCloudinary(file: File | null, folder: string): Promise<string | null> {
@@ -23,9 +23,9 @@ async function saveFileToCloudinary(file: File | null, folder: string): Promise<
         const { uploadToCloudinary } = await import("@/lib/cloudinary");
         const result = await uploadToCloudinary(buffer, `bookings/${folder}`, "auto");
         return result.secure_url;
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Cloudinary upload error:", error);
-        throw new Error(`Failed to upload document: ${error.message || "Unknown error"}`);
+        return null;
     }
 }
 
@@ -48,6 +48,8 @@ export async function createBooking(formData: FormData) {
         const customerPhone1 = formData.get("customerPhone1") as string;
         const customerLicenseNo = formData.get("customerLicenseNo") as string;
         const customerNicNo = formData.get("customerNicNo") as string;
+
+        const customerAddress = formData.get("customerAddress") as string;
 
         const guaranteeFullname = formData.get("guaranteeFullname") as string;
         const guaranteeAddress = formData.get("guaranteeAddress") as string;
@@ -87,7 +89,7 @@ export async function createBooking(formData: FormData) {
         });
 
         // Insert into database
-        await (db.insert(booking) as any).values({
+        await db.insert(booking).values({
             userId: userId,
             vehicleId: vehicleId,
             serviceCategoryId: serviceCategoryId,
@@ -97,6 +99,7 @@ export async function createBooking(formData: FormData) {
             customerPhoneNumber1: customerPhone1,
             customerLicenseNo,
             customerNicNo,
+            customerAddress,
             customerDrivingLicencePdf: licensePath,
             customerIdPdf: idPath,
             guaranteeFullname,
@@ -129,6 +132,7 @@ export async function getPendingBookings(employeeId?: number) {
         const results = await db.select({
             bookingId: booking.bookingId,
             customerName: booking.customerFullName,
+            customerAddress: booking.customerAddress,
             phone: booking.customerPhoneNumber1,
             nic: booking.customerNicNo,
             license: booking.customerLicenseNo,
@@ -137,6 +141,14 @@ export async function getPendingBookings(employeeId?: number) {
             totalFare: booking.totalFare,
             status: booking.status,
             rejectionReason: booking.rejectionReason,
+            createdAt: booking.createdAt,
+            terms1: booking.terms1,
+            guaranteeFullname: booking.guaranteeFullname,
+            guaranteeAddress: booking.guaranteeAddress,
+            guaranteePhoneNo1: booking.guaranteePhoneNo1,
+            guaranteeNicNo: booking.guaranteeNicNo,
+            guaranteeLicensePdf: booking.guaranteeLicensePdf,
+            email: users.email,
             vehicle: {
                 brand: vehicleBrand.brandName,
                 model: vehicleModel.modelName,
@@ -147,8 +159,9 @@ export async function getPendingBookings(employeeId?: number) {
             .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
             .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
+            .leftJoin(users, eq(booking.userId, users.userId))
             .where(
-                employeeId 
+                employeeId
                     ? and(eq(booking.status, "PENDING"), eq(booking.assignedEmployeeId, employeeId))
                     : eq(booking.status, "PENDING")
             )
@@ -175,23 +188,34 @@ export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" 
         revalidatePath("/employee/bookings/requested");
 
         // Handle Notifications
-        if (status === "ACCEPTED") {
-            // Find current booking for userId and description
-            const [b] = await db.select().from(booking).where(eq(booking.bookingId, bookingId));
-            if (b) {
-                // 1. Notify Customer
+        const [b] = await db.select().from(booking).where(eq(booking.bookingId, bookingId));
+        if (b) {
+            const [u] = await db.select({ email: users.email, name: users.name })
+                .from(users).where(eq(users.userId, b.userId!));
+
+            if (status === "ACCEPTED") {
+                // 1. Notify Customer — in-app + email
                 if (b.userId) {
-                    await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been ACCEPTED.`, bookingId);
+                    try { await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been ACCEPTED.`, bookingId); }
+                    catch (e) { console.error("Notification error:", e); }
+                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", bookingId, "Rent-a-Car", "ACCEPTED"); }
+                    catch (e) { console.error("Email error:", e); }
                 }
                 // 2. Notify Assigned Employee
                 if (assignedEmployeeId) {
-                    // Find actual userId of the employee
-                    const [empUser] = await db.select({ id: users.userId })
-                        .from(users)
-                        .where(eq(users.relatedId, assignedEmployeeId));
-                    if (empUser) {
-                        await sendNotification(empUser.id, `You have been assigned to handle Rent-a-Car booking #${bookingId}.`, bookingId);
-                    }
+                    try {
+                        const [empUser] = await db.select({ id: users.userId }).from(users).where(eq(users.relatedId, assignedEmployeeId));
+                        if (empUser) await sendNotification(empUser.id, `You have been assigned to handle Rent-a-Car booking #${bookingId}.`, bookingId);
+                    } catch (e) { console.error("Employee notification error:", e); }
+                }
+            } else if (status === "REJECTED") {
+                // Notify Customer — in-app + email
+                if (b.userId) {
+                    const reason = formData?.get("rejectionReason") as string | undefined;
+                    try { await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been REJECTED.`, bookingId); }
+                    catch (e) { console.error("Notification error:", e); }
+                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", bookingId, "Rent-a-Car", "REJECTED", reason ?? undefined); }
+                    catch (e) { console.error("Email error:", e); }
                 }
             }
         }

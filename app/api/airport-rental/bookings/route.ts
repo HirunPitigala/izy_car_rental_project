@@ -7,7 +7,7 @@ import {
 import { sendNotification } from "@/lib/actions/notificationActions";
 import { sendBookingStatusEmail } from "@/lib/email";
 import { db } from "@/lib/db";
-import { airportBookings, users } from "@/src/db/schema";
+import { booking, users } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -78,15 +78,15 @@ export async function PATCH(req: Request) {
         );
 
         // Handle Notifications
-        const [a] = await db.select().from(airportBookings).where(eq(airportBookings.id, parseInt(id, 10)));
-        if (a) {
+        const [a] = await db.select().from(booking).where(eq(booking.bookingId, parseInt(id, 10)));
+        if (a && a.userId) {
             const [u] = await db.select({ email: users.email, name: users.name })
-                .from(users).where(eq(users.userId, a.customerId));
+                .from(users).where(eq(users.userId, a.userId));
 
             if (upperStatus === "ACCEPTED") {
                 // 1. Notify Customer — in-app + email
-                if (a.customerId) {
-                    try { await sendNotification(a.customerId, `Your Airport booking (#${id}) has been ACCEPTED.`, parseInt(id, 10), "airport-transfer"); }
+                if (a.userId) {
+                    try { await sendNotification(a.userId, `Your Airport booking (#${id}) has been ACCEPTED.`, parseInt(id, 10), "airport-transfer"); }
                     catch (e) { console.error("Notification error:", e); }
                     try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", parseInt(id, 10), "Airport Transfer", "ACCEPTED"); }
                     catch (e) { console.error("Email error:", e); }
@@ -100,8 +100,8 @@ export async function PATCH(req: Request) {
                 }
             } else if (upperStatus === "REJECTED") {
                 // Notify Customer — in-app + email
-                if (a.customerId) {
-                    try { await sendNotification(a.customerId, `Your Airport booking (#${id}) has been REJECTED.`, parseInt(id, 10), "airport-transfer"); }
+                if (a.userId) {
+                    try { await sendNotification(a.userId, `Your Airport booking (#${id}) has been REJECTED.`, parseInt(id, 10), "airport-transfer"); }
                     catch (e) { console.error("Notification error:", e); }
                     try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", parseInt(id, 10), "Airport Transfer", "REJECTED", rejection_reason ?? undefined); }
                     catch (e) { console.error("Email error:", e); }

@@ -3,7 +3,7 @@ dotenv.config({ path: ".env.local" });
 import { migrate } from "drizzle-orm/mysql2/migrator";
 
 async function main() {
-    const { db, pool } = await import("./lib/db.ts");
+    const { db, pool } = await import("./lib/db");
     console.log("Running migrations...");
     await migrate(db, { migrationsFolder: "drizzle" });
     console.log("Migrations complete!");

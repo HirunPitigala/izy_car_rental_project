@@ -9,13 +9,14 @@ import { NotificationRepo } from "@/lib/db/index";
  */
 export async function PATCH(
     _req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const session = await getSession();
         if (!session) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
-        const notificationId = parseInt(params.id, 10);
+        const notificationId = parseInt(id, 10);
         if (isNaN(notificationId)) return NextResponse.json({ error: "Invalid notification id." }, { status: 400 });
 
         const existing = await NotificationRepo.getNotificationById(notificationId);

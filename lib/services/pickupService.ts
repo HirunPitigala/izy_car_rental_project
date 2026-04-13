@@ -1,6 +1,14 @@
 import { db } from "@/lib/db";
-import { pickupRequests, vehicle, vehicleBrand, vehicleModel, serviceCategory, users } from "@/src/db/schema";
-import { eq, and, gte } from "drizzle-orm";
+import { 
+    booking, 
+    vehicle, 
+    vehicleBrand, 
+    vehicleModel, 
+    serviceCategory, 
+    users,
+    employee 
+} from "@/src/db/schema";
+import { eq, and, gte, sql } from "drizzle-orm";
 import { SERVICE_CATEGORIES } from "@/lib/constants";
 
 // ──────────────────────────────────────────────────────────────
@@ -26,16 +34,23 @@ export interface PickupBookingData {
     price: number;
     customerFullName: string;
     customerPhone: string;
+    paymentslip?: string;
 }
 
 // ──────────────────────────────────────────────────────────────
-// Fare Calculation (stub — no external API needed)
+// Helper: Category ID
 // ──────────────────────────────────────────────────────────────
 
-/**
- * Calculate estimated pickup fare.
- * Formula: distance × pricePerKm  (× 2 if return trip).
- */
+async function getPickupCategoryId(): Promise<number> {
+    const [cat] = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, SERVICE_CATEGORIES.PICKUPS));
+    if (!cat) throw new Error(`Service category "${SERVICE_CATEGORIES.PICKUPS}" not found.`);
+    return cat.categoryId;
+}
+
+// ──────────────────────────────────────────────────────────────
+// Fare Calculation
+// ──────────────────────────────────────────────────────────────
+
 export function calculateFare(
     distanceKm: number,
     pricePerKm: number,
@@ -45,20 +60,13 @@ export function calculateFare(
     return isReturnTrip ? base * 2 : base;
 }
 
-/**
- * Stub distance estimation between two place names.
- * Returns a sensible placeholder value so the booking can be submitted.
- * Replace with a real geo API later.
- */
 export function estimateDistance(from: string, to: string): number {
-    // Very basic hash so the same pair always returns the same distance
     const str = `${from.toLowerCase().trim()}${to.toLowerCase().trim()}`;
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         hash = (hash << 5) - hash + str.charCodeAt(i);
         hash |= 0;
     }
-    // Clamp between 5 and 150 km
     return Math.abs(hash % 145) + 5;
 }
 
@@ -66,10 +74,6 @@ export function estimateDistance(from: string, to: string): number {
 // Vehicle Search
 // ──────────────────────────────────────────────────────────────
 
-/**
- * Return available Pickup-category vehicles that have enough seating
- * capacity for the requested number of travelers.
- */
 export async function searchAvailablePickupVehicles(
     travelers: number,
     _luggage: number
@@ -105,7 +109,7 @@ export async function searchAvailablePickupVehicles(
 }
 
 // ──────────────────────────────────────────────────────────────
-// Booking Creation
+// Validation
 // ──────────────────────────────────────────────────────────────
 
 export interface ValidationError {
@@ -113,9 +117,6 @@ export interface ValidationError {
     message: string;
 }
 
-/**
- * Validate booking payload and return any errors found.
- */
 export function validatePickupBooking(data: PickupBookingData): ValidationError[] {
     const errors: ValidationError[] = [];
     if (data.travelers <= 0) {
@@ -139,15 +140,12 @@ export function validatePickupBooking(data: PickupBookingData): ValidationError[
     if (!data.pickupLocation.trim()) {
         errors.push({ field: "pickupLocation", message: "Pickup location is required." });
     }
-
     if (!data.dropLocation.trim()) {
         errors.push({ field: "dropLocation", message: "Drop-off location is required." });
     }
-
     if (!data.customerFullName.trim()) {
         errors.push({ field: "customerFullName", message: "Full name is required." });
     }
-
     if (!data.customerPhone.trim()) {
         errors.push({ field: "customerPhone", message: "Phone number is required." });
     }
@@ -155,77 +153,93 @@ export function validatePickupBooking(data: PickupBookingData): ValidationError[
     return errors;
 }
 
-/**
- * Persist a validated pickup booking to `pickup_requests`.
- */
+// ──────────────────────────────────────────────────────────────
+// Booking Creation (UnifiedTable)
+// ──────────────────────────────────────────────────────────────
+
 export async function createPickupBooking(data: PickupBookingData) {
-    const [result] = await db.insert(pickupRequests).values({
-        customerId: data.customerId,
+    const categoryId = await getPickupCategoryId();
+
+    const [result] = await db.insert(booking).values({
+        serviceCategoryId: categoryId,
+        userId: data.customerId,
         vehicleId: data.vehicleId,
-        pickupLocation: data.pickupLocation,
-        dropLocation: data.dropLocation,
-        pickupTime: data.pickupTime,
-        returnTime: data.isReturnTrip && data.returnTime ? data.returnTime : null,
-        isReturnTrip: data.isReturnTrip,
-        travelers: data.travelers,
-        luggageCount: data.luggageCount,
-        distanceKm: data.distanceKm.toFixed(2),
-        price: data.price.toFixed(2),
+        
+        rentalDate: data.pickupTime,
+        returnDate: data.isReturnTrip && data.returnTime ? data.returnTime : null,
+
         customerFullName: data.customerFullName,
-        customerPhone: data.customerPhone,
+        customerPhoneNumber1: data.customerPhone,
+        customerPhoneNumber2: "", 
+        customerLicenseNo: "N/A",  
+        customerNicNo: "N/A",      
+        customerAddress: data.pickupLocation, // Using pickup as address placeholder if needed
+
+        pickupLocation: data.pickupLocation,
+        dropoffLocation: data.dropLocation,
+
+        distance: data.distanceKm.toFixed(2),
+        totalFare: data.price.toFixed(2),
+
+        numberOfTravelers: data.travelers,
+        numberOfLuggages: data.luggageCount,
+
+        message: `Pickup Trip | Return: ${data.isReturnTrip ? "YES" : "NO"}`,
         status: "PENDING",
+        terms1: true,
+        terms2Confirmation: data.isReturnTrip, // Map return trip flag here
+        paymentslip: data.paymentslip,
     });
 
     return (result as any).insertId as number;
 }
 
 // ──────────────────────────────────────────────────────────────
-// Employee Read / Update
+// Read / Update
 // ──────────────────────────────────────────────────────────────
 
-/**
- * Fetch all pickup requests with the given status (default: PENDING).
- */
 export async function getPickupRequestsByStatus(status = "PENDING", employeeId?: number) {
+    const categoryId = await getPickupCategoryId();
+
     return db
         .select({
-            id: pickupRequests.id,
-            pickupLocation: pickupRequests.pickupLocation,
-            dropLocation: pickupRequests.dropLocation,
-            pickupTime: pickupRequests.pickupTime,
-            returnTime: pickupRequests.returnTime,
-            isReturnTrip: pickupRequests.isReturnTrip,
-            travelers: pickupRequests.travelers,
-            luggageCount: pickupRequests.luggageCount,
-            distanceKm: pickupRequests.distanceKm,
-            price: pickupRequests.price,
-            status: pickupRequests.status,
-            rejectionReason: pickupRequests.rejectionReason,
-            createdAt: pickupRequests.createdAt,
-            customerFullName: pickupRequests.customerFullName,
-            customerPhone: pickupRequests.customerPhone,
+            id: booking.bookingId,
+            pickupLocation: booking.pickupLocation,
+            dropLocation: booking.dropoffLocation,
+            pickupTime: booking.rentalDate,
+            returnTime: booking.returnDate,
+            isReturnTrip: booking.terms2Confirmation,
+            travelers: booking.numberOfTravelers,
+            luggageCount: booking.numberOfLuggages,
+            distanceKm: booking.distance,
+            price: booking.totalFare,
+            status: booking.status,
+            rejectionReason: booking.rejectionReason,
+            createdAt: booking.createdAt,
+            customerFullName: booking.customerFullName,
+            customerPhone: booking.customerPhoneNumber1,
             vehicleBrand: vehicleBrand.brandName,
             vehicleModel: vehicleModel.modelName,
             vehiclePlate: vehicle.plateNumber,
-            customerName: users.name,
             customerEmail: users.email,
+            paymentslip: booking.paymentslip,
         })
-        .from(pickupRequests)
-        .leftJoin(vehicle, eq(pickupRequests.vehicleId, vehicle.vehicleId))
+        .from(booking)
+        .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
         .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
         .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-        .leftJoin(users, eq(pickupRequests.customerId, users.userId))
+        .leftJoin(users, eq(booking.userId, users.userId))
         .where(
-            employeeId 
-                ? and(eq(pickupRequests.status, status), eq(pickupRequests.assignedEmployeeId, employeeId))
-                : eq(pickupRequests.status, status)
+            and(
+                eq(booking.serviceCategoryId, categoryId),
+                employeeId 
+                    ? and(eq(booking.status, status), eq(booking.assignedEmployeeId, employeeId))
+                    : eq(booking.status, status)
+            )
         )
-        .orderBy(pickupRequests.createdAt);
+        .orderBy(booking.createdAt);
 }
 
-/**
- * Update status of a pickup request (accept or reject).
- */
 export async function updatePickupRequestStatus(
     id: number,
     status: "ACCEPTED" | "REJECTED",
@@ -233,41 +247,40 @@ export async function updatePickupRequestStatus(
     assignedEmployeeId?: number
 ) {
     await db
-        .update(pickupRequests)
+        .update(booking)
         .set({
             status,
             rejectionReason: status === "REJECTED" ? (rejectionReason ?? null) : null,
             assignedEmployeeId: assignedEmployeeId ?? undefined
         })
-        .where(eq(pickupRequests.id, id));
+        .where(eq(booking.bookingId, id));
 }
 
-/**
- * Fetch pickup bookings for a specific customer.
- */
 export async function getCustomerPickupHistory(customerId: number) {
+    const categoryId = await getPickupCategoryId();
+
     return db
         .select({
-            id: pickupRequests.id,
-            pickupLocation: pickupRequests.pickupLocation,
-            dropLocation: pickupRequests.dropLocation,
-            pickupTime: pickupRequests.pickupTime,
-            returnTime: pickupRequests.returnTime,
-            isReturnTrip: pickupRequests.isReturnTrip,
-            travelers: pickupRequests.travelers,
-            distanceKm: pickupRequests.distanceKm,
-            price: pickupRequests.price,
-            status: pickupRequests.status,
-            rejectionReason: pickupRequests.rejectionReason,
-            createdAt: pickupRequests.createdAt,
+            id: booking.bookingId,
+            pickupLocation: booking.pickupLocation,
+            dropLocation: booking.dropoffLocation,
+            pickupTime: booking.rentalDate,
+            returnTime: booking.returnDate,
+            isReturnTrip: booking.terms2Confirmation,
+            travelers: booking.numberOfTravelers,
+            distanceKm: booking.distance,
+            price: booking.totalFare,
+            status: booking.status,
+            rejectionReason: booking.rejectionReason,
+            createdAt: booking.createdAt,
             vehicleBrand: vehicleBrand.brandName,
             vehicleModel: vehicleModel.modelName,
             vehiclePlate: vehicle.plateNumber,
         })
-        .from(pickupRequests)
-        .leftJoin(vehicle, eq(pickupRequests.vehicleId, vehicle.vehicleId))
+        .from(booking)
+        .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
         .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
         .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-        .where(eq(pickupRequests.customerId, customerId))
-        .orderBy(pickupRequests.createdAt);
+        .where(and(eq(booking.userId, customerId), eq(booking.serviceCategoryId, categoryId)))
+        .orderBy(booking.createdAt);
 }

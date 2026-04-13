@@ -10,13 +10,12 @@ import {
 
 interface AirportBooking {
     id: number;
-    transferType: string;
-    airport: string;
-    transferDate: string;
-    transferTime: string;
+    pickupDate: string | Date | null;
     passengers: number;
     luggageCount: number | null;
     transferLocation: string;
+    pickupLocation: string;
+    dropoffLocation: string;
     status: string | null;
     rejectionReason: string | null;
     createdAt: string | null;
@@ -143,39 +142,32 @@ export default function CustomerAirportBookingsPage() {
                                                 </span>
                                             </div>
 
-                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                                 <div className="flex items-center gap-2 text-sm">
-                                                    <Plane className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                                                    <MapPin className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                                                     <div>
-                                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Transfer</p>
-                                                        <p className="font-bold text-gray-900">{b.transferType === "PICKUP" ? "Pickup" : "Drop"}</p>
+                                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Origin</p>
+                                                        <p className="font-bold text-gray-900 line-clamp-1">{b.pickupLocation}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-sm">
-                                                    <MapPin className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                                                    <MapPin className="w-4 h-4 text-red-500 flex-shrink-0" />
                                                     <div>
-                                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Airport</p>
-                                                        <p className="font-bold text-gray-900">{airportLabel(b.airport)}</p>
+                                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Destination</p>
+                                                        <p className="font-bold text-gray-900 line-clamp-1">{b.dropoffLocation}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-sm">
                                                     <Calendar className="w-4 h-4 text-yellow-500 flex-shrink-0" />
                                                     <div>
                                                         <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Date &amp; Time</p>
-                                                        <p className="font-bold text-gray-900">{b.transferDate} {b.transferTime}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-sm">
-                                                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                                    <div>
-                                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Address</p>
-                                                        <p className="font-bold text-gray-900 truncate max-w-[150px]">{b.transferLocation}</p>
+                                                        <p className="font-bold text-gray-900">{b.pickupDate ? new Date(b.pickupDate).toLocaleString() : "TBD"}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 text-sm">
                                                     <Users className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                                     <div>
-                                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Passengers</p>
+                                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Capacity</p>
                                                         <p className="font-bold text-gray-900">{b.passengers} pax · {b.luggageCount ?? 0} bags</p>
                                                     </div>
                                                 </div>

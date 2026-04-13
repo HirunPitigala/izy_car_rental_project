@@ -6,9 +6,10 @@ import { eq } from "drizzle-orm";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const bookingId = parseInt(params.id);
+  const { id } = await params;
+  const bookingId = parseInt(id);
 
   if (isNaN(bookingId)) {
     return NextResponse.json({ success: false, message: "Invalid booking ID" }, { status: 400 });

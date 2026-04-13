@@ -72,6 +72,7 @@ export const booking = mysqlTable("booking", {
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 
 	assignedEmployeeId: int("assigned_employee_id").references(() => employee.employeeId),
+	paymentslip: varchar("paymentslip", { length: 255 }),
 },
 	(table) => [
 		primaryKey({ columns: [table.bookingId], name: "booking_pk" }),
@@ -334,38 +335,6 @@ export const passwordResetTokens = mysqlTable("password_reset_tokens", {
 		primaryKey({ columns: [table.id], name: "password_reset_tokens_id" }),
 		unique("token").on(table.token),
 	]);
-
-export const pickupRequests = mysqlTable("pickup_requests", {
-	id: int("id").autoincrement().notNull(),
-	customerId: int("customer_id").references(() => users.userId).notNull(),
-	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId).notNull(),
-	driverId: int("driver_id").references(() => driver.driverId),
-	// Locations
-	pickupLocation: varchar("pickup_location", { length: 255 }).notNull(),
-	dropLocation: varchar("drop_location", { length: 255 }).notNull(),
-	// Timing
-	pickupTime: datetime("pickup_time").notNull(),
-	returnTime: datetime("return_time"),
-	// Trip details
-	isReturnTrip: boolean("is_return_trip").default(false),
-	travelers: int("travelers").notNull(),
-	luggageCount: int("luggage_count").default(0),
-	distanceKm: decimal("distance_km", { precision: 10, scale: 2 }).notNull(),
-	price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-	// Customer contact
-	customerFullName: varchar("customer_full_name", { length: 100 }).notNull(),
-	customerPhone: varchar("customer_phone", { length: 20 }).notNull(),
-	// Booking lifecycle
-	status: varchar("status", { length: 20 }).default("PENDING").notNull(),
-	rejectionReason: text("rejection_reason"),
-	assignedEmployeeId: int("assigned_employee_id").references(() => employee.employeeId),
-	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [
-	primaryKey({ columns: [table.id], name: "pickup_requests_pk" }),
-	index("pr_customer_id_idx").on(table.customerId),
-	index("pr_vehicle_id_idx").on(table.vehicleId),
-	index("pr_assigned_employee_id_idx").on(table.assignedEmployeeId),
-]);
 
 export const airportBookings = mysqlTable("airport_bookings", {
 	id: int("id").autoincrement().notNull(),

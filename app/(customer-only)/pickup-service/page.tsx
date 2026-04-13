@@ -82,6 +82,7 @@ export default function PickupServicePage() {
         customerFullName: "",
         customerPhone: "",
     });
+    const [paymentslip, setPaymentslip] = useState<File | null>(null);
 
     // ── Step 1: Search ─────────────────────────────────────────
 
@@ -140,26 +141,34 @@ export default function PickupServicePage() {
         e.preventDefault();
         if (!selectedVehicle) return;
 
+        if (!paymentslip) {
+            setError("Payment slip is required. Please upload your bank payment slip to proceed.");
+            return;
+        }
+
         setError(null);
         setLoading(true);
 
         try {
+            const formData = new FormData();
+            formData.append("vehicle_id", selectedVehicle.vehicleId.toString());
+            formData.append("pickup_location", searchForm.pickupLocation);
+            formData.append("drop_location", searchForm.dropLocation);
+            formData.append("pickup_datetime", searchForm.pickupDatetime);
+            formData.append("return_datetime", searchForm.isReturnTrip ? searchForm.returnDatetime : "");
+            formData.append("is_return_trip", searchForm.isReturnTrip.toString());
+            formData.append("travelers", searchForm.travelers.toString());
+            formData.append("luggage_count", searchForm.luggageCount.toString());
+            formData.append("customer_full_name", bookingForm.customerFullName);
+            formData.append("customer_phone", bookingForm.customerPhone);
+            formData.append("price_per_km", (selectedVehicle.pricePerKm ?? "100"));
+            formData.append("distance_km", estimatedDistance.toString());
+            formData.append("price", estimatedPrice.toString());
+            formData.append("paymentslip", paymentslip);
+
             const res = await fetch("/api/pickup/book", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    vehicle_id: selectedVehicle.vehicleId,
-                    pickup_location: searchForm.pickupLocation,
-                    drop_location: searchForm.dropLocation,
-                    pickup_datetime: searchForm.pickupDatetime,
-                    return_datetime: searchForm.isReturnTrip ? searchForm.returnDatetime : null,
-                    is_return_trip: searchForm.isReturnTrip,
-                    travelers: searchForm.travelers,
-                    luggage_count: searchForm.luggageCount,
-                    customer_full_name: bookingForm.customerFullName,
-                    customer_phone: bookingForm.customerPhone,
-                    price_per_km: parseFloat(selectedVehicle.pricePerKm ?? "100"),
-                }),
+                body: formData,
             });
 
             const data = await res.json();
@@ -584,6 +593,51 @@ export default function PickupServicePage() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Bank Details */}
+                        <div className="bg-emerald-50 rounded-[2rem] p-8 space-y-6">
+                            <div className="flex items-center gap-3">
+                                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                                <h3 className="font-black text-emerald-900">Bank Transfer Details</h3>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                {[
+                                    { label: "Bank Name", value: "Bank of Ceylon (BOC)" },
+                                    { label: "Account Name", value: "Test User" },
+                                    { label: "Account Number", value: "123456789012" },
+                                    { label: "Branch", value: "Colombo Main Branch" },
+                                    { label: "Branch Code", value: "001" },
+                                    { label: "SWIFT Code", value: "BCEYLKLX" },
+                                ].map(({ label, value }) => (
+                                    <div key={label}>
+                                        <p className="text-[10px] font-black text-emerald-600/60 uppercase tracking-widest mb-1">{label}</p>
+                                        <p className="font-bold text-emerald-900">{value}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Payment Slip Upload */}
+                        <div className="bg-white rounded-[2rem] border-2 border-dashed border-gray-100 p-8 text-center space-y-4">
+                            <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto text-gray-400">
+                                {paymentslip ? <CheckCircle2 className="w-8 h-8 text-emerald-500" /> : <Settings className="w-8 h-8" />}
+                            </div>
+                            <div>
+                                <h3 className="font-black text-gray-900">{paymentslip ? paymentslip.name : "Upload Payment Slip"}</h3>
+                                <p className="text-sm text-gray-400 mt-1 font-medium italic">
+                                    Please upload a photo of your bank transfer slip.
+                                </p>
+                            </div>
+                            <label className="inline-block px-8 py-3 bg-gray-900 text-white rounded-xl font-bold text-sm cursor-pointer hover:bg-emerald-600 transition-all">
+                                {paymentslip ? "Change File" : "Choose File"}
+                                <input 
+                                    type="file" 
+                                    className="hidden" 
+                                    onChange={(e) => setPaymentslip(e.target.files?.[0] || null)}
+                                    accept="image/*,.pdf"
+                                />
+                            </label>
                         </div>
 
                         <button

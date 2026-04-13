@@ -256,11 +256,13 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
         idDocument: File | null;
         guaranteeNic: File | null;
         guaranteeLicense: File | null;
+        paymentslip: File | null;
     }>({
         license: null,
         idDocument: null,
         guaranteeNic: null,
         guaranteeLicense: null,
+        paymentslip: null,
     });
 
     const handleFileChange = (
@@ -330,6 +332,12 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
         setLoading(true);
         setError(null);
 
+        if (!files.paymentslip) {
+            setError("Payment slip check: Please upload your bank payment slip to proceed.");
+            setLoading(false);
+            return;
+        }
+
         try {
             const data = new FormData();
             data.append("vehicleId", searchParams.vehicleId);
@@ -359,6 +367,7 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
             if (files.idDocument) data.append("customerIdPdf", files.idDocument);
             if (files.guaranteeNic) data.append("guaranteeNicPdf", files.guaranteeNic);
             if (files.guaranteeLicense) data.append("guaranteeLicensePdf", files.guaranteeLicense);
+            if (files.paymentslip) data.append("paymentslip", files.paymentslip);
 
             const result = await createBooking(data);
 
@@ -1016,6 +1025,52 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Bank Payment Details */}
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 space-y-4">
+                        <div className="flex items-center gap-3 border-b border-emerald-100 pb-3">
+                            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-emerald-600 shadow-sm">
+                                <ShieldCheck className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-bold text-emerald-900 leading-none">Bank Payment Details</h3>
+                                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest mt-1">Please pay to the following account</p>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+                            {[
+                                { label: "Bank Name", value: "Bank of Ceylon (BOC)" },
+                                { label: "Account Name", value: "Test User" },
+                                { label: "Account Number", value: "123456789012" },
+                                { label: "Branch", value: "Colombo Main Branch" },
+                                { label: "Branch Code", value: "001" },
+                                { label: "SWIFT Code", value: "BCEYLKLX" },
+                            ].map(({ label, value }) => (
+                                <div key={label} className="space-y-0.5">
+                                    <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-widest">{label}</p>
+                                    <p className="text-sm font-bold text-emerald-900">{value}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Payment Slip Upload */}
+                    <div className="pt-2">
+                        <SectionHeading>Payment Slip Upload</SectionHeading>
+                        <p className="text-xs text-gray-500 mb-4 italic">
+                            After making the bank transfer, please upload a photo or PDF of your payment slip below to confirm your booking.
+                        </p>
+                        <FileUploadTile
+                            label="Upload Payment Slip"
+                            file={files.paymentslip}
+                            type="paymentslip"
+                            required
+                        />
+                        {!files.paymentslip && error && error.includes("Payment slip") && (
+                            <FieldError message="Please upload your payment slip to continue." />
+                        )}
                     </div>
 
                     {/* Authorization notice */}

@@ -13,7 +13,8 @@ import {
 } from "@/lib/actions/pickupActions";
 import {
     getWeddingCarInquiries,
-    markWeddingInquiryContacted
+    markWeddingInquiryContacted,
+    acceptWeddingInquiry
 } from "@/lib/actions/weddingActions";
 import { getAllEmployees } from "@/lib/actions/employeeActions";
 import {
@@ -124,7 +125,7 @@ export default function RequestedBookingsPage() {
             } catch (e) { console.error(e); }
         } else if (category === "wedding") {
             const res = await getWeddingCarInquiries();
-            if (res.success && res.data) setWeddingBookings(res.data.filter((b: any) => b.status === "WEDDING_INQUIRY") || []);
+            if (res.success && res.data) setWeddingBookings(res.data.filter((b: any) => b.status === "WEDDING_INQUIRY" || b.status === "WEDDING_CONTACTED") || []);
         }
         setLoading(false);
         
@@ -201,10 +202,15 @@ export default function RequestedBookingsPage() {
     };
 
     // --- WEDDING ACTIONS ---
-    const handleWeddingAction = async (id: number) => {
+    const handleWeddingAction = async (id: number, status: "CONTACTED" | "ACCEPTED") => {
         setActionLoading(id);
-        const result = await markWeddingInquiryContacted(id);
-        if (result.success) fetchData("wedding");
+        if (status === "CONTACTED") {
+            const result = await markWeddingInquiryContacted(id);
+            if (result.success) fetchData("wedding");
+        } else {
+            const result = await acceptWeddingInquiry(id, parseInt(selectedEmployeeId));
+            if (result.success) fetchData("wedding");
+        }
         setActionLoading(null);
     };
 
@@ -334,7 +340,14 @@ export default function RequestedBookingsPage() {
                     {selectedCategory === "wedding" && (
                         weddingBookings.length === 0 ? <NoRequests /> : (
                             weddingBookings.map((b) => (
-                                <WeddingCard key={b.bookingId} booking={b} onDetails={() => setViewingDetails(b)} onContacted={() => handleWeddingAction(b.bookingId)} />
+                                <WeddingCard 
+                                    key={b.bookingId} 
+                                    booking={b} 
+                                    onDetails={() => setViewingDetails(b)} 
+                                    onContacted={() => handleWeddingAction(b.bookingId, "CONTACTED")} 
+                                    onApprove={() => handleWeddingAction(b.bookingId, "ACCEPTED")}
+                                    selectedEmployeeId={selectedEmployeeId}
+                                />
                             ))
                         )
                     )}
@@ -389,7 +402,10 @@ export default function RequestedBookingsPage() {
                     }} 
                     onReject={() => setShowRejectModal(selectedCategory === "rent-a-car" ? viewingDetails.bookingId : viewingDetails.id)} 
                     onAction={() => {
-                        if (selectedCategory === "wedding") handleWeddingAction(viewingDetails.bookingId);
+                        if (selectedCategory === "wedding") {
+                            if (viewingDetails.status === "WEDDING_INQUIRY") handleWeddingAction(viewingDetails.bookingId, "CONTACTED");
+                            else handleWeddingAction(viewingDetails.bookingId, "ACCEPTED");
+                        }
                         setViewingDetails(null);
                         setSelectedEmployeeId("");
                     }} 
@@ -497,12 +513,14 @@ function AirportCard({ booking, onDetails, onApprove, onReject }: any) {
                     <p className="text-[10px] font-bold text-gray-400">{booking.customerPhone}</p>
                 </div>
                 <div className="flex-1 border-l border-gray-100 pl-6">
-                    <h3 className="text-sm font-black text-primary uppercase tracking-tight">{booking.airport === "BANDARANAYAKE" ? "BIA (Colombo)" : "HRI (Mattala)"}</h3>
-                    <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest">{booking.transferType}</p>
+                    <h3 className="text-sm font-black text-primary uppercase tracking-tight">{booking.pickupLocation} → {booking.dropoffLocation}</h3>
+                    <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest">{booking.vehicleBrand} {booking.vehicleModel}</p>
                 </div>
                 <div className="flex-1 border-l border-gray-100 pl-6">
                     <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Schedule</span>
-                    <span className="text-[11px] font-black text-primary">{booking.transferDate} {booking.transferTime}</span>
+                    <span className="text-[11px] font-black text-primary">
+                        {booking.pickupDate ? new Date(booking.pickupDate).toLocaleString() : "TBD"}
+                    </span>
                 </div>
                 <div className="flex items-center gap-2 border-l border-gray-100 pl-6">
                     <button onClick={onDetails} className="h-10 px-4 bg-gray-50 hover:bg-purple-50 text-gray-600 hover:text-purple-600 rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest"><Eye className="w-3.5 h-3.5" /> Details</button>
@@ -514,7 +532,7 @@ function AirportCard({ booking, onDetails, onApprove, onReject }: any) {
     );
 }
 
-function WeddingCard({ booking, onDetails, onContacted }: any) {
+function WeddingCard({ booking, onDetails, onContacted, onApprove, selectedEmployeeId }: any) {
     return (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-4">
             <div className="flex items-center gap-6">
@@ -525,7 +543,7 @@ function WeddingCard({ booking, onDetails, onContacted }: any) {
                 </div>
                 <div className="flex-1 border-l border-gray-100 pl-6">
                     <h3 className="text-sm font-black text-primary uppercase tracking-tight">{booking.vehicle?.brand} {booking.vehicle?.model}</h3>
-                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Wedding Request</p>
+                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">{booking.status.replace("_", " ")}</p>
                 </div>
                 <div className="flex-1 border-l border-gray-100 pl-6">
                     <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Event Date</span>
@@ -533,7 +551,17 @@ function WeddingCard({ booking, onDetails, onContacted }: any) {
                 </div>
                 <div className="flex items-center gap-2 border-l border-gray-100 pl-6">
                     <button onClick={onDetails} className="h-10 px-4 bg-gray-50 hover:bg-amber-50 text-gray-600 hover:text-amber-600 rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest"><MessageSquare className="w-3.5 h-3.5" /> Details</button>
-                    <button onClick={onContacted} className="h-10 px-4 bg-green-50 text-green-600 rounded-xl flex items-center gap-2 hover:bg-green-600 hover:text-white transition-all font-black text-[9px] uppercase tracking-widest"><Check className="w-3.5 h-3.5" /> Contacted</button>
+                    {booking.status === "WEDDING_INQUIRY" ? (
+                        <button onClick={onContacted} className="h-10 px-4 bg-blue-50 text-blue-600 rounded-xl flex items-center gap-2 hover:bg-blue-600 hover:text-white transition-all font-black text-[9px] uppercase tracking-widest"><Check className="w-3.5 h-3.5" /> Mark Contacted</button>
+                    ) : (
+                        <button 
+                            onClick={onApprove} 
+                            disabled={!selectedEmployeeId}
+                            className="h-10 px-4 bg-green-50 text-green-600 rounded-xl flex items-center gap-2 hover:bg-green-600 hover:text-white transition-all font-black text-[9px] uppercase tracking-widest disabled:opacity-50"
+                        >
+                            <Briefcase className="w-3.5 h-3.5" /> Connect & Approve
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
@@ -619,7 +647,6 @@ function DetailModal({ category, data, employees, selectedEmployeeId, onEmployee
                                     )}
                                 </div>
                             </section>
-
                             {/* Section 4: Documents */}
                             {onViewDocs && (
                                 <section>
@@ -633,6 +660,31 @@ function DetailModal({ category, data, employees, selectedEmployeeId, onEmployee
                                         <Eye className="w-4 h-4 text-red-600" />
                                         <span className="text-[10px] font-black uppercase tracking-widest">View All Files</span>
                                     </button>
+                                </section>
+                            )}
+
+                            {/* Section 5: Payment Slip */}
+                            {data.paymentslip && (
+                                <section>
+                                    <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
+                                        <Briefcase className="w-4 h-4" /> Payment Documentation
+                                    </h4>
+                                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6">
+                                        <div className="flex items-center justify-between gap-4">
+                                            <div>
+                                                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Bank Payment Slip</p>
+                                                <p className="text-xs text-emerald-800 font-medium italic">Uploaded by customer for verification</p>
+                                            </div>
+                                            <a
+                                                href={data.paymentslip}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="h-10 px-6 bg-emerald-600 text-white rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
+                                            >
+                                                <ExternalLink className="w-3.5 h-3.5" /> View Slip
+                                            </a>
+                                        </div>
+                                    </div>
                                 </section>
                             )}
                         </>
@@ -667,9 +719,10 @@ function DetailModal({ category, data, employees, selectedEmployeeId, onEmployee
                                     )}
                                     {category === "airport" && (
                                         <>
-                                            <DetailItem label="Airport" value={data.airport} />
-                                            <DetailItem label="Type" value={data.transferType} />
-                                            <DetailItem label="Location" value={data.transferLocation} />
+                                            <DetailItem label="Origin" value={data.pickupLocation} />
+                                            <DetailItem label="Destination" value={data.dropoffLocation} />
+                                            <DetailItem label="Schedule" value={data.pickupDate ? new Date(data.pickupDate).toLocaleString() : "TBD"} />
+                                            <DetailItem label="Vechicle" value={`${data.vehicleBrand} ${data.vehicleModel} (${data.vehiclePlate})`} />
                                         </>
                                     )}
                                     {category === "wedding" && (
@@ -681,6 +734,29 @@ function DetailModal({ category, data, employees, selectedEmployeeId, onEmployee
                                     )}
                                 </div>
                             </section>
+
+                            {/* Payment Slip for Non-Rentals */}
+                            {data.paymentslip && (
+                                <section className="lg:col-span-2">
+                                    <h4 className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-3">
+                                        <Briefcase className="w-4 h-4" /> Payment Documentation
+                                    </h4>
+                                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-6 flex items-center justify-between gap-4">
+                                        <div>
+                                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Bank Payment Slip</p>
+                                            <p className="text-xs text-emerald-800 font-medium italic">Customer uploaded proof of payment</p>
+                                        </div>
+                                        <a
+                                            href={data.paymentslip}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="h-10 px-6 bg-emerald-600 text-white rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5" /> View Payment Slip
+                                        </a>
+                                    </div>
+                                </section>
+                            )}
                         </div>
                     )}
 
@@ -693,7 +769,6 @@ function DetailModal({ category, data, employees, selectedEmployeeId, onEmployee
                         </section>
                     )}
 
-                    {category !== "wedding" && (
                         <section className="bg-gray-50 rounded-4xl p-8 border border-gray-100">
                             <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
                                 <Briefcase className="w-4 h-4 text-red-600" /> Assign Employee
@@ -719,12 +794,17 @@ function DetailModal({ category, data, employees, selectedEmployeeId, onEmployee
                                 )}
                             </div>
                         </section>
-                    )}
                 </div>
 
                 <div className="p-8 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-4">
                     {category === "wedding" ? (
-                        <button onClick={onAction} className="h-14 px-12 bg-green-600 text-white font-black rounded-3xl hover:bg-green-700 transition-all text-xs uppercase tracking-widest">Mark Contacted</button>
+                        <button 
+                            onClick={onAction} 
+                            disabled={data.status !== "WEDDING_INQUIRY" && !selectedEmployeeId}
+                            className="h-14 px-12 bg-green-600 text-white font-black rounded-3xl hover:bg-green-700 transition-all text-xs uppercase tracking-widest disabled:opacity-50"
+                        >
+                            {data.status === "WEDDING_INQUIRY" ? "Mark Contacted" : "Approve & Connect"}
+                        </button>
                     ) : (
                         <>
                             <button onClick={onReject} className="h-14 px-8 border border-red-100 bg-white text-red-600 font-black rounded-3xl hover:bg-red-600 hover:text-white transition-all text-xs uppercase tracking-widest">Reject</button>

@@ -6,9 +6,9 @@ import {
     vehicle,
     vehicleBrand,
     vehicleModel,
-    pickupRequests,
-    airportBookings,
+    serviceCategory,
 } from "@/src/db/schema";
+import { SERVICE_CATEGORIES } from "@/lib/constants";
 import { eq, and } from "drizzle-orm";
 
 /**
@@ -39,6 +39,10 @@ export async function GET(req: Request) {
 
         // session.relatedId = employee.employeeId
         const employeeId = session.relatedId;
+
+        if (!employeeId) {
+            return NextResponse.json({ error: "Employee profile not found." }, { status: 404 });
+        }
 
         let data: any[] = [];
 
@@ -76,38 +80,42 @@ export async function GET(req: Request) {
 
         // ── Pickup ────────────────────────────────────────────────────────────
         else if (serviceType === "pickup") {
+            const [cat] = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, SERVICE_CATEGORIES.PICKUPS));
+            if (!cat) throw new Error("Pickups category not found.");
+
             const rows = await db
                 .select({
-                    id: pickupRequests.id,
-                    customerName: pickupRequests.customerFullName,
-                    customerPhone: pickupRequests.customerPhone,
-                    pickupDate: pickupRequests.pickupTime,
-                    returnDate: pickupRequests.returnTime,
-                    pickupLocation: pickupRequests.pickupLocation,
-                    dropoffLocation: pickupRequests.dropLocation,
-                    status: pickupRequests.status,
-                    totalFare: pickupRequests.price,
-                    createdAt: pickupRequests.createdAt,
+                    id: booking.bookingId,
+                    customerName: booking.customerFullName,
+                    customerPhone: booking.customerPhoneNumber1,
+                    pickupDate: booking.rentalDate,
+                    returnDate: booking.returnDate,
+                    pickupLocation: booking.pickupLocation,
+                    dropoffLocation: booking.dropoffLocation,
+                    status: booking.status,
+                    totalFare: booking.totalFare,
+                    createdAt: booking.createdAt,
                     vehicleBrand: vehicleBrand.brandName,
                     vehicleModel: vehicleModel.modelName,
                     plateNumber: vehicle.plateNumber,
                     vehicleImage: vehicle.vehicleImage,
-                    distanceKm: pickupRequests.distanceKm,
-                    travelers: pickupRequests.travelers,
-                    luggageCount: pickupRequests.luggageCount,
-                    isReturnTrip: pickupRequests.isReturnTrip,
+                    distanceKm: booking.distance,
+                    travelers: booking.numberOfTravelers,
+                    luggageCount: booking.numberOfLuggages,
+                    isReturnTrip: booking.terms2Confirmation,
                 })
-                .from(pickupRequests)
-                .leftJoin(vehicle, eq(pickupRequests.vehicleId, vehicle.vehicleId))
+                .from(booking)
+                .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
                 .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
                 .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
                 .where(
                     and(
-                        eq(pickupRequests.assignedEmployeeId, employeeId),
-                        eq(pickupRequests.status, "ACCEPTED")
+                        eq(booking.serviceCategoryId, cat.categoryId),
+                        eq(booking.assignedEmployeeId, employeeId),
+                        eq(booking.status, "ACCEPTED")
                     )
                 )
-                .orderBy(pickupRequests.pickupTime);
+                .orderBy(booking.rentalDate);
 
             // Convert decimal fields to numbers
             data = rows.map((r) => ({
@@ -119,40 +127,38 @@ export async function GET(req: Request) {
 
         // ── Airport Transfer ──────────────────────────────────────────────────
         else if (serviceType === "airport-transfer") {
+            const [cat] = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, SERVICE_CATEGORIES.AIRPORT_RENTAL));
+            
             data = await db
                 .select({
-                    id: airportBookings.id,
-                    customerName: airportBookings.customerFullName,
-                    customerPhone: airportBookings.customerPhone,
-                    pickupDate: airportBookings.pickupDate,
-                    returnDate: airportBookings.dropDate,
-                    pickupLocation: airportBookings.transferLocation,
-                    dropoffLocation: airportBookings.airport,
-                    status: airportBookings.status,
-                    totalFare: null,
-                    createdAt: airportBookings.createdAt,
+                    id: booking.bookingId,
+                    customerName: booking.customerFullName,
+                    customerPhone: booking.customerPhoneNumber1,
+                    pickupDate: booking.rentalDate,
+                    returnDate: booking.returnDate,
+                    pickupLocation: booking.pickupLocation,
+                    dropoffLocation: booking.dropoffLocation,
+                    status: booking.status,
+                    totalFare: booking.totalFare,
+                    createdAt: booking.createdAt,
                     vehicleBrand: vehicleBrand.brandName,
                     vehicleModel: vehicleModel.modelName,
                     plateNumber: vehicle.plateNumber,
                     vehicleImage: vehicle.vehicleImage,
-                    transferType: airportBookings.transferType,
-                    airport: airportBookings.airport,
-                    passengers: airportBookings.passengers,
-                    luggageCount: airportBookings.luggageCount,
-                    pickupTime: airportBookings.pickupTime,
-                    dropTime: airportBookings.dropTime,
+                    message: booking.message,
                 })
-                .from(airportBookings)
-                .leftJoin(vehicle, eq(airportBookings.vehicleId, vehicle.vehicleId))
+                .from(booking)
+                .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId!))
                 .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
                 .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
                 .where(
                     and(
-                        eq(airportBookings.handledByEmployeeId, employeeId),
-                        eq(airportBookings.status, "ACCEPTED")
+                        eq(booking.serviceCategoryId, cat.categoryId),
+                        eq(booking.assignedEmployeeId, employeeId),
+                        eq(booking.status, "ACCEPTED")
                     )
                 )
-                .orderBy(airportBookings.pickupDate);
+                .orderBy(booking.rentalDate);
         } else {
             return NextResponse.json(
                 { error: `Unknown serviceType: ${serviceType}` },

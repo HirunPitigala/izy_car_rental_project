@@ -10,7 +10,7 @@ import { sendNotification, notifyAdmins } from "./notificationActions";
 import { sendBookingStatusEmail } from "@/lib/email";
 
 // Helper to upload file to Cloudinary
-async function saveFileToCloudinary(file: File | null, folder: string): Promise<string | null> {
+export async function saveFileToCloudinary(file: File | null, folder: string): Promise<string | null> {
     if (!file || file.size === 0) return null;
 
     try {
@@ -21,7 +21,9 @@ async function saveFileToCloudinary(file: File | null, folder: string): Promise<
         // though top-level is better. I'll add the import in a separate chunk.
         // For now, let's assume I'll add the import.
         const { uploadToCloudinary } = await import("@/lib/cloudinary");
-        const result = await uploadToCloudinary(buffer, `bookings/${folder}`, "auto");
+        const isPDF = file.type === "application/pdf";
+        const resourceType = isPDF ? "raw" : "image";
+        const result = await uploadToCloudinary(buffer, `bookings/${folder}`, resourceType);
         return result.secure_url;
     } catch (error: unknown) {
         console.error("Cloudinary upload error:", error);
@@ -79,13 +81,15 @@ export async function createBooking(formData: FormData) {
         const idPath = await saveFileToCloudinary(formData.get("customerIdPdf") as File, "id");
         const gNicPath = await saveFileToCloudinary(formData.get("guaranteeNicPdf") as File, "guarantor-nic");
         const gLicensePath = await saveFileToCloudinary(formData.get("guaranteeLicensePdf") as File, "guarantor-license");
+        const paymentslipPath = await saveFileToCloudinary(formData.get("paymentslip") as File, "paymentslip");
 
         // Log data for debugging
         console.log("Creating booking with files:", {
             userId,
             vehicleId,
             licensePath,
-            idPath
+            idPath,
+            paymentslipPath
         });
 
         // Insert into database — capture insertId for notification
@@ -112,6 +116,7 @@ export async function createBooking(formData: FormData) {
             status: "PENDING",
             terms1: true,
             terms2Confirmation: true,
+            paymentslip: paymentslipPath,
         });
 
         const newBookingId: number | undefined = (insertResult as any)?.insertId;
@@ -154,6 +159,7 @@ export async function getPendingBookings(employeeId?: number) {
             guaranteePhoneNo1: booking.guaranteePhoneNo1,
             guaranteeNicNo: booking.guaranteeNicNo,
             guaranteeLicensePdf: booking.guaranteeLicensePdf,
+            paymentslip: booking.paymentslip,
             email: users.email,
             vehicle: {
                 brand: vehicleBrand.brandName,
@@ -180,6 +186,53 @@ export async function getPendingBookings(employeeId?: number) {
     }
 }
 
+export async function getAssignedBookings(employeeId: number) {
+    try {
+        const results = await db.select({
+            bookingId: booking.bookingId,
+            customerName: booking.customerFullName,
+            customerAddress: booking.customerAddress,
+            phone: booking.customerPhoneNumber1,
+            nic: booking.customerNicNo,
+            license: booking.customerLicenseNo,
+            rentalDate: booking.rentalDate,
+            returnDate: booking.returnDate,
+            totalFare: booking.totalFare,
+            status: booking.status,
+            rejectionReason: booking.rejectionReason,
+            createdAt: booking.createdAt,
+            terms1: booking.terms1,
+            guaranteeFullname: booking.guaranteeFullname,
+            guaranteeAddress: booking.guaranteeAddress,
+            guaranteePhoneNo1: booking.guaranteePhoneNo1,
+            guaranteeNicNo: booking.guaranteeNicNo,
+            guaranteeLicensePdf: booking.guaranteeLicensePdf,
+            paymentslip: booking.paymentslip,
+            email: users.email,
+            vehicle: {
+                brand: vehicleBrand.brandName,
+                model: vehicleModel.modelName,
+                plateNumber: vehicle.plateNumber
+            }
+        })
+            .from(booking)
+            .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
+            .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
+            .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
+            .leftJoin(users, eq(booking.userId, users.userId))
+            .where(
+                and(eq(booking.status, "ACCEPTED"), eq(booking.assignedEmployeeId, employeeId))
+            )
+            .orderBy(booking.createdAt);
+
+        return { success: true, data: results };
+    } catch (error) {
+        console.error("Error fetching assigned bookings:", error);
+        return { success: false, error: "Failed to fetch assigned bookings" };
+    }
+}
+
+
 export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" | "REJECTED", formData?: FormData, assignedEmployeeId?: number) {
     try {
         await db.update(booking)
@@ -193,9 +246,13 @@ export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" 
         revalidatePath("/admin/bookings/requested");
         revalidatePath("/employee/assigned");
 
-        // Handle Notifications
+        // Handle Notifications & Vehicle Status
         const [b] = await db.select().from(booking).where(eq(booking.bookingId, bookingId));
         if (b) {
+            if (status === "ACCEPTED" && b.vehicleId) {
+                await db.update(vehicle).set({ status: "UNAVAILABLE" }).where(eq(vehicle.vehicleId, b.vehicleId));
+            }
+
             const [u] = await db.select({ email: users.email, name: users.name })
                 .from(users).where(eq(users.userId, b.userId!));
 
@@ -239,7 +296,8 @@ export async function getBookingDocuments(bookingId: number) {
             license: booking.customerDrivingLicencePdf,
             customerID: booking.customerIdPdf,
             nic: booking.guaranteeNicPdf,
-            gLicense: booking.guaranteeLicensePdf
+            gLicense: booking.guaranteeLicensePdf,
+            paymentslip: booking.paymentslip
         })
             .from(booking)
             .where(eq(booking.bookingId, bookingId));
@@ -252,7 +310,8 @@ export async function getBookingDocuments(bookingId: number) {
                 license: docs.license,
                 customerID: docs.customerID,
                 nic: docs.nic,
-                gLicense: docs.gLicense
+                gLicense: docs.gLicense,
+                paymentslip: docs.paymentslip
             }
         };
     } catch (error) {

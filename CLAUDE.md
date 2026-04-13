@@ -59,7 +59,7 @@ c:\SDP\car-rental\
 │   ├── (auth)/                             # Unauthenticated pages
 │   │   ├── login/page.tsx
 │   │   └── reset-password/page.tsx
-│   ├── (customer-only)/                    # Customer dashboard pages
+│   ├── (customer-only)/                    # Customer service pages (rent, airport, wedding, pickup)
 │   │   ├── layout.tsx                      # Redirects employees away
 │   │   ├── rent/
 │   │   │   ├── page.tsx                    # Date/time selection
@@ -81,6 +81,11 @@ c:\SDP\car-rental\
 │   │   │   └── [id]/page.tsx
 │   │   └── pickup-service/page.tsx
 │   ├── unauthorized/page.tsx               # Shared unauthorized access page
+│   ├── customer/                           # Customer dashboard area
+│   │   ├── layout.tsx
+│   │   ├── dashboard/page.tsx              # Customer dashboard (loyalty tier, rental history CTA)
+│   │   └── profile/
+│   │       └── bookings/page.tsx           # Tabbed booking history — All/Past/Pending/Approved/Rejected
 │   ├── admin/                              # Admin dashboard pages
 │   │   ├── layout.tsx                      # Role guard — redirects non-admins
 │   │   ├── dashboard/
@@ -102,14 +107,12 @@ c:\SDP\car-rental\
 │   │   │   ├── wedding-cars/         (page, add)
 │   │   │   └── pickup-service/       (page, add, [id]/edit)
 │   │   ├── bookings/
+│   │   │   ├── all/page.tsx                # All rent-a-car bookings — filterable by status + past
 │   │   │   ├── requested/page.tsx          # Approve / reject bookings (all service types)
 │   │   │   ├── airport-bookings/page.tsx
 │   │   │   └── wedding-requests/page.tsx
 │   │   ├── employees/page.tsx
 │   │   └── hello/page.tsx                  # Debug test route
-│   ├── customer/
-│   │   ├── layout.tsx
-│   │   └── dashboard/page.tsx
 │   ├── manager/                            # Manager dashboard pages
 │   │   ├── layout.tsx                      # Role guard
 │   │   └── dashboard/page.tsx
@@ -118,9 +121,13 @@ c:\SDP\car-rental\
 │   │   ├── page.tsx
 │   │   ├── pickup-requests/page.tsx
 │   │   ├── airport-requests/page.tsx
-│   │   └── bookings/
-│   │       ├── requested/page.tsx
-│   │       └── [id]/inspection/page.tsx
+│   │   ├── bookings/
+│   │   │   └── requested/page.tsx          # Employee view of bookings pending approval
+│   │   └── assigned/                       # Assigned work pipeline
+│   │       ├── page.tsx                    # Assignment hub — 4 service category cards
+│   │       └── [category]/
+│   │           ├── page.tsx                # Category bookings list
+│   │           └── [id]/page.tsx           # Inspection workspace for a specific assignment
 │   └── api/                                # API route handlers
 │       ├── auth/
 │       │   ├── login/route.ts
@@ -139,9 +146,16 @@ c:\SDP\car-rental\
 │       ├── vehicles/
 │       │   ├── route.ts
 │       │   └── [id]/route.ts
-│       ├── admin/vehicles/
-│       │   ├── route.ts
-│       │   └── [id]/route.ts
+│       ├── admin/
+│       │   ├── vehicles/
+│       │   │   ├── route.ts
+│       │   │   └── [id]/route.ts
+│       │   └── bookings/route.ts           # GET — all rent-a-car bookings (filters: status, past)
+│       ├── customer/
+│       │   └── bookings/route.ts           # GET — customer's own bookings (filters: status, past)
+│       ├── employee/
+│       │   ├── tasks/route.ts
+│       │   └── bookings/route.ts
 │       ├── bookings/
 │       │   ├── route.ts                    # GET (list pending), PATCH (approve/reject)
 │       │   └── create/route.ts             # POST — minimal booking creation
@@ -162,7 +176,6 @@ c:\SDP\car-rental\
 │       │   └── booking/[id]/
 │       │       ├── route.ts
 │       │       └── details/route.ts
-│       ├── employee/tasks/route.ts
 │       ├── notifications/
 │       │   ├── route.ts                    # GET — list user's notifications (newest-first)
 │       │   ├── [id]/route.ts               # PATCH — mark as READ
@@ -191,11 +204,14 @@ c:\SDP\car-rental\
 │   │   ├── AgreementForm.tsx
 │   │   ├── InvoiceView.tsx
 │   │   └── MapModal.tsx
-│   └── employee/inspection/
-│       ├── DamageCanvas.tsx
-│       ├── ChecklistRow.tsx
-│       ├── InspectionCard.tsx
-│       └── InspectionComparisonTable.tsx
+│   └── employee/
+│       ├── InspectionWorkspace.tsx         # Full inspection UI — Details/Pre-Rental/After-Rental tabs
+│       ├── InspectionChecklistModal.tsx    # Deprecated shell (functionality in InspectionWorkspace)
+│       └── inspection/
+│           ├── DamageCanvas.tsx
+│           ├── ChecklistRow.tsx
+│           ├── InspectionCard.tsx
+│           └── InspectionComparisonTable.tsx
 ├── lib/                                    # Server-side utilities and services
 │   ├── auth.ts                             # JWT encrypt/decrypt, getSession(), logDebug()
 │   ├── db.ts                               # Re-exports db + pool from @/src/db (safe to import)
@@ -237,8 +253,10 @@ c:\SDP\car-rental\
 │   │       ├── pickupRequests.repository.ts
 │   │       └── airportBookings.repository.ts
 │   ├── actions/                            # Next.js server actions
-│   │   ├── bookingActions.ts               # createBooking, updateBookingStatus, getPendingBookings
-│   │   ├── pickupActions.ts                # getPendingPickups, updatePickupStatus
+│   │   ├── bookingActions.ts               # createBooking, updateBookingStatus, getPendingBookings, getAssignedBookings, getBookingDocuments
+│   │   ├── pickupActions.ts                # getPendingPickups, getAssignedPickups, updatePickupStatus
+│   │   ├── assignmentActions.ts            # getAssignmentDetails(category, id, employeeId) — unified fetch for all 4 service types
+│   │   ├── inspectionActions.ts            # getOrSeedChecklistItems, saveInspection, getInspection
 │   │   ├── vehicleActions.ts               # saveVehicle, getAvailableVehicles, getVehicleById
 │   │   ├── weddingActions.ts               # getWeddingCars, getWeddingCarById, createWeddingCarInquiry, markWeddingInquiryContacted, addVehicleToWeddingCategory, removeVehicleFromWeddingCategory, getNonWeddingVehicles
 │   │   ├── employeeActions.ts              # getAllEmployees, updateEmployeeStatus, deleteEmployee
@@ -275,22 +293,23 @@ c:\SDP\car-rental\
 | `vehicleBrand` | Vehicle brand lookup |
 | `vehicleModel` | Vehicle model lookup (belongs to brand) |
 | `serviceCategory` | Service category lookup (regular, airport, pickup, wedding) |
-| `booking` | Standard vehicle bookings (includes merged customer + guarantor fields) |
-| `inspection` | BEFORE / AFTER vehicle inspections linked to a booking |
-| `inspectionItems` | Per-item checklist results (OK / NOT_OK) for an inspection |
-| `damageReports` | Damage markers (type, x/y position) linked to an inspection |
-| `item` | Inspection checklist item catalog |
+| `booking` | Standard vehicle bookings — rent-a-car and wedding inquiries; fields: bookingId, userId, vehicleId, assignedEmployeeId, customerFullName, customerPhoneNumber1, customerNicNo, customerLicenseNo, customerAddress, guaranteeFullname, guaranteeAddress, guaranteePhoneNo1, guaranteeNicNo, guaranteeLicensePdf, rentalDate, returnDate, pickupLocation, dropoffLocation, totalFare, status, rejectionReason, message, terms1, createdAt |
+| `inspection` | BEFORE / AFTER vehicle inspections linked to a booking and employee; fields: inspectionId, bookingId, employeeId, inspectionType (BEFORE/AFTER), overallRemarks |
+| `inspectionItems` | Per-item checklist results for an inspection; fields: inspectionItemId, inspectionId, itemId, status (OK/NOT_OK), remarks |
+| `damageReports` | Damage markers linked to an inspection; fields: damageReportId, inspectionId, damageType (SMALL_MARK/SCRATCH/DENT/CRACK), xPosition, yPosition, notes |
+| `item` | Inspection checklist item catalog; fields: itemId, itemName, status |
 | `payment` | Payment records linked to a booking |
 | `notification` | In-app notifications (notificationId, bookingId, message, notificationDate, status UNREAD/READ, adminId, userId) |
 | `review` | Customer reviews (rating 1–5) linked to booking + vehicle |
 | `report` | Manager-generated summary reports |
-| `pickupRequests` | Pickup/delivery bookings (customerId, vehicleId, driverId, pickupLocation, dropLocation, pickupTime, returnTime, isReturnTrip, travelers, luggageCount, distanceKm, price, customerFullName, customerPhone, status, rejectionReason, assignedEmployeeId) |
-| `airportBookings` | Airport transfer bookings (customerId, vehicleId, transferType: pickup/drop, airport: katunayaka/mattala, pickupDate, pickupTime, dropDate, dropTime, passengers, luggageCount, customerFullName, customerPhone, transferLocation, status, bookingType DEFAULT "airport_rental", rejectionReason, handledByEmployeeId) |
+| `pickupRequests` | Pickup/delivery bookings (customerId, vehicleId, driverId, pickupLocation, dropLocation, pickupTime, returnTime, isReturnTrip, travelers, luggageCount, distanceKm, price, customerFullName, customerPhone, status, rejectionReason, assignedEmployeeId, createdAt) |
+| `airportBookings` | Airport transfer bookings (customerId, vehicleId, transferType: pickup/drop, airport, pickupDate, pickupTime, dropDate, dropTime, passengers, luggageCount, customerFullName, customerPhone, transferLocation, status, bookingType DEFAULT "airport_rental", rejectionReason, handledByEmployeeId, createdAt) |
 | `emailVerificationTokens` | Email verification token store |
 | `passwordResetTokens` | Password reset token store |
 
 **Booking status values:** `PENDING` → `ACCEPTED` / `REJECTED`
 **Wedding status values:** `WEDDING_INQUIRY` → `WEDDING_CONTACTED`
+**Past booking definition:** `booking.returnDate < new Date()` (use `lt(booking.returnDate, new Date())` in Drizzle)
 
 Schema defined in: `src/db/schema.ts`
 Relations defined in: `src/db/relations.ts`
@@ -310,7 +329,7 @@ TypeScript types: `lib/db/types.ts`
 |------|-----------|-------|
 | `admin` | `/admin/*` | Hardcoded via `ADMIN_EMAIL`/`ADMIN_PASSWORD` env vars — **userId = 0, no DB row required** |
 | `manager` | `/manager/*` | Database user |
-| `customer` | `/(customer-only)/*` | Database user, status = "active" on registration |
+| `customer` | `/(customer-only)/*` and `/customer/*` | Database user, status = "active" on registration |
 | `employee` | `/employee/*` | Database user, status = "inactive" on registration (must be activated) |
 
 **Key auth files:**
@@ -321,7 +340,7 @@ TypeScript types: `lib/db/types.ts`
 
 Route protection is done at **layout level** (redirect if wrong role), not middleware.
 
-> **Important — single `db` instance:** Always import `db` from `@/src/db`. `lib/db.ts` now re-exports from `@/src/db`, so both paths resolve to the same instance — but direct use of `@/src/db` is preferred to keep imports explicit.
+> **Important — single `db` instance:** Always import `db` from `@/src/db`. `lib/db.ts` re-exports from `@/src/db` and is safe but non-preferred. **Never import `db` from `@/lib/db` inside repository files** — it creates a circular dependency.
 
 ## Notification System
 
@@ -368,6 +387,71 @@ Server Action / API Route
 | Admin rejects Pickup booking | Customer (in-app + email) | `notification:{userId}` |
 | Wedding inquiry marked contacted | Customer (in-app) | `notification:{userId}` |
 
+## Inspection System
+
+Employees perform BEFORE and AFTER vehicle inspections for assigned rent-a-car bookings.
+
+### Workflow
+1. Employee navigates to `/employee/assigned/rent-a-car` — sees all assigned bookings
+2. Opens a booking workspace at `/employee/assigned/rent-a-car/[id]`
+3. **DETAILS tab** — views customer info, vehicle, dates, financials, and document vault (customer ID, license, guarantor NIC/license PDFs)
+4. **PRE-RENTAL tab** — completes 27-item checklist + marks damage on interactive car diagram → saves via `saveInspection({...type:"BEFORE"})`
+5. **AFTER-RENTAL tab** — completes same checklist + damage map; pre-rental damage shown in dashed borders for comparison → saves via `saveInspection({...type:"AFTER"})`
+
+### Checklist Items (27 default — seeded into `item` table on first use)
+Wiper Blades, Hub Caps, Badges Fitted to the Vehicle, Spare Wheel, Jack and Handle, Wheel Brace, Cassette Android/DVD/Normal, Reverse Camera, Air Pump, Window Winders Working, Seat Front (R), Seat Front (L), Seat Rear (R), Seat Rear (L), Carpets Rubber/Velvet, Make of Tires Front (R), Make of Tires Front (L), Make of Tires Rear (R), Make of Tires Rear (L), A/C Vents 4, Antenna, Vehicle Insurance, Vehicle Renewal Licence, Side Mirror (L), Side Mirror (R), Battery Make & Number, Fuel Level
+
+### Damage Types
+`SMALL_MARK` · `SCRATCH` · `DENT` · `CRACK` — stored as percentage-based x/y coordinates on the car diagram
+
+### Key Files
+| File | Role |
+|------|------|
+| `lib/actions/inspectionActions.ts` | `getOrSeedChecklistItems()`, `saveInspection(data)`, `getInspection(bookingId, type)` |
+| `components/employee/InspectionWorkspace.tsx` | Full inspection UI with 3 tabs, checklist, damage mapper, document vault |
+| `app/employee/assigned/[category]/[id]/page.tsx` | Workspace page — fetches assignment details + renders InspectionWorkspace |
+| `lib/actions/bookingActions.ts::getBookingDocuments` | Fetches customer PDF documents for display in the vault |
+
+### InspectionSubmissionData Interface
+```ts
+interface InspectionSubmissionData {
+  bookingId: number;
+  employeeId: number;
+  inspectionType: "BEFORE" | "AFTER";
+  overallRemarks?: string;
+  items: { itemId: number; status: "OK" | "NOT_OK"; remarks?: string }[];
+  damages: { type: "SMALL_MARK" | "SCRATCH" | "DENT" | "CRACK"; x: number; y: number; notes?: string }[];
+}
+```
+
+### DB Tables
+- `inspection` — one row per booking+type (BEFORE/AFTER)
+- `inspectionItems` — one row per checklist item per inspection
+- `damageReports` — one row per damage marker per inspection
+- `item` — checklist item catalog (seeded on first access)
+
+## Booking APIs
+
+### Customer Booking History
+`GET /api/customer/bookings` — requires `customer` role
+
+| Query Param | Values | Effect |
+|-------------|--------|--------|
+| `status` | `pending` / `approved` / `rejected` | Maps to PENDING / ACCEPTED / REJECTED |
+| `past` | `true` | Filters `booking.returnDate < now()` |
+
+Returns: `bookingId`, `rentalDate`, `returnDate`, `totalFare`, `status`, `rejectionReason`, `vehicle` (brand, model, plateNumber, vehicleImage)
+
+### Admin Booking Overview
+`GET /api/admin/bookings` — requires `admin` or `manager` role
+
+| Query Param | Values | Effect |
+|-------------|--------|--------|
+| `status` | `pending` / `approved` / `rejected` | Maps to PENDING / ACCEPTED / REJECTED |
+| `past` | `true` | Filters `booking.returnDate < now()` |
+
+Returns: `bookingId`, `customerName`, `customerPhone`, `userEmail`, `rentalDate`, `returnDate`, `totalFare`, `status`, `vehicle` (brand, model, plateNumber)
+
 ## Environment Variables
 
 ```env
@@ -411,12 +495,14 @@ Config file: `.env.local`
 7. **Session caching** — `getSession()` uses React `cache()` for per-request deduplication
 8. **Image uploads** — always go through `/api/upload` → Cloudinary, never local storage; `saveFileToCloudinary()` returns `null` on network failure (non-fatal)
 9. **Role-based redirects** — enforced in layout files, not middleware
-10. **Raw Drizzle** — always import `db` from `@/src/db` (canonical instance); `lib/db.ts` re-exports from `@/src/db` and is safe but non-preferred
+10. **Raw Drizzle** — always import `db` from `@/src/db` (canonical instance); `lib/db.ts` re-exports from `@/src/db` and is safe but non-preferred. **Repository files must use `@/src/db` directly** to avoid circular imports via the barrel.
 11. **NotificationBroker** — stored on `global` so server actions and route handlers share the same EventEmitter instance across Next.js module contexts
 12. **Email notifications** — `sendBookingStatusEmail()` swallows its own errors; email failure never interrupts booking workflow
 13. **Pricing multipliers** — `lib/price-helper.ts`: PICKUP 1.2×, AIRPORT 1.3×, WEDDING 1.5×, NORMAL 1.0×
 14. **Distance estimation** — `pickupService.ts::estimateDistance()` is a hash-based stub, not a real geo API (replace for production)
-15. **Wedding email workaround** — customer email is stored in the `dropoffLocation` varchar field (schema has no dedicated email column for wedding inquiries)
+15. **Wedding email workaround** — customer email is stored in the `dropoffLocation` varchar field (schema has no dedicated email column for wedding inquiries); `assignmentActions.ts` reads it as `email: booking.dropoffLocation` for wedding category
+16. **Past bookings filter** — use Drizzle's `lt(booking.returnDate, new Date())` — the date column is `returnDate` on `booking`, `returnTime` on `pickupRequests`
+17. **Assignment field names** — rent-a-car and wedding use `assignedEmployeeId` on `booking`; airport uses `handledByEmployeeId` on `airportBookings`; pickups use `assignedEmployeeId` on `pickupRequests`
 
 ### Repository usage example
 ```ts
@@ -435,6 +521,14 @@ await BookingRepo.updateBooking(bookingId, { status: 'APPROVED' });
 - `saveVerificationToken(userId, token, expiresAt)` / `findToken(token)` / `deleteToken(id)`
 - `saveResetToken(userId, token, expiresAt)` / `findResetToken(token)` / `deleteResetToken(userId)` / `deleteResetTokenById(id)`
 - `markEmailVerified(userId)` — sets `emailVerified: true`, `status: "active"`
+
+**Assignment action key method** (`lib/actions/assignmentActions.ts`):
+- `getAssignmentDetails(category, id, employeeId)` — unified fetch for all 4 service types; returns full booking details including joined vehicle, user, and location data
+
+**Inspection action key methods** (`lib/actions/inspectionActions.ts`):
+- `getOrSeedChecklistItems()` — seeds 27 default items into `item` table on first call, then returns all items
+- `saveInspection(data: InspectionSubmissionData)` — upserts inspection + items + damages (deletes existing items/damages on re-save)
+- `getInspection(bookingId, type)` — returns `{ ...inspection, items[], damages[] }` or `null`
 
 ## Bug Fixes Applied (errorfix branch)
 
@@ -460,6 +554,12 @@ await BookingRepo.updateBooking(bookingId, { status: 'APPROVED' });
 - **Root cause:** `saveFileToCloudinary()` caught network errors (e.g. `ENOTFOUND`) but immediately re-threw them, propagating the error up to fail the entire booking.
 - **Fix:** On catch, return `null` instead of rethrowing. The booking is inserted with `null` document paths (same outcome as when no file is provided).
 - **File:** `lib/actions/bookingActions.ts`
+
+### 5. NotificationRepo circular import — `Export NotificationRepo doesn't exist`
+- **Root cause:** `lib/db/repositories/notification.repository.ts` imported `db` from `@/lib/db`, which itself re-exports `NotificationRepo` from that same file — a circular dependency that caused TypeScript/Next.js to fail resolving the export at build time.
+- **Fix:** Changed the import in `notification.repository.ts` from `@/lib/db` to `@/src/db`.
+- **Rule:** All repository files must import `db` from `@/src/db`, never from `@/lib/db`.
+- **File:** `lib/db/repositories/notification.repository.ts`
 
 ## Branch Info
 - Active development branch: `errorfix`

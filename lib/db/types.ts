@@ -27,7 +27,6 @@ import {
   users,
   emailVerificationTokens,
   passwordResetTokens,
-  pickupRequests,
   airportBookings,
 } from '@/src/db/schema';
 
@@ -110,10 +109,6 @@ export type NewEmailVerificationToken = typeof emailVerificationTokens.$inferIns
 // ─── Password Reset Tokens ────────────────────────────────────────────────────
 export type PasswordResetToken    = typeof passwordResetTokens.$inferSelect;
 export type NewPasswordResetToken = typeof passwordResetTokens.$inferInsert;
-
-// ─── Pickup Requests ──────────────────────────────────────────────────────────
-export type PickupRequest    = typeof pickupRequests.$inferSelect;
-export type NewPickupRequest = typeof pickupRequests.$inferInsert;
 
 // ─── Airport Bookings ─────────────────────────────────────────────────────────
 export type AirportBooking    = typeof airportBookings.$inferSelect;

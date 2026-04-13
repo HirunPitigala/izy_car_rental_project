@@ -46,7 +46,7 @@ const customerNavItems: NavItem[] = [
 ];
 
 const employeeNavItems: NavItem[] = [
-    { label: 'Requested Bookings', href: '/employee' },
+    { label: 'Assigned Bookings', href: '/employee/assigned' },
 ];
 
 interface NavbarProps {

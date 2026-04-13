@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { sendNotification } from './notificationActions';
 import { sendBookingStatusEmail } from "@/lib/email";
 import { db } from '@/lib/db';
-import { pickupRequests, users } from '@/src/db/schema';
+import { booking, users, vehicle } from '@/src/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function getPendingPickups(employeeId?: number) {
@@ -24,21 +24,41 @@ export async function getPendingPickups(employeeId?: number) {
     }
 }
 
+export async function getAssignedPickups(employeeId: number) {
+    try {
+        const data = await pickupService.getPickupRequestsByStatus('ACCEPTED', employeeId);
+        // Convert distanceKm and price to number if they are strings from DB
+        const processed = data.map(item => ({
+            ...item,
+            distanceKm: Number(item.distanceKm),
+            price: Number(item.price)
+        }));
+        return { success: true, data: processed };
+    } catch (error: any) {
+        console.error('Error fetching assigned pickups:', error);
+        return { success: false, error: 'Failed to fetch assigned pickup requests' };
+    }
+}
+
 export async function updatePickupStatus(id: number, status: 'ACCEPTED' | 'REJECTED', reason?: string, assignedEmployeeId?: number) {
     try {
         await pickupService.updatePickupRequestStatus(id, status, reason, assignedEmployeeId);
         revalidatePath('/admin/bookings/requested');
         revalidatePath('/employee/assigned');
 
-        const [p] = await db.select().from(pickupRequests).where(eq(pickupRequests.id, id));
+        const [p] = await db.select().from(booking).where(eq(booking.bookingId, id));
         if (p) {
+            if (status === 'ACCEPTED' && p.vehicleId) {
+                await db.update(vehicle).set({ status: 'UNAVAILABLE' }).where(eq(vehicle.vehicleId, p.vehicleId));
+            }
+
             const [u] = await db.select({ email: users.email, name: users.name })
-                .from(users).where(eq(users.userId, p.customerId));
+                .from(users).where(eq(users.userId, p.userId!));
 
             if (status === 'ACCEPTED') {
                 // 1. Notify Customer — in-app + email
-                if (p.customerId) {
-                    try { await sendNotification(p.customerId, `Your Pickup booking (#${id}) has been ACCEPTED.`, id, "pickup"); }
+                if (p.userId) {
+                    try { await sendNotification(p.userId, `Your Pickup booking (#${id}) has been ACCEPTED.`, id, "pickup"); }
                     catch (e) { console.error("Notification error:", e); }
                     try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", id, "Pickup", "ACCEPTED"); }
                     catch (e) { console.error("Email error:", e); }
@@ -52,8 +72,8 @@ export async function updatePickupStatus(id: number, status: 'ACCEPTED' | 'REJEC
                 }
             } else if (status === 'REJECTED') {
                 // Notify Customer — in-app + email
-                if (p.customerId) {
-                    try { await sendNotification(p.customerId, `Your Pickup booking (#${id}) has been REJECTED.`, id, "pickup"); }
+                if (p.userId) {
+                    try { await sendNotification(p.userId, `Your Pickup booking (#${id}) has been REJECTED.`, id, "pickup"); }
                     catch (e) { console.error("Notification error:", e); }
                     try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", id, "Pickup", "REJECTED", reason ?? undefined); }
                     catch (e) { console.error("Email error:", e); }

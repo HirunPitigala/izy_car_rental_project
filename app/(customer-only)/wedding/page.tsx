@@ -51,7 +51,7 @@ export default function WeddingRentalPage() {
 
         async function fetchCars() {
             setLoading(true);
-            const result = await getWeddingCars();
+            const result = await getWeddingCars(true);
             if (result.success) {
                 setCars(result.data as any);
             }

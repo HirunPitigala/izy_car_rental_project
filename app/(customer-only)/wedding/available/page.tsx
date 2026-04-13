@@ -24,7 +24,7 @@ export default function WeddingAvailablePage() {
     useEffect(() => {
         async function fetchCars() {
             setLoading(true);
-            const result = await getWeddingCars();
+            const result = await getWeddingCars(true);
             if (result.success) {
                 setCars(result.data as any);
             }

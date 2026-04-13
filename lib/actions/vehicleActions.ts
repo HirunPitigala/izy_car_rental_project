@@ -124,14 +124,24 @@ export async function getAvailableVehicles(startDate: string, startTime: string,
         // and its date range overlaps with the requested search range.
         const blockedVehiclesQuery = await db.select({ id: booking.vehicleId })
             .from(booking)
+            .innerJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
             .where(
                 and(
                     or(
                         eq(booking.status, 'PENDING'),
-                        eq(booking.status, 'ACCEPTED')
+                        eq(booking.status, 'ACCEPTED'),
+                        eq(booking.status, 'WEDDING_CONTACTED')
                     ),
                     sql`${booking.rentalDate} < ${end}`,
-                    sql`${booking.returnDate} > ${start}`
+                    sql`${booking.returnDate} > ${start}`,
+                    // ONLY block if:
+                    // 1. It is a FUTURE booking (starts after now) -> Prevents double booking future slots.
+                    // 2. OR the car is NOT marked as 'AVAILABLE' -> Standard active booking block.
+                    // This allows "Early Returns" (Current/Past booking + status=AVAILABLE) to be ignored.
+                    or(
+                        gt(booking.rentalDate, sql`NOW()`),
+                        ne(vehicle.status, "AVAILABLE")
+                    )
                 )
             );
 

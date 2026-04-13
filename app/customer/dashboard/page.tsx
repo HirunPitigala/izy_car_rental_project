@@ -72,7 +72,7 @@ export default function CustomerDashboard() {
                     </div>
 
                     <div className="bg-white rounded-[3.5rem] border border-gray-100 shadow-sm p-16 text-center group">
-                        <div className="w-24 h-24 bg-gray-50 rounded-[2rem] flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110 duration-500">
+                        <div className="w-24 h-24 bg-gray-50 rounded-4xl flex items-center justify-center mx-auto mb-8 transition-transform group-hover:scale-110 duration-500">
                             <Car className="h-10 w-10 text-gray-200" />
                         </div>
                         <h3 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Your fleet is waiting</h3>
@@ -89,7 +89,7 @@ export default function CustomerDashboard() {
                 {/* Secondary Actions */}
                 <div className="mt-20 grid grid-cols-1 md:grid-cols-2 gap-8">
                     <Link href="/rent" className="bg-white p-10 rounded-[3rem] border border-gray-100 flex items-center gap-8 group hover:shadow-2xl transition-all">
-                        <div className="h-16 w-16 rounded-[1.5rem] bg-gray-900 flex items-center justify-center text-yellow-400 shadow-xl shadow-gray-200 group-hover:scale-110 transition-transform">
+                        <div className="h-16 w-16 rounded-3xl bg-gray-900 flex items-center justify-center text-yellow-400 shadow-xl shadow-gray-200 group-hover:scale-110 transition-transform">
                             <Car className="h-8 w-8" />
                         </div>
                         <div>
@@ -99,7 +99,7 @@ export default function CustomerDashboard() {
                         <ChevronRight className="h-6 w-6 text-gray-300 ml-auto group-hover:translate-x-2 transition-transform" />
                     </Link>
                     <div className="bg-yellow-400 p-10 rounded-[3rem] shadow-xl shadow-yellow-100 flex items-center gap-8 group cursor-pointer hover:bg-yellow-500 transition-all">
-                        <div className="h-16 w-16 rounded-[1.5rem] bg-gray-900 flex items-center justify-center text-white shadow-xl shadow-gray-200 group-hover:scale-110 transition-transform">
+                        <div className="h-16 w-16 rounded-3xl bg-gray-900 flex items-center justify-center text-white shadow-xl shadow-gray-200 group-hover:scale-110 transition-transform">
                             <CreditCard className="h-8 w-8" />
                         </div>
                         <div>

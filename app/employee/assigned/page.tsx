@@ -3,33 +3,23 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-    getPendingBookings,
-    updateBookingStatus,
-    getBookingDocuments
+    getAssignedBookings,
 } from "@/lib/actions/bookingActions";
 import {
-    getPendingPickups,
-    updatePickupStatus
+    getAssignedPickups,
 } from "@/lib/actions/pickupActions";
+import { getWeddingCarInquiries, getAssignedWeddingBookings } from "@/lib/actions/weddingActions";
+
 import {
-    getWeddingCarInquiries,
-    markWeddingInquiryContacted
-} from "@/lib/actions/weddingActions";
-import {
-    Check,
-    X,
-    Eye,
-    Loader2,
-    User,
     Car,
-    FileText,
     Info,
-    ExternalLink,
     ChevronRight,
     Truck,
     Key,
     Wind,
-    MessageSquare
+    ShieldCheck,
+    Eye,
+    Loader2
 } from "lucide-react";
 
 // --- Types ---
@@ -39,12 +29,9 @@ interface RentBooking {
     bookingId: number;
     customerName: string;
     phone: string;
-    email?: string;
-    nic?: string;
     vehicle?: VehicleInfo;
     rentalDate: string | Date;
     returnDate: string | Date;
-    totalFare: number | string;
 }
 
 interface PickupBooking {
@@ -56,18 +43,15 @@ interface PickupBooking {
     pickupTime: string | Date;
     travelers: number;
     luggageCount: number;
-    price: number | string;
 }
 
 interface AirportBooking {
     id: number;
-    customerFullName: string;
+    customerName: string;
     customerPhone: string;
-    airport: string;
-    transferType: string;
-    transferDate: string;
-    transferTime: string;
-    transferLocation?: string;
+    pickupLocation: string;
+    dropoffLocation: string;
+    pickupDate: string | Date;
 }
 
 interface WeddingBooking {
@@ -76,44 +60,7 @@ interface WeddingBooking {
     phone: string;
     vehicle?: VehicleInfo;
     eventDate: string | Date;
-    message?: string;
     status: string;
-    pickupLocation?: string;
-}
-
-interface BookingDocs {
-    customerID: string | null;
-    license: string | null;
-    nic: string | null;
-    gLicense: string | null;
-}
-
-// Covers all fields accessed inside DetailModal (union of optional fields from all booking types)
-interface BookingDetail {
-    bookingId?: number;
-    id?: number;
-    customerFullName?: string;
-    customerName?: string;
-    customerPhone?: string;
-    phone?: string;
-    email?: string;
-    nic?: string;
-    vehicle?: VehicleInfo;
-    rentalDate?: string | Date;
-    returnDate?: string | Date;
-    totalFare?: number | string;
-    pickupLocation?: string;
-    dropLocation?: string;
-    pickupTime?: string | Date;
-    travelers?: number;
-    luggageCount?: number;
-    price?: number | string;
-    airport?: string;
-    transferType?: string;
-    transferLocation?: string;
-    eventDate?: string | Date;
-    message?: string;
-    status?: string;
 }
 
 // --- Categories Configuration ---
@@ -121,7 +68,7 @@ const categories = [
     {
         id: "rent-a-car",
         name: "Rent a Car",
-        description: "Standard daily/monthly vehicle rental approvals.",
+        description: "Standard daily/monthly vehicle rentals.",
         icon: Car,
         color: "bg-blue-50 text-blue-600 border-blue-100 ring-blue-50",
     },
@@ -158,74 +105,27 @@ export default function EmployeeAssignedBookingsPage() {
     const [airportBookings, setAirportBookings] = useState<AirportBooking[]>([]);
     const [weddingBookings, setWeddingBookings] = useState<WeddingBooking[]>([]);
 
-    // Shared states
-    const [viewingDetails, setViewingDetails] = useState<BookingDetail | null>(null);
-    const [showRejectModal, setShowRejectModal] = useState<number | null>(null);
-    const [rejectionReason, setRejectionReason] = useState("");
     const [employeeId, setEmployeeId] = useState<number | null>(null);
-    const [actionLoading, setActionLoading] = useState<number | null>(null);
 
-    // Rent-A-Car specific
-    const [viewingDocs, setViewingDocs] = useState(false);
-    const [selectedDocs, setSelectedDocs] = useState<BookingDocs | null>(null);
-
-    const fetchData = async (category: string, empId: number, highlightId?: string | null) => {
+    const fetchData = async (category: string, empId: number) => {
         setLoading(true);
         if (category === "rent-a-car") {
-            const res = await getPendingBookings(empId);
+            const res = await getAssignedBookings(empId);
             if (res.success) setRentBookings((res.data ?? []) as RentBooking[]);
         } else if (category === "pickups") {
-            const res = await getPendingPickups(empId);
+            const res = await getAssignedPickups(empId);
             if (res.success) setPickupBookings((res.data ?? []) as PickupBooking[]);
         } else if (category === "airport") {
             try {
-                const res = await fetch(`/api/airport-rental/bookings?status=PENDING&employeeId=${empId}`);
+                const res = await fetch(`/api/airport-rental/bookings?status=ACCEPTED&employeeId=${empId}`);
                 const data = await res.json();
                 if (res.ok && data.success) setAirportBookings((data.data as AirportBooking[]).reverse());
             } catch (e) { console.error(e); }
         } else if (category === "wedding") {
-            const res = await getWeddingCarInquiries();
-            if (res.success && res.data) {
-                setWeddingBookings((res.data as WeddingBooking[]).filter((b) => b.status === "WEDDING_INQUIRY"));
-            }
+            const res = await getAssignedWeddingBookings(empId);
+            if (res.success) setWeddingBookings((res.data ?? []) as WeddingBooking[]);
         }
         setLoading(false);
-        
-        // Handle Highlight Deep Link
-        if (highlightId) {
-            const id = parseInt(highlightId);
-            setTimeout(() => {
-                if (category === "rent-a-car") {
-                    setRentBookings(current => {
-                        const b = current.find(x => x.bookingId === id);
-                        if (b) setViewingDetails(b as BookingDetail);
-                        return current;
-                    });
-                } else if (category === "pickups") {
-                    setPickupBookings(current => {
-                        const b = current.find(x => x.id === id);
-                        if (b) setViewingDetails(b as BookingDetail);
-                        return current;
-                    });
-                } else if (category === "airport") {
-                    setAirportBookings(current => {
-                        const b = current.find(x => x.id === id);
-                        if (b) setViewingDetails(b as BookingDetail);
-                        return current;
-                    });
-                } else if (category === "wedding") {
-                    setWeddingBookings(current => {
-                        const b = current.find(x => x.bookingId === id);
-                        if (b) setViewingDetails(b as BookingDetail);
-                        return current;
-                    });
-                }
-                
-                // Clear highlight from URL
-                const newUrl = window.location.pathname + "?category=" + category;
-                window.history.replaceState({}, document.title, newUrl);
-            }, 100);
-        }
     };
 
     // Initial Fetch & URL parsing
@@ -245,71 +145,13 @@ export default function EmployeeAssignedBookingsPage() {
         if (cat && !selectedCategory) {
             setSelectedCategory(cat);
         }
-        
+    }, []); // Run only once
+
+    useEffect(() => {
         if (selectedCategory && employeeId) {
-            fetchData(selectedCategory, employeeId, params.get("highlight"));
+            fetchData(selectedCategory, employeeId);
         }
     }, [selectedCategory, employeeId]);
-
-    // --- RENT-A-CAR ACTIONS ---
-    const handleRentAction = async (id: number, status: "ACCEPTED" | "REJECTED", reason?: string) => {
-        setActionLoading(id);
-        const formData = new FormData();
-        if (reason) formData.append("rejectionReason", reason);
-        const result = await updateBookingStatus(id, status, formData);
-        if (result.success && employeeId) {
-            fetchData("rent-a-car", employeeId);
-            setShowRejectModal(null);
-            setRejectionReason("");
-            setViewingDetails(null);
-        }
-        setActionLoading(null);
-    };
-
-    const viewDocs = async (id: number) => {
-        setViewingDocs(true);
-        const result = await getBookingDocuments(id);
-        if (result.success && result.data) setSelectedDocs(result.data);
-        else { alert(result.error); setViewingDocs(false); }
-    };
-
-    // --- PICKUP ACTIONS ---
-    const handlePickupAction = async (id: number, status: "ACCEPTED" | "REJECTED", reason?: string) => {
-        setActionLoading(id);
-        const result = await updatePickupStatus(id, status, reason);
-        if (result.success && employeeId) {
-            fetchData("pickups", employeeId);
-            setShowRejectModal(null);
-            setRejectionReason("");
-            setViewingDetails(null);
-        }
-        setActionLoading(null);
-    };
-
-    // --- WEDDING ACTIONS ---
-    const handleWeddingAction = async (id: number) => {
-        setActionLoading(id);
-        const result = await markWeddingInquiryContacted(id);
-        if (result.success && employeeId) fetchData("wedding", employeeId);
-        setActionLoading(null);
-    };
-
-    // --- AIRPORT ACTIONS ---
-    const handleAirportAction = async (id: number, status: "ACCEPTED" | "REJECTED", reason?: string) => {
-        setActionLoading(id);
-        try {
-            const res = await fetch(`/api/airport-rental/bookings`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id, status, rejection_reason: reason })
-            });
-            if (res.ok && employeeId) fetchData("airport", employeeId);
-            setShowRejectModal(null);
-            setRejectionReason("");
-            setViewingDetails(null);
-        } catch (e) { console.error(e); }
-        setActionLoading(null);
-    };
 
     // --- MAIN RENDER ---
     if (!selectedCategory) {
@@ -323,7 +165,7 @@ export default function EmployeeAssignedBookingsPage() {
                             <span className="font-medium text-primary">Bookings</span>
                         </nav>
                         <h1 className="text-2xl font-bold tracking-tight text-primary">Assigned Bookings</h1>
-                        <p className="mt-2 text-base text-gray-500">Select a service category to manage assigned bookings.</p>
+                        <p className="mt-2 text-base text-gray-500">Access approved bookings internally to manage and conduct checklists.</p>
                     </div>
 
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -338,7 +180,7 @@ export default function EmployeeAssignedBookingsPage() {
                                         <p className="text-sm leading-relaxed text-gray-500">{cat.description}</p>
                                     </div>
                                     <div className="mt-8 flex items-center justify-between">
-                                        <span className="text-sm font-bold text-secondary">Manage Bookings</span>
+                                        <span className="text-sm font-bold text-secondary">View Pipeline</span>
                                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-50 transition-colors group-hover:bg-red-600 group-hover:text-white">
                                             <ChevronRight className="h-4 w-4" />
                                         </div>
@@ -380,7 +222,7 @@ export default function EmployeeAssignedBookingsPage() {
             {loading ? (
                 <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
                     <Loader2 className="w-10 h-10 text-red-600 animate-spin" />
-                    <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">Loading pending requests...</p>
+                    <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">Loading assigned entries...</p>
                 </div>
             ) : (
                 <div className="space-y-4">
@@ -388,7 +230,7 @@ export default function EmployeeAssignedBookingsPage() {
                     {selectedCategory === "rent-a-car" && (
                         rentBookings.length === 0 ? <NoRequests /> : (
                             rentBookings.map((b) => (
-                                <BookingCard key={b.bookingId} booking={b} onDetails={() => setViewingDetails(b)} onApprove={() => handleRentAction(b.bookingId, "ACCEPTED")} onReject={() => setShowRejectModal(b.bookingId)} />
+                                <BookingCard key={b.bookingId} booking={b} category={selectedCategory} />
                             ))
                         )
                     )}
@@ -397,7 +239,7 @@ export default function EmployeeAssignedBookingsPage() {
                     {selectedCategory === "pickups" && (
                         pickupBookings.length === 0 ? <NoRequests /> : (
                             pickupBookings.map((b) => (
-                                <PickupCard key={b.id} booking={b} onDetails={() => setViewingDetails(b)} onApprove={() => handlePickupAction(b.id, "ACCEPTED")} onReject={() => setShowRejectModal(b.id)} />
+                                <PickupCard key={b.id} booking={b} category={selectedCategory} />
                             ))
                         )
                     )}
@@ -406,7 +248,7 @@ export default function EmployeeAssignedBookingsPage() {
                     {selectedCategory === "airport" && (
                         airportBookings.length === 0 ? <NoRequests /> : (
                             airportBookings.map((b) => (
-                                <AirportCard key={b.id} booking={b} onDetails={() => setViewingDetails(b)} onApprove={() => handleAirportAction(b.id, "ACCEPTED")} onReject={() => setShowRejectModal(b.id)} />
+                                <AirportCard key={b.id} booking={b} category={selectedCategory} />
                             ))
                         )
                     )}
@@ -415,76 +257,10 @@ export default function EmployeeAssignedBookingsPage() {
                     {selectedCategory === "wedding" && (
                         weddingBookings.length === 0 ? <NoRequests /> : (
                             weddingBookings.map((b) => (
-                                <WeddingCard key={b.bookingId} booking={b} onDetails={() => setViewingDetails(b)} onContacted={() => handleWeddingAction(b.bookingId)} />
+                                <WeddingCard key={b.bookingId} booking={b} category={selectedCategory} />
                             ))
                         )
                     )}
-                </div>
-            )}
-
-            {/* SHARED REJECTION MODAL */}
-            {showRejectModal && (
-                <div className="fixed inset-0 bg-primary/60 backdrop-blur-md z-60 flex items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
-                    <div className="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl space-y-8">
-                        <div>
-                            <h2 className="text-2xl font-black text-primary uppercase tracking-tight">Reject Request</h2>
-                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Please provide a reason for rejection</p>
-                        </div>
-                        <textarea
-                            value={rejectionReason}
-                            onChange={(e) => setRejectionReason(e.target.value)}
-                            className="w-full h-32 bg-gray-50 border border-gray-100 rounded-3xl p-6 text-sm focus:outline-none focus:ring-2 focus:ring-red-600/20 transition-all resize-none"
-                            placeholder="Reason for rejection..."
-                        />
-                        <div className="flex gap-4">
-                            <button onClick={() => { setShowRejectModal(null); setRejectionReason(""); }} className="flex-1 h-12 rounded-2xl border border-gray-100 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50">Cancel</button>
-                            <button
-                                onClick={() => {
-                                    if (selectedCategory === "rent-a-car") handleRentAction(showRejectModal, "REJECTED", rejectionReason);
-                                    else if (selectedCategory === "pickups") handlePickupAction(showRejectModal, "REJECTED", rejectionReason);
-                                    else if (selectedCategory === "airport") handleAirportAction(showRejectModal, "REJECTED", rejectionReason);
-                                }}
-                                disabled={!rejectionReason.trim()}
-                                className="flex-1 h-12 bg-red-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-red-200 hover:bg-red-700 disabled:opacity-50"
-                            >
-                                Confirm Reject
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* DETAIL MODALS (REUSING COMPONENT LOGIC) */}
-            {viewingDetails && (
-                <DetailModal category={selectedCategory} data={viewingDetails} onClose={() => setViewingDetails(null)} onApprove={() => {
-                    if (selectedCategory === "rent-a-car") handleRentAction(viewingDetails.bookingId!, "ACCEPTED");
-                    else if (selectedCategory === "pickups") handlePickupAction(viewingDetails.id!, "ACCEPTED");
-                    else if (selectedCategory === "airport") handleAirportAction(viewingDetails.id!, "ACCEPTED");
-                }} onReject={() => setShowRejectModal(selectedCategory === "rent-a-car" ? viewingDetails.bookingId! : viewingDetails.id!)} onAction={() => {
-                    if (selectedCategory === "wedding") handleWeddingAction(viewingDetails.bookingId!);
-                    setViewingDetails(null);
-                }} onViewDocs={selectedCategory === "rent-a-car" ? viewDocs : undefined} />
-            )}
-
-            {/* DOCS MODAL FOR RENT-A-CAR */}
-            {viewingDocs && (
-                <div className="fixed inset-0 bg-primary/80 backdrop-blur-sm z-70 flex items-center justify-center p-10">
-                    <div className="bg-white w-full max-w-6xl max-h-[90vh] rounded-[3rem] overflow-hidden flex flex-col">
-                        <div className="p-8 border-b border-gray-100 flex justify-between items-center">
-                            <h2 className="text-2xl font-black text-primary uppercase tracking-tight">Vault Documents</h2>
-                            <button onClick={() => { setViewingDocs(false); setSelectedDocs(null); }} className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center hover:text-red-600"><X /></button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-12 bg-gray-50/30">
-                            {selectedDocs ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                                    <DocCard title="Hirer ID Document" file={selectedDocs.customerID} />
-                                    <DocCard title="Driving License" file={selectedDocs.license} />
-                                    <DocCard title="Guarantor NIC" file={selectedDocs.nic} />
-                                    <DocCard title="Guarantor License" file={selectedDocs.gLicense} />
-                                </div>
-                            ) : <Loader2 className="mx-auto animate-spin" />}
-                        </div>
-                    </div>
                 </div>
             )}
         </div>
@@ -498,235 +274,140 @@ function NoRequests() {
         <div className="bg-gray-50 rounded-[2.5rem] border border-gray-100 p-20 text-center">
             <Info className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-black text-primary uppercase tracking-tight mb-2">No Requests Found</h2>
-            <p className="text-gray-400 font-medium">All booking requests for this category have been processed.</p>
+            <p className="text-gray-400 font-medium">There are no approved and assigned bookings for you in this category.</p>
         </div>
     );
 }
 
-function BookingCard({ booking, onDetails, onApprove, onReject }: any) {
+function BookingCard({ booking, category }: { booking: RentBooking, category: string }) {
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-4">
-            <div className="flex items-center gap-6">
-                <div className="w-2 h-12 bg-red-600 rounded-full" />
-                <div className="flex-1">
-                    <h3 className="text-sm font-black text-primary uppercase tracking-tight">{booking.customerName}</h3>
-                    <p className="text-[10px] font-bold text-gray-400">{booking.phone}</p>
-                </div>
-                <div className="flex-1 border-l border-gray-100 pl-6">
-                    <h3 className="text-sm font-black text-primary uppercase tracking-tight">{booking.vehicle?.brand} {booking.vehicle?.model}</h3>
-                    <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">{booking.vehicle?.plateNumber}</p>
-                </div>
-                <div className="flex-1 border-l border-gray-100 pl-6">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Rental Dates</span>
-                    <span className="text-[11px] font-black text-primary">{new Date(booking.rentalDate).toLocaleDateString()} - {new Date(booking.returnDate).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-2 border-l border-gray-100 pl-6">
-                    <button onClick={onDetails} className="h-10 px-4 bg-gray-50 hover:bg-red-50 text-gray-600 hover:text-red-600 rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest"><Eye className="w-3.5 h-3.5" /> Details</button>
-                    <button onClick={onApprove} className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-600 hover:text-white transition-all"><Check className="w-4 h-4" /></button>
-                    <button onClick={onReject} className="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center hover:bg-red-600 hover:text-white transition-all"><X className="w-4 h-4" /></button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function PickupCard({ booking, onDetails, onApprove, onReject }: any) {
-    return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-4">
-            <div className="flex items-center gap-6">
-                <div className="w-2 h-12 bg-emerald-500 rounded-full" />
-                <div className="flex-1">
-                    <h3 className="text-sm font-black text-primary uppercase tracking-tight">{booking.customerFullName}</h3>
-                    <p className="text-[10px] font-bold text-gray-400">{booking.customerPhone}</p>
-                </div>
-                <div className="flex-1 border-l border-gray-100 pl-6">
-                    <h3 className="text-sm font-black text-primary uppercase tracking-tight">{booking.pickupLocation} → {booking.dropLocation}</h3>
-                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{new Date(booking.pickupTime).toLocaleString()}</p>
-                </div>
-                <div className="flex-1 border-l border-gray-100 pl-6">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Travelers</span>
-                    <span className="text-[11px] font-black text-primary">{booking.travelers} Pax · {booking.luggageCount} Bags</span>
-                </div>
-                <div className="flex items-center gap-2 border-l border-gray-100 pl-6">
-                    <button onClick={onDetails} className="h-10 px-4 bg-gray-50 hover:bg-emerald-50 text-gray-600 hover:text-emerald-600 rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest"><Eye className="w-3.5 h-3.5" /> Details</button>
-                    <button onClick={onApprove} className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-600 hover:text-white transition-all"><Check className="w-4 h-4" /></button>
-                    <button onClick={onReject} className="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center hover:bg-red-600 hover:text-white transition-all"><X className="w-4 h-4" /></button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function AirportCard({ booking, onDetails, onApprove, onReject }: any) {
-    return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-4">
-            <div className="flex items-center gap-6">
-                <div className="w-2 h-12 bg-purple-500 rounded-full" />
-                <div className="flex-1">
-                    <h3 className="text-sm font-black text-primary uppercase tracking-tight">{booking.customerFullName}</h3>
-                    <p className="text-[10px] font-bold text-gray-400">{booking.customerPhone}</p>
-                </div>
-                <div className="flex-1 border-l border-gray-100 pl-6">
-                    <h3 className="text-sm font-black text-primary uppercase tracking-tight">{booking.airport === "BANDARANAYAKE" ? "BIA (Colombo)" : "HRI (Mattala)"}</h3>
-                    <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest">{booking.transferType}</p>
-                </div>
-                <div className="flex-1 border-l border-gray-100 pl-6">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Schedule</span>
-                    <span className="text-[11px] font-black text-primary">{booking.transferDate} {booking.transferTime}</span>
-                </div>
-                <div className="flex items-center gap-2 border-l border-gray-100 pl-6">
-                    <button onClick={onDetails} className="h-10 px-4 bg-gray-50 hover:bg-purple-50 text-gray-600 hover:text-purple-600 rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest"><Eye className="w-3.5 h-3.5" /> Details</button>
-                    <button onClick={onApprove} className="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-600 hover:text-white transition-all"><Check className="w-4 h-4" /></button>
-                    <button onClick={onReject} className="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center hover:bg-red-600 hover:text-white transition-all"><X className="w-4 h-4" /></button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function WeddingCard({ booking, onDetails, onContacted }: any) {
-    return (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-4">
-            <div className="flex items-center gap-6">
-                <div className="w-2 h-12 bg-amber-500 rounded-full" />
-                <div className="flex-1">
-                    <h3 className="text-sm font-black text-primary uppercase tracking-tight">{booking.customerName}</h3>
-                    <p className="text-[10px] font-bold text-gray-400">{booking.phone}</p>
-                </div>
-                <div className="flex-1 border-l border-gray-100 pl-6">
-                    <h3 className="text-sm font-black text-primary uppercase tracking-tight">{booking.vehicle?.brand} {booking.vehicle?.model}</h3>
-                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Wedding Request</p>
-                </div>
-                <div className="flex-1 border-l border-gray-100 pl-6">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">Event Date</span>
-                    <span className="text-[11px] font-black text-primary">{new Date(booking.eventDate).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-2 border-l border-gray-100 pl-6">
-                    <button onClick={onDetails} className="h-10 px-4 bg-gray-50 hover:bg-amber-50 text-gray-600 hover:text-amber-600 rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest"><MessageSquare className="w-3.5 h-3.5" /> Details</button>
-                    <button onClick={onContacted} className="h-10 px-4 bg-green-50 text-green-600 rounded-xl flex items-center gap-2 hover:bg-green-600 hover:text-white transition-all font-black text-[9px] uppercase tracking-widest"><Check className="w-3.5 h-3.5" /> Contacted</button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function DetailModal({ category, data, onClose, onApprove, onReject, onAction, onViewDocs }: any) {
-    return (
-        <div className="fixed inset-0 bg-primary/80 backdrop-blur-md z-50 flex items-center justify-center p-6 lg:p-12 animate-in fade-in duration-300">
-            <div className="bg-white w-full max-w-5xl max-h-full rounded-[3rem] overflow-hidden flex flex-col shadow-2xl">
-                <div className="p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+        <Link href={`/employee/assigned/${category}/${booking.bookingId}`} className="block bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-5 cursor-pointer hover:border-gray-300 group">
+            <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-start border-b border-gray-50 pb-3">
                     <div>
-                        <h2 className="text-2xl font-black text-primary uppercase tracking-tight">Request Details</h2>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Full verification file for #{data.bookingId || data.id}</p>
+                        <h3 className="text-base font-bold text-gray-900">{booking.customerName}</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">{booking.phone}</p>
                     </div>
-                    <button onClick={onClose} className="w-12 h-12 bg-white border border-gray-100 rounded-2xl flex items-center justify-center hover:text-red-600"><X /></button>
+                    <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider rounded-md">Rent-A-Car</span>
+                </div>
+                
+                <div className="flex flex-col gap-3 text-sm">
+                    <div>
+                        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Vehicle</p>
+                        <p className="font-medium text-gray-800">{booking.vehicle?.brand} {booking.vehicle?.model} <span className="text-gray-400 text-xs ml-1">({booking.vehicle?.plateNumber || "TBD"})</span></p>
+                    </div>
+                    <div>
+                        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Dates</p>
+                        <p className="font-medium text-gray-800">{new Date(booking.rentalDate).toLocaleDateString()} - {new Date(booking.returnDate).toLocaleDateString()}</p>
+                    </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-10 space-y-10">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                        <section>
-                            <h4 className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-3"><User className="w-4 h-4" /> Customer Information</h4>
-                            <div className="bg-gray-50 rounded-2xl p-6 space-y-4">
-                                <DetailItem label="Full Name" value={data.customerFullName || data.customerName} />
-                                <DetailItem label="Phone" value={data.customerPhone || data.phone} />
-                                {data.email && <DetailItem label="Email" value={data.email} />}
-                                {data.nic && <DetailItem label="NIC" value={data.nic} />}
-                            </div>
-                        </section>
-
-                        <section>
-                            <h4 className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-3"><Car className="w-4 h-4" /> Service Details</h4>
-                            <div className="bg-gray-50 rounded-2xl p-6 space-y-4">
-                                {category === "rent-a-car" && (
-                                    <>
-                                        <DetailItem label="Vehicle" value={`${data.vehicle?.brand} ${data.vehicle?.model}`} />
-                                        <DetailItem label="Plate" value={data.vehicle?.plateNumber} />
-                                        <DetailItem label="Fare" value={`LKR ${Number(data.totalFare).toLocaleString()}`} />
-                                    </>
-                                )}
-                                {category === "pickups" && (
-                                    <>
-                                        <DetailItem label="Route" value={`${data.pickupLocation} → ${data.dropLocation}`} />
-                                        <DetailItem label="Travelers" value={`${data.travelers} Pax · ${data.luggageCount} Bags`} />
-                                        <DetailItem label="Fare" value={`LKR ${Number(data.price).toLocaleString()}`} />
-                                    </>
-                                )}
-                                {category === "airport" && (
-                                    <>
-                                        <DetailItem label="Airport" value={data.airport} />
-                                        <DetailItem label="Type" value={data.transferType} />
-                                        <DetailItem label="Location" value={data.transferLocation} />
-                                    </>
-                                )}
-                                {category === "wedding" && (
-                                    <>
-                                        <DetailItem label="Vehicle" value={`${data.vehicle?.brand} ${data.vehicle?.model}`} />
-                                        <DetailItem label="Event Date" value={new Date(data.eventDate).toLocaleDateString()} />
-                                        <DetailItem label="Pickup" value={data.pickupLocation} />
-                                    </>
-                                )}
-                            </div>
-                        </section>
+                <div className="pt-2">
+                    <div className="w-full py-2.5 bg-gray-50 group-hover:bg-primary group-hover:text-white text-gray-700 rounded-lg text-xs font-bold transition-colors text-center border border-gray-100 group-hover:border-primary">
+                        View Workspace
                     </div>
-
-                    {category === "wedding" && data.message && (
-                        <section>
-                            <h4 className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-3"><MessageSquare className="w-4 h-4" /> Message</h4>
-                            <div className="bg-amber-50/50 rounded-2xl p-6 border border-amber-100 text-sm">{data.message}</div>
-                        </section>
-                    )}
-
-                    {category === "rent-a-car" && onViewDocs && (
-                        <section>
-                            <h4 className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-3"><FileText className="w-4 h-4" /> Documents</h4>
-                            <button onClick={() => onViewDocs(data.bookingId)} className="w-full h-14 bg-white border border-gray-100 rounded-2xl flex items-center justify-center gap-3 hover:border-red-600 transition-all shadow-sm">
-                                <Eye className="w-4 h-4 text-red-600" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">View All Files</span>
-                            </button>
-                        </section>
-                    )}
-                </div>
-
-                <div className="p-8 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-4">
-                    {category === "wedding" ? (
-                        <button onClick={onAction} className="h-14 px-12 bg-green-600 text-white font-black rounded-3xl hover:bg-green-700 transition-all text-xs uppercase tracking-widest">Mark Contacted</button>
-                    ) : (
-                        <>
-                            <button onClick={onReject} className="h-14 px-8 border border-red-100 bg-white text-red-600 font-black rounded-3xl hover:bg-red-600 hover:text-white transition-all text-xs uppercase tracking-widest">Reject</button>
-                            <button onClick={onApprove} className="h-14 px-12 bg-primary text-white font-black rounded-3xl hover:bg-green-600 transition-all text-xs uppercase tracking-widest">Approve Booking</button>
-                        </>
-                    )}
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }
 
-function DetailItem({ label, value }: { label: string; value: string }) {
+function PickupCard({ booking, category }: { booking: PickupBooking, category: string }) {
     return (
-        <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{label}</span>
-            <span className="text-sm font-bold text-primary">{value || "Not Provided"}</span>
-        </div>
+        <Link href={`/employee/assigned/${category}/${booking.id}`} className="block bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-5 cursor-pointer hover:border-gray-300 group">
+            <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-start border-b border-gray-50 pb-3">
+                    <div>
+                        <h3 className="text-base font-bold text-gray-900">{booking.customerFullName}</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">{booking.customerPhone}</p>
+                    </div>
+                    <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider rounded-md">Pickup</span>
+                </div>
+                
+                <div className="flex flex-col gap-3 text-sm">
+                    <div>
+                        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Route</p>
+                        <p className="font-medium text-gray-800 line-clamp-2">{booking.pickupLocation} → {booking.dropLocation}</p>
+                    </div>
+                    <div>
+                        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Schedule & Logistics</p>
+                        <p className="font-medium text-gray-800">{new Date(booking.pickupTime).toLocaleString()}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{booking.travelers} Travelers • {booking.luggageCount} Bags</p>
+                    </div>
+                </div>
+
+                <div className="pt-2">
+                    <div className="w-full py-2.5 bg-gray-50 group-hover:bg-primary group-hover:text-white text-gray-700 rounded-lg text-xs font-bold transition-colors text-center border border-gray-100 group-hover:border-primary">
+                        View Workspace
+                    </div>
+                </div>
+            </div>
+        </Link>
     );
 }
 
-function DocCard({ title, file }: { title: string; file: string | null }) {
-    if (!file) return (
-        <div className="space-y-4">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</p>
-            <div className="aspect-4/3 bg-gray-100 rounded-4xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 grayscale"><X /><span className="text-[9px] font-black text-gray-300">Not Uploaded</span></div>
-        </div>
-    );
+function AirportCard({ booking, category }: { booking: AirportBooking, category: string }) {
     return (
-        <div className="space-y-4">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</p>
-            <div className="aspect-4/3 bg-white rounded-4xl border border-gray-100 shadow-sm overflow-hidden flex items-center justify-center relative group">
-                <embed src={file.startsWith('http') ? file : `data:application/pdf;base64,${file}`} className="w-full h-full" type="application/pdf" />
-                <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <a href={file.startsWith('http') ? file : `data:application/pdf;base64,${file}`} download="document.pdf" className="bg-white px-6 h-10 rounded-full font-black text-[10px] uppercase tracking-tight flex items-center gap-2 hover:bg-red-600 hover:text-white transition-all"><ExternalLink className="w-4 h-4" /> Download</a>
+        <Link href={`/employee/assigned/${category}/${booking.id}`} className="block bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-5 cursor-pointer hover:border-gray-300 group">
+            <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-start border-b border-gray-50 pb-3">
+                    <div>
+                        <h3 className="text-base font-bold text-gray-900">{booking.customerName}</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">{booking.customerPhone}</p>
+                    </div>
+                    <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider rounded-md">Airport</span>
+                </div>
+                
+                <div className="flex flex-col gap-3 text-sm">
+                    <div>
+                        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Route</p>
+                        <p className="font-medium text-gray-800 line-clamp-2">{booking.pickupLocation} → {booking.dropoffLocation}</p>
+                    </div>
+                    <div>
+                        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Schedule</p>
+                        <p className="font-medium text-gray-800">{new Date(booking.pickupDate).toLocaleString()}</p>
+                    </div>
+                </div>
+
+                <div className="pt-2">
+                    <div className="w-full py-2.5 bg-gray-50 group-hover:bg-primary group-hover:text-white text-gray-700 rounded-lg text-xs font-bold transition-colors text-center border border-gray-100 group-hover:border-primary">
+                        View Workspace
+                    </div>
                 </div>
             </div>
-        </div>
+        </Link>
+    );
+}
+
+function WeddingCard({ booking, category }: { booking: WeddingBooking, category: string }) {
+    return (
+        <Link href={`/employee/assigned/${category}/${booking.bookingId}`} className="block bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-5 cursor-pointer hover:border-gray-300 group">
+            <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-start border-b border-gray-50 pb-3">
+                    <div>
+                        <h3 className="text-base font-bold text-gray-900">{booking.customerName}</h3>
+                        <p className="text-xs text-gray-500 mt-0.5">{booking.phone}</p>
+                    </div>
+                    <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider rounded-md">Wedding</span>
+                </div>
+                
+                <div className="flex flex-col gap-3 text-sm">
+                    <div>
+                        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Vehicle</p>
+                        <p className="font-medium text-gray-800">{booking.vehicle?.brand} {booking.vehicle?.model}</p>
+                    </div>
+                    <div>
+                        <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Event Date</p>
+                        <p className="font-medium text-gray-800">{new Date(booking.eventDate).toLocaleDateString()}</p>
+                    </div>
+                </div>
+
+                <div className="pt-2">
+                    <div className="w-full py-2.5 bg-gray-50 group-hover:bg-primary group-hover:text-white text-gray-700 rounded-lg text-xs font-bold transition-colors text-center border border-gray-100 group-hover:border-primary">
+                        View Workspace
+                    </div>
+                </div>
+            </div>
+        </Link>
     );
 }

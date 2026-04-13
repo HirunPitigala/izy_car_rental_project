@@ -66,6 +66,7 @@ function AirportDetailContent() {
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitSuccess, setSubmitSuccess] = useState(false);
+    const [paymentslip, setPaymentslip] = useState<File | null>(null);
 
     // Fetch vehicle details
     useEffect(() => {
@@ -108,28 +109,33 @@ function AirportDetailContent() {
         e.preventDefault();
         if (!validateForm() || !vehicle) return;
 
+        if (!paymentslip) {
+            setSubmitError("Payment slip is required. Please upload your bank payment slip to proceed.");
+            return;
+        }
+
         setSubmitting(true);
         setSubmitError(null);
 
         try {
+            const formData = new FormData();
+            formData.append("vehicle_id", vehicle.vehicleId.toString());
+            formData.append("transfer_type", transferType);
+            formData.append("airport", airport);
+            formData.append("pickupDate", pickupDate);
+            formData.append("pickupTime", pickupTime);
+            formData.append("dropDate", dropDate);
+            formData.append("dropTime", dropTime);
+            formData.append("passengers", passengers);
+            formData.append("luggage_count", luggage);
+            formData.append("customer_full_name", booking.customerFullName);
+            formData.append("customer_phone", booking.customerPhone);
+            formData.append("transfer_location", booking.transferLocation);
+            formData.append("paymentslip", paymentslip);
+
             const res = await fetch("/api/airport-rental/book", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    vehicle_id: vehicle.vehicleId,
-                    transfer_type: transferType,
-                    airport,
-                    pickupDate,
-                    pickupTime,
-                    dropDate,
-                    dropTime,
-                    passengers: parseInt(passengers, 10),
-                    luggage_count: parseInt(luggage, 10),
-                    customer_full_name: booking.customerFullName,
-                    customer_phone: booking.customerPhone,
-
-                    transfer_location: booking.transferLocation,
-                }),
+                body: formData,
             });
 
             const data = await res.json();
@@ -366,6 +372,46 @@ function AirportDetailContent() {
                                             className={`w-full h-12 bg-gray-50 border-2 rounded-2xl px-4 text-sm font-bold text-gray-900 outline-none transition-all ${errors.transferLocation ? "border-red-400 focus:border-red-600" : "border-transparent focus:border-yellow-400"}`}
                                         />
                                         {errors.transferLocation && <p className="text-xs text-red-500 font-semibold mt-1">{errors.transferLocation}</p>}
+                                    </div>
+
+                                    {/* Bank Details */}
+                                    <div className="bg-yellow-50 rounded-2xl p-6 space-y-4">
+                                        <div className="flex items-center gap-2 border-b border-yellow-200 pb-2">
+                                            <ShieldCheck className="w-4 h-4 text-yellow-600" />
+                                            <p className="text-xs font-black text-yellow-800 uppercase tracking-widest">Bank Payment Details</p>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-3">
+                                            {[
+                                                { label: "Bank", value: "Bank of Ceylon (BOC)" },
+                                                { label: "Account Name", value: "Test User" },
+                                                { label: "Account No", value: "123456789012" },
+                                                { label: "Branch", value: "Colombo Main Branch" },
+                                            ].map(({ label, value }) => (
+                                                <div key={label} className="flex justify-between items-center text-[11px]">
+                                                    <span className="text-yellow-600/60 font-black uppercase tracking-widest">{label}</span>
+                                                    <span className="text-yellow-900 font-bold">{value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Pay Slip Upload */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                            <Briefcase className="w-3.5 h-3.5" /> Payment Slip *
+                                        </label>
+                                        <div className="border-2 border-dashed border-gray-100 rounded-2xl p-4 text-center space-y-3">
+                                            <p className="text-[10px] text-gray-400 font-medium italic">Upload your bank deposit/transfer slip</p>
+                                            <label className="inline-block px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-[11px] font-black cursor-pointer hover:bg-yellow-400 hover:text-gray-900 transition-all">
+                                                {paymentslip ? paymentslip.name : "Choose File"}
+                                                <input 
+                                                    type="file" 
+                                                    className="hidden" 
+                                                    onChange={(e) => setPaymentslip(e.target.files?.[0] || null)}
+                                                    accept="image/*,.pdf"
+                                                />
+                                            </label>
+                                        </div>
                                     </div>
 
                                     {submitError && (

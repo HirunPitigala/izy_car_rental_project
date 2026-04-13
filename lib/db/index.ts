@@ -69,8 +69,5 @@ export * as EmailVerificationTokensRepo from './repositories/emailVerificationTo
 // ─── Password Reset Tokens ────────────────────────────────────────────────────
 export * as PasswordResetTokensRepo from './repositories/passwordResetTokens.repository';
 
-// ─── Pickup Requests ──────────────────────────────────────────────────────────
-export * as PickupRequestsRepo from './repositories/pickupRequests.repository';
-
 // ─── Airport Bookings ─────────────────────────────────────────────────────────
 export * as AirportBookingsRepo from './repositories/airportBookings.repository';

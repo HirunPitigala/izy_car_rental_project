@@ -43,7 +43,7 @@ export async function POST(req: Request) {
         const price_per_km = parseFloat(formData.get("price_per_km") as string || "0");
         const distance_km_raw = parseFloat(formData.get("distance_km") as string || "0");
         const price_raw = parseFloat(formData.get("price") as string || "0");
-        const paymentslipFile = formData.get("paymentslip") as File | null;
+        const paymentslipPath = formData.get("paymentslip") as string | null;
 
         // ── Required field check ──────────────────────────────
         if (!vehicle_id || !pickup_location || !drop_location || !pickup_datetime) {
@@ -53,12 +53,9 @@ export async function POST(req: Request) {
             );
         }
 
-        if (!paymentslipFile || paymentslipFile.size === 0) {
+        if (!paymentslipPath || paymentslipPath.length === 0) {
             return NextResponse.json({ success: false, error: "Payment slip is required." }, { status: 400 });
         }
-
-        // ── Upload Pay Slip ───────────────────────────────────
-        const paymentslipPath = await saveFileToCloudinary(paymentslipFile, "pay-slips/pickup");
 
         // ── Resolve dates ─────────────────────────────────────
         const pickupTime = new Date(pickup_datetime);

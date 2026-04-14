@@ -83,7 +83,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
             {/* 1. Identity & Category */}
             <section className="space-y-6">
                 <div className="border-b border-gray-200 pb-2">
-                    <h3 className="text-xl font-medium text-[#0f0f0f]">Identity & Category</h3>
+                    <h3 className="text-xl font-medium text-primary">Identity & Category</h3>
                 </div>
 
                 <div className="space-y-6">
@@ -149,12 +149,12 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
             {/* 2. Media Upload */}
             <section className="space-y-6">
                 <div className="border-b border-gray-200 pb-2">
-                    <h3 className="text-xl font-medium text-[#0f0f0f]">Vehicle Image</h3>
+                    <h3 className="text-xl font-medium text-primary">Vehicle Image</h3>
                 </div>
 
                 <div className="space-y-6">
                     {formData.image ? (
-                        <div className="relative aspect-video w-full overflow-hidden rounded-xl border-2 border-[#0f0f0f]">
+                        <div className="relative aspect-video w-full overflow-hidden rounded-xl border-2 border-primary">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={
@@ -170,7 +170,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
                             <button
                                 type="button"
                                 onClick={() => setFormData({ ...formData, image: "" })}
-                                className="absolute top-4 right-4 h-10 w-10 rounded-full bg-[#0f0f0f] text-white flex items-center justify-center hover:bg-[#dc2626] transition-colors"
+                                className="absolute top-4 right-4 h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center hover:bg-secondary transition-colors"
                             >
                                 <X className="h-5 w-5" />
                             </button>
@@ -183,9 +183,9 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
                                 className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                                 onChange={handleImageUpload}
                             />
-                            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#0f0f0f] bg-gray-50 p-10 text-center transition-colors hover:bg-gray-100">
-                                <Upload className="h-10 w-10 text-[#0f0f0f] mb-3" />
-                                <p className="text-base font-medium text-[#0f0f0f]">Click to upload vehicle image</p>
+                            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary bg-gray-50 p-10 text-center transition-colors hover:bg-gray-100">
+                                <Upload className="h-10 w-10 text-primary mb-3" />
+                                <p className="text-base font-medium text-primary">Click to upload vehicle image</p>
                                 <p className="mt-1 text-sm text-gray-500">High-res PNG or JPG recommended</p>
                             </div>
                         </div>
@@ -196,7 +196,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
             {/* 3. Technical Specifications */}
             <section className="space-y-6">
                 <div className="border-b border-gray-200 pb-2">
-                    <h3 className="text-xl font-medium text-[#0f0f0f]">Technical Specifications</h3>
+                    <h3 className="text-xl font-medium text-primary">Technical Specifications</h3>
                 </div>
 
                 <div className="space-y-6">
@@ -260,7 +260,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
             {/* 4. Pricing & Limits */}
             <section className="space-y-6">
                 <div className="border-b border-gray-200 pb-2">
-                    <h3 className="text-xl font-medium text-[#0f0f0f]">Pricing & Limits</h3>
+                    <h3 className="text-xl font-medium text-primary">Pricing & Limits</h3>
                 </div>
 
                 <div className="space-y-6">
@@ -353,7 +353,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
             {/* 5. Fleet Status */}
             <section className="space-y-6">
                 <div className="border-b border-gray-200 pb-2">
-                    <h3 className="text-xl font-medium text-[#0f0f0f]">Fleet Status</h3>
+                    <h3 className="text-xl font-medium text-primary">Fleet Status</h3>
                 </div>
 
                 <div className="space-y-4">
@@ -386,7 +386,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-14 rounded-xl bg-[#0f0f0f] text-white font-bold text-base transition-all hover:bg-[#dc2626] disabled:opacity-50 disabled:hover:bg-[#0f0f0f]"
+                    className="w-full h-14 rounded-xl bg-primary text-white font-bold text-base transition-all hover:bg-secondary disabled:opacity-50 disabled:hover:bg-primary"
                 >
                     {loading ? "Processing..." : (mode === "add" ? "Enroll Vehicle" : "Save Changes")}
                 </button>
@@ -395,7 +395,7 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
                     type="button"
                     disabled={loading}
                     onClick={() => router.push(redirectPath)}
-                    className="w-full h-14 rounded-xl border-2 border-[#0f0f0f] bg-transparent text-[#0f0f0f] font-bold text-base transition-all hover:bg-gray-50 disabled:opacity-50"
+                    className="w-full h-14 rounded-xl border-2 border-primary bg-transparent text-primary font-bold text-base transition-all hover:bg-gray-50 disabled:opacity-50"
                 >
                     Cancel
                 </button>
@@ -435,7 +435,7 @@ interface FormGroupProps {
 function FormGroup({ label, children, icon: Icon }: FormGroupProps) {
     return (
         <div className="space-y-2">
-            <label className="block text-sm font-medium text-[#0f0f0f]">
+            <label className="block text-sm font-medium text-primary">
                 {label}
             </label>
             <div className="relative">
@@ -463,15 +463,15 @@ function StatusRadio({ checked, value, label, description, onClick }: StatusRadi
         <div
             onClick={() => onClick(value)}
             className={`cursor-pointer flex items-center gap-4 p-4 rounded-xl border transition-all ${checked
-                ? "border-[#dc2626] bg-red-50/10 ring-1 ring-[#dc2626]"
+                ? "border-secondary bg-red-50/10 ring-1 ring-secondary"
                 : "border-gray-200 hover:border-gray-300"
                 }`}
         >
-            <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${checked ? "border-[#dc2626]" : "border-gray-300"}`}>
-                {checked && <div className="h-2.5 w-2.5 rounded-full bg-[#dc2626]" />}
+            <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${checked ? "border-secondary" : "border-gray-300"}`}>
+                {checked && <div className="h-2.5 w-2.5 rounded-full bg-secondary" />}
             </div>
             <div>
-                <p className="text-base font-bold text-[#0f0f0f]">{label}</p>
+                <p className="text-base font-bold text-primary">{label}</p>
                 <p className="text-sm text-gray-500">{description}</p>
             </div>
         </div>

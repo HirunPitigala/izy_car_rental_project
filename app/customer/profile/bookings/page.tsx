@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Car, Clock, Calendar, CheckCircle, XCircle, MapPin, Loader2 } from "lucide-react";
+import { Car, Clock, Calendar, CheckCircle, XCircle, MapPin, Loader2, FileText } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -214,9 +214,18 @@ export default function CustomerBookingsPage() {
                                             RS {booking.totalFare ? parseFloat(booking.totalFare).toLocaleString() : "0.00"}
                                         </span>
                                     </div>
-                                    <p className="text-xs text-gray-400">
-                                        Requested on {formatDate(booking.createdAt)}
-                                    </p>
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                                        <p className="text-xs text-gray-400">
+                                            Requested on {formatDate(booking.createdAt)}
+                                        </p>
+                                        <Link 
+                                            href={`/rent/invoice?bookingId=${booking.bookingId}`}
+                                            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest"
+                                        >
+                                            <FileText className="w-3.5 h-3.5" />
+                                            View Bill
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         </div>

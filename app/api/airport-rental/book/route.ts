@@ -37,14 +37,11 @@ export async function POST(req: Request) {
         const customer_full_name = formData.get("customer_full_name") as string;
         const customer_phone = formData.get("customer_phone") as string;
         const transfer_location = formData.get("transfer_location") as string;
-        const paymentslipFile = formData.get("paymentslip") as File | null;
+        const paymentslipPath = formData.get("paymentslip") as string | null;
 
-        if (!paymentslipFile || paymentslipFile.size === 0) {
+        if (!paymentslipPath || paymentslipPath.length === 0) {
             return NextResponse.json({ success: false, error: "Payment slip is required." }, { status: 400 });
         }
-
-        // ── Upload Pay Slip ───────────────────────────────────
-        const paymentslipPath = await saveFileToCloudinary(paymentslipFile, "pay-slips/airport");
 
         const bookingData = {
             customerId: session.userId,

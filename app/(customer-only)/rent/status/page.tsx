@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import {
     CheckCircle2,
     Calendar,
@@ -12,6 +12,7 @@ import {
     Loader2,
     ArrowLeft,
     Phone,
+    FileText,
 } from "lucide-react";
 
 // ── Date formatter ─────────────────────────────────────────────────────────────
@@ -48,7 +49,7 @@ function DetailRow({
 }) {
     return (
         <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center shrink-0">
                 <Icon className="w-4 h-4 text-gray-500" />
             </div>
             <div className="min-w-0">
@@ -68,11 +69,7 @@ function StatusContent() {
     const endDate = searchParams.get("rental_end_date");
     const totalPrice = searchParams.get("totalPrice");
 
-    const [reference, setReference] = useState("—");
-
-    useEffect(() => {
-        setReference(`IZR-${Math.random().toString(36).substr(2, 9).toUpperCase()}`);
-    }, []);
+    const [reference] = useState(() => `IZR-${Math.random().toString(36).slice(2, 11).toUpperCase()}`);
 
     return (
         <div className="max-w-2xl mx-auto px-4 py-12">
@@ -84,7 +81,7 @@ function StatusContent() {
 
                 <div className="p-5 flex items-start gap-4">
                     {/* Icon */}
-                    <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
                         <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                     </div>
 
@@ -191,7 +188,7 @@ function StatusContent() {
                         },
                     ].map(({ step, title, desc }) => (
                         <div key={step} className="flex items-start gap-4">
-                            <span className="text-[10px] font-bold text-gray-300 w-6 flex-shrink-0 mt-0.5 tabular-nums">
+                            <span className="text-[10px] font-bold text-gray-300 w-6 shrink-0 mt-0.5 tabular-nums">
                                 {step}
                             </span>
                             <div>
@@ -206,10 +203,17 @@ function StatusContent() {
             {/* ── Actions ── */}
             <div className="flex flex-col sm:flex-row gap-3">
                 <Link
-                    href="/rent"
+                    href={`/rent/invoice?bookingId=${searchParams.get("bookingId")}`}
                     className="flex-1 h-10 bg-gray-900 hover:bg-red-600 text-white font-semibold rounded-xl transition-all text-sm flex items-center justify-center gap-2 group"
                 >
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                    <FileText className="w-4 h-4" />
+                    View Digital Bill
+                </Link>
+                <Link
+                    href="/rent"
+                    className="flex-1 h-10 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-xl transition-all text-sm flex items-center justify-center gap-2"
+                >
+                    <ArrowLeft className="w-4 h-4" />
                     Back to Rentals
                 </Link>
                 <Link

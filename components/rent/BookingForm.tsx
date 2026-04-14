@@ -22,6 +22,7 @@ import {
 import { createBooking } from "@/lib/actions/bookingActions";
 import { getVehicleById } from "@/lib/actions/vehicleActions";
 import { validateNIC, validateAddress } from "@/lib/validation";
+import { uploadFileToCloudinary } from "@/lib/utils/cloudinaryClient";
 
 // ─── Country data ──────────────────────────────────────────────────────────────
 interface Country {
@@ -225,6 +226,7 @@ interface BookingFormProps {
 export default function BookingForm({ searchParams, user }: BookingFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [step, setStep] = useState(1);
     const [error, setError] = useState<string | null>(null);
     const [vehicle, setVehicle] = useState<any>(null);
@@ -339,6 +341,37 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
         }
 
         try {
+            setUploading(true);
+            
+            // 1. Upload files to Cloudinary from client-side
+            const uploadPromises = [];
+            const fileFields: string[] = [];
+
+            if (files.license) {
+                uploadPromises.push(uploadFileToCloudinary(files.license, "bookings/license"));
+                fileFields.push("customerLicensePdf");
+            }
+            if (files.idDocument) {
+                uploadPromises.push(uploadFileToCloudinary(files.idDocument, "bookings/id"));
+                fileFields.push("customerIdPdf");
+            }
+            if (files.guaranteeNic) {
+                uploadPromises.push(uploadFileToCloudinary(files.guaranteeNic, "bookings/guarantor-nic"));
+                fileFields.push("guaranteeNicPdf");
+            }
+            if (files.guaranteeLicense) {
+                uploadPromises.push(uploadFileToCloudinary(files.guaranteeLicense, "bookings/guarantor-license"));
+                fileFields.push("guaranteeLicensePdf");
+            }
+            if (files.paymentslip) {
+                uploadPromises.push(uploadFileToCloudinary(files.paymentslip, "bookings/paymentslip"));
+                fileFields.push("paymentslip");
+            }
+
+            const urls = await Promise.all(uploadPromises);
+            setUploading(false);
+
+            // 2. Build FormData with URLs instead of Files
             const data = new FormData();
             data.append("vehicleId", searchParams.vehicleId);
             data.append("serviceCategoryId", "1");
@@ -363,24 +396,24 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
             data.append("guaranteePhone1", formData.guaranteePhone1);
             data.append("guaranteeNicNo", formData.guaranteeNicNo);
 
-            if (files.license) data.append("customerLicensePdf", files.license);
-            if (files.idDocument) data.append("customerIdPdf", files.idDocument);
-            if (files.guaranteeNic) data.append("guaranteeNicPdf", files.guaranteeNic);
-            if (files.guaranteeLicense) data.append("guaranteeLicensePdf", files.guaranteeLicense);
-            if (files.paymentslip) data.append("paymentslip", files.paymentslip);
+            // Append the uploaded URLs
+            fileFields.forEach((field, index) => {
+                data.append(field, urls[index]);
+            });
 
             const result = await createBooking(data);
 
             if (result.success) {
                 router.push(
-                    `/rent/status?bookingId=NEW&${new URLSearchParams(searchParams).toString()}`
+                    `/rent/status?bookingId=${result.bookingId}&${new URLSearchParams(searchParams).toString()}`
                 );
             } else {
                 setError(result.error || "Submission failed");
             }
         } catch (err) {
             console.error(err);
-            setError("An unexpected error occurred. Please try again.");
+            setError("An unexpected error occurred during document upload. Please try again.");
+            setUploading(false);
         } finally {
             setLoading(false);
         }

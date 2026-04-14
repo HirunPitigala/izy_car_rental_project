@@ -15,14 +15,13 @@ export async function saveFileToCloudinary(file: File | null, folder: string): P
 
     try {
         const buffer = Buffer.from(await file.arrayBuffer());
-        // Use the new helper
-        // We need to import it dynamically or at the top if we change imports
-        // But since this is a server action file, dynamic import is cleaner if we want to avoid top-level issues, 
-        // though top-level is better. I'll add the import in a separate chunk.
-        // For now, let's assume I'll add the import.
         const { uploadToCloudinary } = await import("@/lib/cloudinary");
-        const isPDF = file.type === "application/pdf";
-        const resourceType = isPDF ? "raw" : "image";
+        
+        // Use 'image' for PDFs as Cloudinary handles them as documents this way, 
+        // allowing browser viewing and transformations. 'raw' often forces download.
+        const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+        const resourceType = isPDF ? "image" : "image"; 
+        
         const result = await uploadToCloudinary(buffer, `bookings/${folder}`, resourceType);
         return result.secure_url;
     } catch (error: unknown) {
@@ -76,12 +75,12 @@ export async function createBooking(formData: FormData) {
             return { success: false, error: `Guarantor NIC: ${guaranteeNicValidation.error}` };
         }
 
-        // Process Files - Upload to Cloudinary
-        const licensePath = await saveFileToCloudinary(formData.get("customerLicensePdf") as File, "license");
-        const idPath = await saveFileToCloudinary(formData.get("customerIdPdf") as File, "id");
-        const gNicPath = await saveFileToCloudinary(formData.get("guaranteeNicPdf") as File, "guarantor-nic");
-        const gLicensePath = await saveFileToCloudinary(formData.get("guaranteeLicensePdf") as File, "guarantor-license");
-        const paymentslipPath = await saveFileToCloudinary(formData.get("paymentslip") as File, "paymentslip");
+        // Process Files - Now receiving URLs from frontend directly
+        const licensePath = formData.get("customerLicensePdf") as string | null;
+        const idPath = formData.get("customerIdPdf") as string | null;
+        const gNicPath = formData.get("guaranteeNicPdf") as string | null;
+        const gLicensePath = formData.get("guaranteeLicensePdf") as string | null;
+        const paymentslipPath = formData.get("paymentslip") as string | null;
 
         // Log data for debugging
         console.log("Creating booking with files:", {
@@ -129,8 +128,7 @@ export async function createBooking(formData: FormData) {
             newBookingId,
             "rent-a-car"
         );
-
-        return { success: true };
+        return { success: true, bookingId: newBookingId };
     } catch (error) {
         console.error("Booking creation error:", error);
         const errorMessage = error instanceof Error ? error.message : "Failed to process your booking request";

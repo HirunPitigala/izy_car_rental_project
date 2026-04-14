@@ -17,6 +17,7 @@ Built with Next.js App Router (v16), TypeScript, Drizzle ORM, and MySQL.
 - **Charts:** Recharts 3.6.0
 - **Icons:** Lucide React 0.562.0
 - **Runtime:** Node.js 20 (Alpine in Docker)
+- **PDF Export:** html2canvas 1.4.1 + jsPDF 4.2.1 (invoice download)
 - **Misc:** uuid 13.0.0, clsx 2.1.1, tailwind-merge 3.4.0
 
 ## Commands
@@ -31,9 +32,10 @@ npm run lint       # Run ESLint
 
 ### Database
 ```bash
-npx drizzle-kit generate   # Generate migration files from schema
-npx drizzle-kit migrate    # Apply migrations to DB
-npx ts-node migrate.ts     # Alternative migration runner
+npx drizzle-kit generate              # Generate migration files from schema
+npx drizzle-kit migrate               # Apply migrations to DB
+npx ts-node migrate.ts                # Alternative migration runner
+npx ts-node scripts/seed-analytics.ts # Seed test vehicles/customers/bookings/payments for analytics
 ```
 
 ### Docker
@@ -66,10 +68,10 @@ c:\SDP\car-rental\
 │   │   │   ├── available/page.tsx
 │   │   │   ├── results/page.tsx            # Vehicle listing with filters
 │   │   │   ├── [vehicleId]/page.tsx        # Vehicle detail
-│   │   │   ├── status/page.tsx             # Booking status tracker
+│   │   │   ├── status/page.tsx             # Post-booking confirmation — reference number, "What Happens Next", link to invoice
 │   │   │   ├── agreement/page.tsx          # Booking form + T&Cs
 │   │   │   ├── payment/page.tsx
-│   │   │   └── invoice/page.tsx
+│   │   │   └── invoice/page.tsx            # Fetches /api/customer/bookings/:id/invoice → renders InvoiceView
 │   │   ├── airport/
 │   │   │   ├── page.tsx
 │   │   │   ├── available/page.tsx
@@ -89,8 +91,8 @@ c:\SDP\car-rental\
 │   ├── admin/                              # Admin dashboard pages
 │   │   ├── layout.tsx                      # Role guard — redirects non-admins
 │   │   ├── dashboard/
-│   │   │   ├── page.tsx
-│   │   │   └── components/                 # StatsCard, Charts, TopNav
+│   │   │   ├── page.tsx                    # Fetches /api/admin/analytics → 4 KPI cards + Charts
+│   │   │   └── components/                 # StatsCard, Charts (LineCharts with time-period filter), TopNav
 │   │   ├── reports/
 │   │   │   ├── page.tsx
 │   │   │   ├── view/page.tsx
@@ -150,9 +152,12 @@ c:\SDP\car-rental\
 │       │   ├── vehicles/
 │       │   │   ├── route.ts
 │       │   │   └── [id]/route.ts
-│       │   └── bookings/route.ts           # GET — all rent-a-car bookings (filters: status, past)
+│       │   ├── bookings/route.ts           # GET — all rent-a-car bookings (filters: status, past)
+│       │   └── analytics/route.ts          # GET — dashboard KPIs + chart data (admin/manager only)
 │       ├── customer/
-│       │   └── bookings/route.ts           # GET — customer's own bookings (filters: status, past)
+│       │   └── bookings/
+│       │       ├── route.ts                # GET — customer's own bookings (filters: status, past)
+│       │       └── [id]/invoice/route.ts   # GET — invoice data for a specific booking (ownership validated)
 │       ├── employee/
 │       │   ├── tasks/route.ts
 │       │   └── bookings/route.ts
@@ -199,10 +204,10 @@ c:\SDP\car-rental\
 │   ├── rent/
 │   │   ├── VehicleCard.tsx
 │   │   ├── RentVehicleCard.tsx
-│   │   ├── BookingForm.tsx
+│   │   ├── BookingForm.tsx                 # 4-step form: customer details → guarantor → docs/T&Cs → overview; custom PhoneInputField (10 countries); 5-doc upload (payment slip required)
 │   │   ├── BookingSummary.tsx
 │   │   ├── AgreementForm.tsx
-│   │   ├── InvoiceView.tsx
+│   │   ├── InvoiceView.tsx                 # Professional invoice renderer; PDF export via html2canvas+jsPDF; InvoiceData interface
 │   │   └── MapModal.tsx
 │   └── employee/
 │       ├── InspectionWorkspace.tsx         # Full inspection UI — Details/Pre-Rental/After-Rental tabs
@@ -230,6 +235,7 @@ c:\SDP\car-rental\
 │   │   ├── types.ts                        # Inferred Select/Insert types for all 24 tables
 │   │   ├── index.ts                        # Barrel export — import all repos from one place
 │   │   └── repositories/                   # One file per table, full CRUD + filtered queries
+│   │       ├── analytics.repository.ts     # getDashboardStats(), getChartData(days), getYearlyChartData()
 │   │       ├── admin.repository.ts
 │   │       ├── booking.repository.ts
 │   │       ├── inspection.repository.ts
@@ -273,6 +279,8 @@ c:\SDP\car-rental\
 │       ├── auth.service.ts
 │       ├── auth.repository.ts
 │       └── auth.dto.ts
+├── scripts/
+│   └── seed-analytics.ts                   # Dev data seeder — creates vehicles, customers, bookings, payments for analytics testing
 ├── drizzle/                                # Generated migration files
 ├── public/                                 # Static assets
 ├── drizzle.config.ts                       # Drizzle ORM configuration (schema: src/db/schema.ts)
@@ -293,7 +301,7 @@ c:\SDP\car-rental\
 | `vehicleBrand` | Vehicle brand lookup |
 | `vehicleModel` | Vehicle model lookup (belongs to brand) |
 | `serviceCategory` | Service category lookup (regular, airport, pickup, wedding) |
-| `booking` | Standard vehicle bookings — rent-a-car and wedding inquiries; fields: bookingId, userId, vehicleId, assignedEmployeeId, customerFullName, customerPhoneNumber1, customerNicNo, customerLicenseNo, customerAddress, guaranteeFullname, guaranteeAddress, guaranteePhoneNo1, guaranteeNicNo, guaranteeLicensePdf, rentalDate, returnDate, pickupLocation, dropoffLocation, totalFare, status, rejectionReason, message, terms1, createdAt |
+| `booking` | Standard vehicle bookings — rent-a-car and wedding inquiries; fields: bookingId, userId, vehicleId, serviceCategoryId, assignedEmployeeId, customerFullName, customerPhoneNumber1/2, customerNicNo, customerLicenseNo, customerAddress, customerDrivingLicencePdf, customerIdPdf, guaranteeFullname, guaranteeAddress, guaranteePhoneNo1/2, guaranteeNicNo, guaranteeNicPdf, guaranteeLicensePdf, rentalDate, returnDate, pickupLocation, dropoffLocation, distance, totalFare, status, rejectionReason, message, terms1, terms2Confirmation, numberOfTravelers, numberOfLuggages, **paymentslip** (varchar 255 — Cloudinary URL), createdAt |
 | `inspection` | BEFORE / AFTER vehicle inspections linked to a booking and employee; fields: inspectionId, bookingId, employeeId, inspectionType (BEFORE/AFTER), overallRemarks |
 | `inspectionItems` | Per-item checklist results for an inspection; fields: inspectionItemId, inspectionId, itemId, status (OK/NOT_OK), remarks |
 | `damageReports` | Damage markers linked to an inspection; fields: damageReportId, inspectionId, damageType (SMALL_MARK/SCRATCH/DENT/CRACK), xPosition, yPosition, notes |
@@ -442,6 +450,11 @@ interface InspectionSubmissionData {
 
 Returns: `bookingId`, `rentalDate`, `returnDate`, `totalFare`, `status`, `rejectionReason`, `vehicle` (brand, model, plateNumber, vehicleImage)
 
+### Customer Booking Invoice
+`GET /api/customer/bookings/:id/invoice` — requires `customer` role; validates booking ownership
+
+Returns: `bookingId`, `rentalDate`, `returnDate`, `totalFare`, `status`, `createdAt`, `customerName`, `vehicle` (brand, model, plateNumber)
+
 ### Admin Booking Overview
 `GET /api/admin/bookings` — requires `admin` or `manager` role
 
@@ -451,6 +464,32 @@ Returns: `bookingId`, `rentalDate`, `returnDate`, `totalFare`, `status`, `reject
 | `past` | `true` | Filters `booking.returnDate < now()` |
 
 Returns: `bookingId`, `customerName`, `customerPhone`, `userEmail`, `rentalDate`, `returnDate`, `totalFare`, `status`, `vehicle` (brand, model, plateNumber)
+
+### Admin Analytics Dashboard
+`GET /api/admin/analytics` — requires `admin` or `manager` role
+
+Returns:
+```ts
+{
+  stats: {
+    totalCustomersToday: number,   // new customers (CUSTOMER role) created today
+    vehiclesOnRent: number,        // vehicles with status = 'RENTED'
+    overdueVehicles: number,       // returnDate < now, status not COMPLETED/CANCELLED/REJECTED
+    todayIncome: number            // sum of payments with paymentDate today
+  },
+  charts: {
+    last10Days: ChartData[],       // "Day 1" … "Day 10" labels
+    last30Days: ChartData[],       // date-format labels (e.g. "Jan 15")
+    last12Months: ChartData[]      // monthly rollup
+  }
+}
+// ChartData: { name: string, customers: number, reservations: number, income: number }
+```
+
+Powered by `lib/db/repositories/analytics.repository.ts`:
+- `getDashboardStats()` — 4 aggregation queries
+- `getChartData(days: number)` — per-day time-series for last N days
+- `getYearlyChartData()` — 12-month rollup
 
 ## Environment Variables
 
@@ -503,6 +542,10 @@ Config file: `.env.local`
 15. **Wedding email workaround** — customer email is stored in the `dropoffLocation` varchar field (schema has no dedicated email column for wedding inquiries); `assignmentActions.ts` reads it as `email: booking.dropoffLocation` for wedding category
 16. **Past bookings filter** — use Drizzle's `lt(booking.returnDate, new Date())` — the date column is `returnDate` on `booking`, `returnTime` on `pickupRequests`
 17. **Assignment field names** — rent-a-car and wedding use `assignedEmployeeId` on `booking`; airport uses `handledByEmployeeId` on `airportBookings`; pickups use `assignedEmployeeId` on `pickupRequests`
+18. **Invoice number format** — `#INV-{bookingId padded to 6 digits}`, reference `#BK-{bookingId}`; status is "PAID" when booking status = "ACCEPTED", otherwise "PENDING"
+19. **Currency & date display** — all monetary amounts in LKR (Sri Lankan Rupees); dates formatted in en-GB locale (DD Mon YYYY) throughout UI
+20. **BookingForm file uploads** — `createBooking()` uploads 5 files to Cloudinary: customer driving license PDF, customer ID document, guarantor NIC PDF, guarantor license PDF, payment slip; payment slip is required; all others are optional (stored as `null` if not provided)
+21. **PhoneInputField country codes** — booking form supports 10 countries: LK, IN, US, GB, AU, AE, SG, MY, PK, BD; country-specific min/max digit validation
 
 ### Repository usage example
 ```ts
@@ -524,6 +567,27 @@ await BookingRepo.updateBooking(bookingId, { status: 'APPROVED' });
 
 **Assignment action key method** (`lib/actions/assignmentActions.ts`):
 - `getAssignmentDetails(category, id, employeeId)` — unified fetch for all 4 service types; returns full booking details including joined vehicle, user, and location data
+
+**Booking action key methods** (`lib/actions/bookingActions.ts`):
+- `saveFileToCloudinary(file, folder)` — uploads PDF/image to Cloudinary; returns URL or `null` (never throws)
+- `createBooking(formData)` — validates NIC/address, uploads 5 docs, inserts booking (PENDING), notifies admins
+- `updateBookingStatus(bookingId, status, formData?, assignedEmployeeId?)` — ACCEPTED sets vehicle UNAVAILABLE; sends in-app + email notifications
+- `getBookingDocuments(bookingId)` — returns `{ license, customerID, nic, gLicense, paymentslip }` URLs
+- `getPendingBookings(employeeId?)` / `getAssignedBookings(employeeId)` — booking lists with joined vehicle + user data
+
+**InvoiceData interface** (`components/rent/InvoiceView.tsx`):
+```ts
+interface InvoiceData {
+  invoiceId: string;
+  bookingId: string;
+  customerName: string;
+  vehicle: string;         // "Brand Model (PlateNumber)"
+  dateRange: string;       // "15 Jan 2024 - 18 Jan 2024"
+  totalAmount: number;
+  paymentStatus: string;   // "PAID" if status=ACCEPTED, else "PENDING"
+  createdAt?: string;
+}
+```
 
 **Inspection action key methods** (`lib/actions/inspectionActions.ts`):
 - `getOrSeedChecklistItems()` — seeds 27 default items into `item` table on first call, then returns all items

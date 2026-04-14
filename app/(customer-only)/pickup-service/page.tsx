@@ -7,6 +7,7 @@ import {
     RotateCcw, Search, ChevronRight, CheckCircle2, Loader2,
     Truck, Fuel, Settings, X, Phone, User, ArrowRight
 } from "lucide-react";
+import { uploadFileToCloudinary } from "@/lib/utils/cloudinaryClient";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -150,6 +151,10 @@ export default function PickupServicePage() {
         setLoading(true);
 
         try {
+            // 1. Upload payment slip to Cloudinary from client-side
+            const paymentslipUrl = await uploadFileToCloudinary(paymentslip, "pay-slips/pickup");
+
+            // 2. Build FormData with URL instead of File
             const formData = new FormData();
             formData.append("vehicle_id", selectedVehicle.vehicleId.toString());
             formData.append("pickup_location", searchForm.pickupLocation);
@@ -164,7 +169,7 @@ export default function PickupServicePage() {
             formData.append("price_per_km", (selectedVehicle.pricePerKm ?? "100"));
             formData.append("distance_km", estimatedDistance.toString());
             formData.append("price", estimatedPrice.toString());
-            formData.append("paymentslip", paymentslip);
+            formData.append("paymentslip", paymentslipUrl);
 
             const res = await fetch("/api/pickup/book", {
                 method: "POST",
@@ -646,7 +651,7 @@ export default function PickupServicePage() {
                             className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl transition-all shadow-xl shadow-emerald-200 flex items-center justify-center gap-3 text-lg active:scale-[0.98] disabled:opacity-60"
                         >
                             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <CheckCircle2 className="w-6 h-6" />}
-                            {loading ? "Submitting..." : "Confirm & Book Pickup"}
+                            {loading ? "Processing Booking..." : "Confirm & Book Pickup"}
                         </button>
                     </form>
                 )}

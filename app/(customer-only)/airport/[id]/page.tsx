@@ -9,6 +9,7 @@ import {
     Phone, Mail, User as UserIcon, Loader2
 } from "lucide-react";
 import { validateAddress } from "@/lib/validation";
+import { uploadFileToCloudinary } from "@/lib/utils/cloudinaryClient";
 import Link from "next/link";
 
 interface AirportVehicle {
@@ -118,6 +119,10 @@ function AirportDetailContent() {
         setSubmitError(null);
 
         try {
+            // 1. Upload payment slip to Cloudinary from client-side
+            const paymentslipUrl = await uploadFileToCloudinary(paymentslip, "pay-slips/airport");
+
+            // 2. Build FormData with URL instead of File
             const formData = new FormData();
             formData.append("vehicle_id", vehicle.vehicleId.toString());
             formData.append("transfer_type", transferType);
@@ -131,7 +136,7 @@ function AirportDetailContent() {
             formData.append("customer_full_name", booking.customerFullName);
             formData.append("customer_phone", booking.customerPhone);
             formData.append("transfer_location", booking.transferLocation);
-            formData.append("paymentslip", paymentslip);
+            formData.append("paymentslip", paymentslipUrl);
 
             const res = await fetch("/api/airport-rental/book", {
                 method: "POST",
@@ -427,7 +432,7 @@ function AirportDetailContent() {
                                         className="w-full h-13 py-3 bg-gray-900 hover:bg-yellow-400 hover:text-gray-900 text-white rounded-2xl font-black transition-all hover:translate-y-[-2px] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
                                         {submitting ? (
-                                            <><Loader2 className="w-5 h-5 animate-spin" /> Confirming...</>
+                                            <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
                                         ) : (
                                             "Confirm Booking"
                                         )}

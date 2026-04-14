@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, type Dispatch, type SetStateAction } from "react";
 import { X, CheckCircle, ChevronLeft, PenTool, User, Car, FileText, ClipboardList, ShieldCheck, MapPin, Calendar, CreditCard, ExternalLink, RefreshCw } from "lucide-react";
+import PDFViewerModal from "@/components/shared/PDFViewerModal";
 
 // --- Local types ---
 type DamageType = "SMALL_MARK" | "SCRATCH" | "DENT" | "CRACK";
@@ -228,6 +229,17 @@ export default function InspectionWorkspace({
     const [docs, setDocs] = useState<BookingDocs | null>(null);
     const [loadingDocs, setLoadingDocs] = useState(false);
 
+    // PDF Viewer State
+    const [pdfViewer, setPdfViewer] = useState<{ isOpen: boolean; url: string; title: string }>({
+        isOpen: false,
+        url: "",
+        title: ""
+    });
+
+    const openPdf = (url: string, title: string) => {
+        setPdfViewer({ isOpen: true, url, title });
+    };
+
     useEffect(() => {
         if (category === "rent-a-car") {
             setLoadingDocs(true);
@@ -449,10 +461,10 @@ export default function InspectionWorkspace({
                                     </div>
                                 ) : docs ? (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <DocumentItem title="Hirer Identification" url={docs.customerID} />
-                                        <DocumentItem title="Driving License" url={docs.license} />
-                                        <DocumentItem title="Guarantor NIC" url={docs.nic} />
-                                        <DocumentItem title="Guarantor License" url={docs.gLicense} />
+                                        <DocumentItem title="Hirer Identification" url={docs.customerID} onOpen={(url, title) => setPdfViewer({ isOpen: true, url, title })} />
+                                        <DocumentItem title="Driving License" url={docs.license} onOpen={(url, title) => setPdfViewer({ isOpen: true, url, title })} />
+                                        <DocumentItem title="Guarantor NIC" url={docs.nic} onOpen={(url, title) => setPdfViewer({ isOpen: true, url, title })} />
+                                        <DocumentItem title="Guarantor License" url={docs.gLicense} onOpen={(url, title) => setPdfViewer({ isOpen: true, url, title })} />
                                     </div>
                                 ) : (
                                     <div className="p-6 bg-gray-50 border border-gray-200 rounded-xl text-center">
@@ -590,11 +602,18 @@ export default function InspectionWorkspace({
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #f1f5f9; border-radius: 20px; }
             `}</style>
+            
+            <PDFViewerModal 
+                isOpen={pdfViewer.isOpen}
+                url={pdfViewer.url}
+                title={pdfViewer.title}
+                onClose={() => setPdfViewer(prev => ({ ...prev, isOpen: false }))}
+            />
         </div>
     );
 }
 
-function DocumentItem({ title, url }: { title: string, url?: string | null }) {
+function DocumentItem({ title, url, onOpen }: { title: string, url?: string | null, onOpen: (url: string, title: string) => void }) {
     if (!url) return (
          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 grayscale opacity-60">
              <div className="flex items-center gap-4">
@@ -604,16 +623,16 @@ function DocumentItem({ title, url }: { title: string, url?: string | null }) {
          </div>
     );
 
-    const isHttp = (url as string).startsWith('http');
-    const finalUrl = isHttp ? (url as string) : `data:application/pdf;base64,${url}`;
-
     return (
-        <a href={finalUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200 hover:border-red-400 hover:shadow-md transition-all group cursor-pointer">
+        <button 
+            onClick={() => onOpen(url, title)} 
+            className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-200 hover:border-red-400 hover:shadow-md transition-all group cursor-pointer w-full text-left"
+        >
              <div className="flex items-center gap-4">
                  <div className="w-10 h-10 bg-red-50 text-red-600 rounded-xl flex items-center justify-center transition-colors"><FileText className="w-4 h-4" /></div>
                  <div><p className="text-xs font-black text-primary tracking-tight">{title}</p><p className="text-[9px] font-bold uppercase tracking-widest text-primary/40 mt-0.5">Verified Document Upload</p></div>
              </div>
              <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-red-600 group-hover:text-white transition-colors text-gray-400"><ExternalLink className="w-3 h-3" /></div>
-        </a>
+        </button>
     );
 }

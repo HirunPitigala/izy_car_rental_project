@@ -34,6 +34,7 @@ import {
     MessageSquare,
     Briefcase
 } from "lucide-react";
+import PDFViewerModal from "@/components/shared/PDFViewerModal";
 
 // --- Categories Configuration ---
 const categories = [
@@ -88,6 +89,17 @@ export default function RequestedBookingsPage() {
     // Rent-A-Car specific
     const [viewingDocs, setViewingDocs] = useState(false);
     const [selectedDocs, setSelectedDocs] = useState<any>(null);
+
+    // Global PDF Viewer State
+    const [pdfViewer, setPdfViewer] = useState<{ isOpen: boolean; url: string; title: string }>({
+        isOpen: false,
+        url: "",
+        title: ""
+    });
+
+    const openPdf = (url: string, title: string) => {
+        setPdfViewer({ isOpen: true, url, title });
+    };
 
     // Initial Fetch & Deep Linking
     useEffect(() => {
@@ -410,6 +422,7 @@ export default function RequestedBookingsPage() {
                         setSelectedEmployeeId("");
                     }} 
                     onViewDocs={selectedCategory === "rent-a-car" ? viewDocs : undefined} 
+                    onOpenPdf={openPdf}
                 />
             )}
 
@@ -424,16 +437,24 @@ export default function RequestedBookingsPage() {
                         <div className="flex-1 overflow-y-auto p-12 bg-gray-50/30">
                             {selectedDocs ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                                    <DocCard title="Hirer ID Document" file={selectedDocs.customerID} />
-                                    <DocCard title="Driving License" file={selectedDocs.license} />
-                                    <DocCard title="Guarantor NIC" file={selectedDocs.nic} />
-                                    <DocCard title="Guarantor License" file={selectedDocs.gLicense} />
+                                    <DocCard title="Hirer ID Document" file={selectedDocs.customerID} onOpen={openPdf} />
+                                    <DocCard title="Driving License" file={selectedDocs.license} onOpen={openPdf} />
+                                    <DocCard title="Guarantor NIC" file={selectedDocs.nic} onOpen={openPdf} />
+                                    <DocCard title="Guarantor License" file={selectedDocs.gLicense} onOpen={openPdf} />
                                 </div>
                             ) : <Loader2 className="mx-auto animate-spin" />}
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* SHARED PDF VIEWER */}
+            <PDFViewerModal 
+                isOpen={pdfViewer.isOpen}
+                url={pdfViewer.url}
+                title={pdfViewer.title}
+                onClose={() => setPdfViewer(prev => ({ ...prev, isOpen: false }))}
+            />
         </div>
     );
 }
@@ -568,7 +589,7 @@ function WeddingCard({ booking, onDetails, onContacted, onApprove, selectedEmplo
     );
 }
 
-function DetailModal({ category, data, employees, selectedEmployeeId, onEmployeeChange, onClose, onApprove, onReject, onAction, onViewDocs }: any) {
+function DetailModal({ category, data, employees, selectedEmployeeId, onEmployeeChange, onClose, onApprove, onReject, onAction, onViewDocs, onOpenPdf }: any) {
     return (
         <div className="fixed inset-0 bg-primary/80 backdrop-blur-md z-50 flex items-center justify-center p-6 lg:p-12 animate-in fade-in duration-300">
             <div className="bg-white w-full max-w-5xl max-h-full rounded-[3rem] overflow-hidden flex flex-col shadow-2xl">
@@ -635,14 +656,12 @@ function DetailModal({ category, data, employees, selectedEmployeeId, onEmployee
                                     {data.guaranteeLicensePdf && (
                                         <div className="lg:col-span-2">
                                             <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1">License Document</span>
-                                            <a
-                                                href={data.guaranteeLicensePdf}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                            <button
+                                                onClick={() => onOpenPdf(data.guaranteeLicensePdf, "Guarantor License")}
                                                 className="inline-flex items-center gap-2 text-xs font-black text-red-600 hover:underline"
                                             >
                                                 <ExternalLink className="w-3.5 h-3.5" /> View Guarantor License
-                                            </a>
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -675,14 +694,12 @@ function DetailModal({ category, data, employees, selectedEmployeeId, onEmployee
                                                 <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Bank Payment Slip</p>
                                                 <p className="text-xs text-emerald-800 font-medium italic">Uploaded by customer for verification</p>
                                             </div>
-                                            <a
-                                                href={data.paymentslip}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                            <button
+                                                onClick={() => onOpenPdf(data.paymentslip, "Bank Payment Slip")}
                                                 className="h-10 px-6 bg-emerald-600 text-white rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
                                             >
                                                 <ExternalLink className="w-3.5 h-3.5" /> View Slip
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                 </section>
@@ -746,14 +763,12 @@ function DetailModal({ category, data, employees, selectedEmployeeId, onEmployee
                                             <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Bank Payment Slip</p>
                                             <p className="text-xs text-emerald-800 font-medium italic">Customer uploaded proof of payment</p>
                                         </div>
-                                        <a
-                                            href={data.paymentslip}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                        <button
+                                            onClick={() => onOpenPdf(data.paymentslip, "Bank Payment Slip")}
                                             className="h-10 px-6 bg-emerald-600 text-white rounded-xl flex items-center gap-2 font-black text-[9px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200"
                                         >
                                             <ExternalLink className="w-3.5 h-3.5" /> View Payment Slip
-                                        </a>
+                                        </button>
                                     </div>
                                 </section>
                             )}
@@ -832,7 +847,7 @@ function DetailItem({ label, value }: { label: string; value: string }) {
     );
 }
 
-function DocCard({ title, file }: { title: string; file: string | null }) {
+function DocCard({ title, file, onOpen }: { title: string; file: string | null; onOpen: (url: string, title: string) => void }) {
     if (!file) return (
         <div className="space-y-4">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{title}</p>
@@ -843,7 +858,8 @@ function DocCard({ title, file }: { title: string; file: string | null }) {
         </div>
     );
 
-    const isImage = /\/image\/upload\//.test(file) || /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(file);
+    const isPDF = file.toLowerCase().includes(".pdf");
+    const isImage = !isPDF && (/\/image\/upload\//.test(file) || /\.(jpg|jpeg|png|gif|webp)(\?.*)?$/i.test(file));
 
     return (
         <div className="space-y-4">
@@ -852,17 +868,18 @@ function DocCard({ title, file }: { title: string; file: string | null }) {
                 {isImage ? (
                     <img src={file} alt={title} className="w-full h-full object-contain" />
                 ) : (
-                    <iframe src={file} className="w-full h-full border-0" title={title} />
+                    <div className="flex flex-col items-center gap-3">
+                        <FileText className="w-10 h-10 text-gray-300" />
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">PDF Document</span>
+                    </div>
                 )}
                 <div className="absolute inset-0 bg-primary/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <a
-                        href={file}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <button
+                        onClick={() => onOpen(file, title)}
                         className="bg-white px-6 h-10 rounded-full font-black text-[10px] uppercase tracking-tight flex items-center gap-2 hover:bg-red-600 hover:text-white transition-all"
                     >
                         <ExternalLink className="w-4 h-4" /> Open
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>

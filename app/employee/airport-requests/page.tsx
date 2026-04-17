@@ -10,16 +10,14 @@ import {
 
 interface AirportBookingRequest {
     id: number;
-    transferType: string;
-    airport: string;
-    transferDate: string;
-    transferTime: string;
+    pickupDate: string | Date | null;
     passengers: number;
     luggageCount: number | null;
     customerFullName: string;
     customerPhone: string;
-    customerEmail: string | null;
     transferLocation: string;
+    pickupLocation: string;
+    dropoffLocation: string;
     status: string | null;
     rejectionReason: string | null;
     createdAt: string | null;
@@ -181,41 +179,32 @@ export default function EmployeeAirportRequestsPage() {
 
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <div className="flex items-start gap-3">
+                                                    <div className="p-2 bg-emerald-50 rounded-lg flex-shrink-0">
+                                                        <MapPin className="h-4 w-4 text-emerald-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Origin</p>
+                                                        <p className="text-sm font-bold text-gray-900">{req.pickupLocation}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="p-2 bg-red-50 rounded-lg flex-shrink-0">
+                                                        <MapPin className="h-4 w-4 text-red-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Destination</p>
+                                                        <p className="text-sm font-bold text-gray-900">{req.dropoffLocation}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-start gap-3">
                                                     <div className="p-2 bg-yellow-50 rounded-lg flex-shrink-0">
-                                                        <Plane className="h-4 w-4 text-yellow-600" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Transfer Type</p>
-                                                        <p className="text-sm font-bold text-gray-900">
-                                                            {req.transferType === "PICKUP" ? "Airport Pickup" : "Airport Drop"}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-start gap-3">
-                                                    <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
-                                                        <MapPin className="h-4 w-4 text-gray-600" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Airport</p>
-                                                        <p className="text-sm font-bold text-gray-900">{airportLabel(req.airport)}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-start gap-3">
-                                                    <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
-                                                        <Calendar className="h-4 w-4 text-gray-600" />
+                                                        <Calendar className="h-4 w-4 text-yellow-600" />
                                                     </div>
                                                     <div>
                                                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Date &amp; Time</p>
-                                                        <p className="text-sm font-bold text-gray-900">{req.transferDate} at {req.transferTime}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-start gap-3">
-                                                    <div className="p-2 bg-gray-50 rounded-lg flex-shrink-0">
-                                                        <MapPin className="h-4 w-4 text-gray-400" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Transfer Address</p>
-                                                        <p className="text-sm font-bold text-gray-900">{req.transferLocation}</p>
+                                                        <p className="text-sm font-bold text-gray-900">
+                                                            {req.pickupDate ? new Date(req.pickupDate).toLocaleString() : "TBD"}
+                                                        </p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-start gap-3">
@@ -250,12 +239,7 @@ export default function EmployeeAirportRequestsPage() {
                                                     <Phone className="h-3.5 w-3.5 text-gray-400" />
                                                     <span className="font-medium">{req.customerPhone}</span>
                                                 </div>
-                                                {req.customerEmail && (
-                                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                        <AlertCircle className="h-3.5 w-3.5 text-gray-400" />
-                                                        <span className="font-medium">{req.customerEmail}</span>
-                                                    </div>
-                                                )}
+
                                             </div>
 
                                             {req.status === "REJECTED" && req.rejectionReason && (

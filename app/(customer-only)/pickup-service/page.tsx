@@ -7,6 +7,7 @@ import {
     RotateCcw, Search, ChevronRight, CheckCircle2, Loader2,
     Truck, Fuel, Settings, X, Phone, User, ArrowRight
 } from "lucide-react";
+import { uploadFileToCloudinary } from "@/lib/utils/cloudinaryClient";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -82,6 +83,7 @@ export default function PickupServicePage() {
         customerFullName: "",
         customerPhone: "",
     });
+    const [paymentslip, setPaymentslip] = useState<File | null>(null);
 
     // ── Step 1: Search ─────────────────────────────────────────
 
@@ -140,26 +142,38 @@ export default function PickupServicePage() {
         e.preventDefault();
         if (!selectedVehicle) return;
 
+        if (!paymentslip) {
+            setError("Payment slip is required. Please upload your bank payment slip to proceed.");
+            return;
+        }
+
         setError(null);
         setLoading(true);
 
         try {
+            // 1. Upload payment slip to Cloudinary from client-side
+            const paymentslipUrl = await uploadFileToCloudinary(paymentslip, "pay-slips/pickup");
+
+            // 2. Build FormData with URL instead of File
+            const formData = new FormData();
+            formData.append("vehicle_id", selectedVehicle.vehicleId.toString());
+            formData.append("pickup_location", searchForm.pickupLocation);
+            formData.append("drop_location", searchForm.dropLocation);
+            formData.append("pickup_datetime", searchForm.pickupDatetime);
+            formData.append("return_datetime", searchForm.isReturnTrip ? searchForm.returnDatetime : "");
+            formData.append("is_return_trip", searchForm.isReturnTrip.toString());
+            formData.append("travelers", searchForm.travelers.toString());
+            formData.append("luggage_count", searchForm.luggageCount.toString());
+            formData.append("customer_full_name", bookingForm.customerFullName);
+            formData.append("customer_phone", bookingForm.customerPhone);
+            formData.append("price_per_km", (selectedVehicle.pricePerKm ?? "100"));
+            formData.append("distance_km", estimatedDistance.toString());
+            formData.append("price", estimatedPrice.toString());
+            formData.append("paymentslip", paymentslipUrl);
+
             const res = await fetch("/api/pickup/book", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    vehicle_id: selectedVehicle.vehicleId,
-                    pickup_location: searchForm.pickupLocation,
-                    drop_location: searchForm.dropLocation,
-                    pickup_datetime: searchForm.pickupDatetime,
-                    return_datetime: searchForm.isReturnTrip ? searchForm.returnDatetime : null,
-                    is_return_trip: searchForm.isReturnTrip,
-                    travelers: searchForm.travelers,
-                    luggage_count: searchForm.luggageCount,
-                    customer_full_name: bookingForm.customerFullName,
-                    customer_phone: bookingForm.customerPhone,
-                    price_per_km: parseFloat(selectedVehicle.pricePerKm ?? "100"),
-                }),
+                body: formData,
             });
 
             const data = await res.json();
@@ -251,12 +265,12 @@ export default function PickupServicePage() {
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Pickup Location</label>
                                 <div className="relative">
-                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-emerald-500" />
                                     <input
                                         type="text"
                                         required
                                         placeholder="e.g. Negombo Bus Stand"
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
                                         value={searchForm.pickupLocation}
                                         onChange={(e) => setSearchForm({ ...searchForm, pickupLocation: e.target.value })}
                                     />
@@ -265,12 +279,12 @@ export default function PickupServicePage() {
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Drop-Off Location</label>
                                 <div className="relative">
-                                    <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Navigation className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                     <input
                                         type="text"
                                         required
                                         placeholder="e.g. Katunayake Airport"
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
                                         value={searchForm.dropLocation}
                                         onChange={(e) => setSearchForm({ ...searchForm, dropLocation: e.target.value })}
                                     />
@@ -283,11 +297,11 @@ export default function PickupServicePage() {
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Pickup Date & Time</label>
                                 <div className="relative">
-                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-emerald-500" />
                                     <input
                                         type="datetime-local"
                                         required
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
                                         value={searchForm.pickupDatetime}
                                         onChange={(e) => setSearchForm({ ...searchForm, pickupDatetime: e.target.value })}
                                     />
@@ -308,7 +322,7 @@ export default function PickupServicePage() {
                                     <span className="font-bold text-sm">
                                         {searchForm.isReturnTrip ? "Return trip included" : "One-way trip"}
                                     </span>
-                                    <div className={`ml-auto w-10 h-6 rounded-full transition-all relative
+                                    <div className={`ml-auto w-10 h-6 rounded-full transition-all relative flex-shrink-0
                                         ${searchForm.isReturnTrip ? "bg-emerald-500" : "bg-gray-200"}`}>
                                         <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all
                                             ${searchForm.isReturnTrip ? "left-5" : "left-1"}`} />
@@ -319,18 +333,20 @@ export default function PickupServicePage() {
 
                         {/* Return datetime (conditional) */}
                         {searchForm.isReturnTrip && (
-                            <div className="space-y-2">
-                                <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Return Date & Time</label>
-                                <div className="relative">
-                                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input
-                                        type="datetime-local"
-                                        required
-                                        min={searchForm.pickupDatetime || undefined}
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
-                                        value={searchForm.returnDatetime}
-                                        onChange={(e) => setSearchForm({ ...searchForm, returnDatetime: e.target.value })}
-                                    />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Return Date & Time</label>
+                                    <div className="relative">
+                                        <Clock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <input
+                                            type="datetime-local"
+                                            required
+                                            min={searchForm.pickupDatetime || undefined}
+                                            className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                            value={searchForm.returnDatetime}
+                                            onChange={(e) => setSearchForm({ ...searchForm, returnDatetime: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -340,13 +356,13 @@ export default function PickupServicePage() {
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Travelers</label>
                                 <div className="relative">
-                                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+                                    <Users className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-emerald-500" />
                                     <input
                                         type="number"
                                         min={1}
                                         max={20}
                                         required
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-bold text-gray-900"
+                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-bold text-gray-900"
                                         value={searchForm.travelers}
                                         onChange={(e) => setSearchForm({ ...searchForm, travelers: parseInt(e.target.value) })}
                                     />
@@ -355,12 +371,12 @@ export default function PickupServicePage() {
                             <div className="space-y-2">
                                 <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Luggage Pieces</label>
                                 <div className="relative">
-                                    <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                     <input
                                         type="number"
                                         min={0}
                                         max={20}
-                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-bold text-gray-900"
+                                        className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-bold text-gray-900"
                                         value={searchForm.luggageCount}
                                         onChange={(e) => setSearchForm({ ...searchForm, luggageCount: parseInt(e.target.value) || 0 })}
                                     />
@@ -556,12 +572,12 @@ export default function PickupServicePage() {
                                 <div className="space-y-2">
                                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Full Name</label>
                                     <div className="relative">
-                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                         <input
                                             type="text"
                                             required
                                             placeholder="Your full name"
-                                            className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                            className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
                                             value={bookingForm.customerFullName}
                                             onChange={(e) => setBookingForm({ ...bookingForm, customerFullName: e.target.value })}
                                         />
@@ -570,12 +586,12 @@ export default function PickupServicePage() {
                                 <div className="space-y-2">
                                     <label className="text-xs font-black text-gray-400 uppercase tracking-widest">Phone Number</label>
                                     <div className="relative">
-                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                         <input
                                             type="tel"
                                             required
                                             placeholder="+94 77 XXX XXXX"
-                                            className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-11 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
+                                            className="w-full h-14 bg-gray-50 border border-transparent rounded-2xl pl-14 pr-4 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all font-medium text-gray-900"
                                             value={bookingForm.customerPhone}
                                             onChange={(e) => setBookingForm({ ...bookingForm, customerPhone: e.target.value })}
                                         />
@@ -584,13 +600,58 @@ export default function PickupServicePage() {
                             </div>
                         </div>
 
+                        {/* Bank Details */}
+                        <div className="bg-emerald-50 rounded-[2rem] p-8 space-y-6">
+                            <div className="flex items-center gap-3">
+                                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                                <h3 className="font-black text-emerald-900">Bank Transfer Details</h3>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                {[
+                                    { label: "Bank Name", value: "Bank of Ceylon (BOC)" },
+                                    { label: "Account Name", value: "Test User" },
+                                    { label: "Account Number", value: "123456789012" },
+                                    { label: "Branch", value: "Colombo Main Branch" },
+                                    { label: "Branch Code", value: "001" },
+                                    { label: "SWIFT Code", value: "BCEYLKLX" },
+                                ].map(({ label, value }) => (
+                                    <div key={label}>
+                                        <p className="text-[10px] font-black text-emerald-600/60 uppercase tracking-widest mb-1">{label}</p>
+                                        <p className="font-bold text-emerald-900">{value}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Payment Slip Upload */}
+                        <div className="bg-white rounded-[2rem] border-2 border-dashed border-gray-100 p-8 text-center space-y-4">
+                            <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto text-gray-400">
+                                {paymentslip ? <CheckCircle2 className="w-8 h-8 text-emerald-500" /> : <Settings className="w-8 h-8" />}
+                            </div>
+                            <div>
+                                <h3 className="font-black text-gray-900">{paymentslip ? paymentslip.name : "Upload Payment Slip"}</h3>
+                                <p className="text-sm text-gray-400 mt-1 font-medium italic">
+                                    Please upload a photo of your bank transfer slip.
+                                </p>
+                            </div>
+                            <label className="inline-block px-8 py-3 bg-gray-900 text-white rounded-xl font-bold text-sm cursor-pointer hover:bg-emerald-600 transition-all">
+                                {paymentslip ? "Change File" : "Choose File"}
+                                <input 
+                                    type="file" 
+                                    className="hidden" 
+                                    onChange={(e) => setPaymentslip(e.target.files?.[0] || null)}
+                                    accept="image/*,.pdf"
+                                />
+                            </label>
+                        </div>
+
                         <button
                             type="submit"
                             disabled={loading}
                             className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl transition-all shadow-xl shadow-emerald-200 flex items-center justify-center gap-3 text-lg active:scale-[0.98] disabled:opacity-60"
                         >
                             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <CheckCircle2 className="w-6 h-6" />}
-                            {loading ? "Submitting..." : "Confirm & Book Pickup"}
+                            {loading ? "Processing Booking..." : "Confirm & Book Pickup"}
                         </button>
                     </form>
                 )}

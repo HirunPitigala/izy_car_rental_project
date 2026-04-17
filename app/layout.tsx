@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
+import NotificationStream from "@/components/notifications/NotificationStream";
+import { NotificationProvider } from "@/components/notifications/NotificationContext";
 import { getSession, logDebug } from "@/lib/auth";
 import { cookies } from "next/headers";
 
@@ -34,10 +36,13 @@ export default async function RootLayout({
         className={`${poppins.variable} font-sans antialiased bg-[#fcfcfc] text-[#0f0f0f]`}
         suppressHydrationWarning
       >
-        <Navbar session={session} />
-        <main className="min-h-screen">
-          {children}
-        </main>
+        <NotificationProvider session={session}>
+          <Navbar session={session} />
+          <NotificationStream />
+          <main className="min-h-screen">
+            {children}
+          </main>
+        </NotificationProvider>
       </body>
     </html>
   );

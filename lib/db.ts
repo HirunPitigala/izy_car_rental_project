@@ -1,19 +1,9 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import mysql from 'mysql2/promise';
-import * as schema from '@/src/db/schema';
-import * as relations from '@/src/db/relations';
+// Re-export the canonical db instance and pool from src/db so that
+// import { db } from "@/lib/db" works alongside the repo barrel.
+export { db, pool } from '@/src/db';
 
-// Create MySQL connection pool
-export const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: Number(process.env.DB_PORT),
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-});
-
-// Create Drizzle instance with schema and relations
-export const db = drizzle(pool, { schema: { ...schema, ...relations }, mode: 'default' });
+// Re-export all repository namespaces and types from the barrel so that
+// import { NotificationRepo, VehicleRepo, … } from "@/lib/db" continues to work.
+// NOTE: @/lib/db resolves to this file (lib/db.ts) — TypeScript picks files
+// over directories — so we must explicitly re-export lib/db/index here.
+export * from './db/index';

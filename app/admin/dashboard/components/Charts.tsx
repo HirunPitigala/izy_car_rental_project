@@ -13,48 +13,40 @@ import {
     Line,
 } from "recharts";
 
-const dataLast10Days = [
-    { name: "Day 1", customers: 40, reservations: 24, income: 2400 },
-    { name: "Day 2", customers: 30, reservations: 13, income: 1398 },
-    { name: "Day 3", customers: 20, reservations: 98, income: 9800 },
-    { name: "Day 4", customers: 27, reservations: 39, income: 3908 },
-    { name: "Day 5", customers: 18, reservations: 48, income: 4800 },
-    { name: "Day 6", customers: 23, reservations: 38, income: 3800 },
-    { name: "Day 7", customers: 34, reservations: 43, income: 4300 },
-];
+interface ChartDataItem {
+    name: string;
+    customers: number;
+    reservations: number;
+    income: number;
+}
 
-const dataLastMonth = [
-    { name: "Week 1", customers: 240, reservations: 124, income: 12400 },
-    { name: "Week 2", customers: 130, reservations: 113, income: 11398 },
-    { name: "Week 3", customers: 220, reservations: 198, income: 19800 },
-    { name: "Week 4", customers: 270, reservations: 139, income: 13908 },
-];
+interface ChartsProps {
+    data: {
+        last10Days: ChartDataItem[];
+        last30Days: ChartDataItem[];
+        last12Months: ChartDataItem[];
+    };
+    loading?: boolean;
+}
 
-const dataLastYear = [
-    { name: "Jan", customers: 400, reservations: 240, income: 24000 },
-    { name: "Feb", customers: 300, reservations: 130, income: 13980 },
-    { name: "Mar", customers: 200, reservations: 980, income: 98000 },
-    { name: "Apr", customers: 270, reservations: 390, income: 39080 },
-    { name: "May", customers: 180, reservations: 480, income: 48000 },
-    { name: "Jun", customers: 230, reservations: 380, income: 38000 },
-    { name: "Jul", customers: 340, reservations: 430, income: 43000 },
-    { name: "Aug", customers: 400, reservations: 240, income: 24000 },
-    { name: "Sep", customers: 300, reservations: 130, income: 13980 },
-    { name: "Oct", customers: 200, reservations: 980, income: 98000 },
-    { name: "Nov", customers: 270, reservations: 390, income: 39080 },
-    { name: "Dec", customers: 180, reservations: 480, income: 48000 },
-];
-
-export default function Charts() {
+export default function Charts({ data: allData, loading }: ChartsProps) {
     const [filter, setFilter] = useState("Last 10 days");
 
-    let data;
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#dc2626]"></div>
+            </div>
+        );
+    }
+
+    let currentData: ChartDataItem[] = [];
     if (filter === "Last 10 days") {
-        data = dataLast10Days;
+        currentData = allData?.last10Days || [];
     } else if (filter === "Last 30 days") {
-        data = dataLastMonth;
+        currentData = allData?.last30Days || [];
     } else {
-        data = dataLastYear;
+        currentData = allData?.last12Months || [];
     }
 
     const CustomTooltip = ({ active, payload, label }: any) => {
@@ -94,7 +86,7 @@ export default function Charts() {
                     </h3>
                     <div className="h-72 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                            <LineChart data={currentData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" />
                                 <XAxis
                                     dataKey="name"
@@ -133,7 +125,7 @@ export default function Charts() {
                     </h3>
                     <div className="h-72 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                            <LineChart data={currentData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" />
                                 <XAxis
                                     dataKey="name"
@@ -173,7 +165,7 @@ export default function Charts() {
                 </h3>
                 <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
+                        <LineChart data={currentData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#F3F4F6" />
                             <XAxis
                                 dataKey="name"
@@ -190,7 +182,7 @@ export default function Charts() {
                                 fontWeight={600}
                                 tickLine={false}
                                 axisLine={false}
-                                tickFormatter={(value) => `LKR ${value}`}
+                                tickFormatter={(value) => `LKR ${value.toLocaleString()}`}
                             />
                             <Tooltip content={<CustomTooltip />} />
                             <Line

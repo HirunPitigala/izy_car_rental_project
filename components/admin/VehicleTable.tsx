@@ -106,7 +106,7 @@ export default function VehicleTable({ vehicles, onRefresh, editPath = "/admin/v
                                     <tr key={vehicle.vehicleId} className="group transition-colors hover:bg-gray-50/50">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-4">
-                                                <div className="relative h-14 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm">
+                                                <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm">
                                                     {vehicle.image ? (
                                                         <div className="relative h-full w-full">
                                                             <Image
@@ -166,14 +166,14 @@ export default function VehicleTable({ vehicles, onRefresh, editPath = "/admin/v
                                             <div className="flex justify-end gap-2">
                                                 <button
                                                     onClick={() => setSelectedVehicle(vehicle)}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-all hover:bg-gray-50 hover:text-[#0f0f0f] shadow-sm active:scale-95"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-all hover:bg-gray-50 hover:text-primary shadow-sm active:scale-95"
                                                     title="View Details"
                                                 >
                                                     <Eye className="h-4 w-4" />
                                                 </button>
                                                 <Link
                                                     href={`/admin/vehicles/edit/${vehicle.vehicleId}`}
-                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-all hover:bg-gray-50 hover:text-[#0f0f0f] shadow-sm active:scale-95"
+                                                    className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-all hover:bg-gray-50 hover:text-primary shadow-sm active:scale-95"
                                                     title="Edit Vehicle"
                                                 >
                                                     <Edit2 className="h-4 w-4" />

@@ -17,7 +17,7 @@ export default async function AdminLayout({
             if (session.role === "admin") redirect("/admin/dashboard");
             if (session.role === "manager") redirect("/manager/dashboard");
             if (session.role === "customer") redirect("/customer/dashboard");
-            if (session.role === "employee") redirect("/employee/bookings/requested");
+            if (session.role === "employee") redirect("/employee/assigned");
         }
         redirect("/login");
     }

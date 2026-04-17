@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { booking, inspection, inspectionItems, damageReports, item, notification, payment, manager, report, vehicle, review, vehicleBrand, vehicleModel, serviceCategory, employee, admin, pickupRequests, users, airportBookings } from "./schema";
+import { booking, inspection, inspectionItems, damageReports, item, notification, payment, manager, report, vehicle, review, vehicleBrand, vehicleModel, serviceCategory, employee, admin, users, airportBookings } from "./schema";
 
 export const bookingRelations = relations(booking, ({ one, many }) => ({
 	serviceCategory: one(serviceCategory, {
@@ -12,12 +12,16 @@ export const bookingRelations = relations(booking, ({ one, many }) => ({
 	}),
 	user: one(users, {
 		fields: [booking.userId],
-		references: [users.id],
+		references: [users.userId],
 	}),
 	payments: many(payment),
 	inspections: many(inspection),
 	notifications: many(notification),
 	reviews: many(review),
+	assignedEmployee: one(employee, {
+		fields: [booking.assignedEmployeeId],
+		references: [employee.employeeId],
+	}),
 }));
 
 export const inspectionRelations = relations(inspection, ({ one, many }) => ({
@@ -63,6 +67,10 @@ export const notificationRelations = relations(notification, ({ one }) => ({
 	admin: one(admin, {
 		fields: [notification.adminId],
 		references: [admin.adminId],
+	}),
+	user: one(users, {
+		fields: [notification.userId],
+		references: [users.userId],
 	}),
 }));
 
@@ -129,21 +137,10 @@ export const serviceCategoryRelations = relations(serviceCategory, ({ many }) =>
 	vehicles: many(vehicle),
 }));
 
-export const pickupRequestRelations = relations(pickupRequests, ({ one }) => ({
-	customer: one(users, {
-		fields: [pickupRequests.customerId],
-		references: [users.id],
-	}),
-	vehicle: one(vehicle, {
-		fields: [pickupRequests.vehicleId],
-		references: [vehicle.vehicleId],
-	}),
-}));
-
 export const airportBookingRelations = relations(airportBookings, ({ one }) => ({
 	customer: one(users, {
 		fields: [airportBookings.customerId],
-		references: [users.id],
+		references: [users.userId],
 	}),
 	vehicle: one(vehicle, {
 		fields: [airportBookings.vehicleId],

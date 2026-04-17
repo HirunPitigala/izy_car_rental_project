@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       // 4. Update booking status based on inspection type
       const newStatus = inspectionType === "BEFORE" ? "PICKED_UP" : "RETURNED";
       await tx.update(booking).set({ 
-        bookingStatus: newStatus 
+        status: newStatus 
       }).where(eq(booking.bookingId, bookingId));
 
       return { inspectionId, status: newStatus };

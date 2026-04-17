@@ -30,6 +30,7 @@ export default function WeddingRentalPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [userId, setUserId] = useState<number | null>(null);
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
@@ -39,9 +40,18 @@ export default function WeddingRentalPage() {
     });
 
     useEffect(() => {
+        async function fetchSession() {
+            const res = await fetch('/api/auth/session');
+            const data = await res.json();
+            if (data.session?.userId) {
+                setUserId(data.session.userId);
+            }
+        }
+        fetchSession();
+
         async function fetchCars() {
             setLoading(true);
-            const result = await getWeddingCars();
+            const result = await getWeddingCars(true);
             if (result.success) {
                 setCars(result.data as any);
             }
@@ -63,6 +73,7 @@ export default function WeddingRentalPage() {
 
         const result = await createWeddingCarInquiry({
             vehicleId: selectedCar,
+            userId: userId!,
             customerName: formData.fullName,
             email: formData.email,
             phone: formData.phone,
@@ -171,11 +182,6 @@ export default function WeddingRentalPage() {
                                                 <Heart className="h-3 w-3 fill-white" />
                                                 Wedding Special
                                             </div>
-                                            {car.rentPerDay && (
-                                                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#0f0f0f]">
-                                                    LKR {Number(car.rentPerDay).toLocaleString()} / day
-                                                </div>
-                                            )}
                                         </div>
                                         <div className="p-5">
                                             <h3 className="font-bold text-lg text-[#0f0f0f] mb-1">{car.brand} {car.model}</h3>

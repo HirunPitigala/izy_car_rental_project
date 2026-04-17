@@ -3,41 +3,76 @@
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import InvoiceView, { InvoiceData } from "@/components/rent/InvoiceView";
-import { Loader2 } from "lucide-react";
-import { mockVehicles } from "@/lib/mockVehicles";
+import { Loader2, AlertCircle } from "lucide-react";
 
 function InvoiceContent() {
     const searchParams = useSearchParams();
     const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const vehicleId = searchParams.get("vehicleId") || "";
-        // Attempt to find the vehicle to display its name in the invoice
-        const mock = mockVehicles.find(v => v.id === vehicleId);
+        const fetchInvoice = async () => {
+            const bookingId = searchParams.get("bookingId");
+            if (!bookingId) {
+                setError("Missing booking reference");
+                setLoading(false);
+                return;
+            }
 
-        // Simulation of mapping step 8 invoice fields
-        setInvoiceData({
-            invoiceId: Math.floor(Math.random() * 900000) + 100000 + "",
-            bookingId: Math.floor(Math.random() * 90000) + 10000 + "",
-            customerName: "Authorized Customer", // Fallback for demonstration
-            vehicle: mock ? `${mock.brand} ${mock.model} (${mock.plateNumber})` : "Premium Car Rental",
-            dateRange: `${searchParams.get("rental_start_date")} - ${searchParams.get("rental_end_date")}`,
-            totalAmount: Number(searchParams.get("totalPrice")) || 0,
-            paymentStatus: "Completed"
-        });
+            try {
+                const res = await fetch(`/api/customer/bookings/${bookingId}/invoice`);
+                if (!res.ok) throw new Error("Could not retrieve billing information");
+                
+                const result = await res.json();
+                if (result.success) {
+                    const d = result.data;
+                    setInvoiceData({
+                        invoiceId: d.bookingId.toString(),
+                        bookingId: d.bookingId.toString(),
+                        customerName: d.customerName || "Authorized Customer",
+                        vehicle: `${d.vehicle.brand} ${d.vehicle.model} (${d.vehicle.plateNumber})`,
+                        dateRange: `${new Date(d.rentalDate).toLocaleDateString('en-GB')} - ${new Date(d.returnDate).toLocaleDateString('en-GB')}`,
+                        totalAmount: Number(d.totalFare) || 0,
+                        paymentStatus: d.status,
+                        createdAt: d.createdAt
+                    });
+                } else {
+                    throw new Error(result.error || "Failed to fetch invoice");
+                }
+            } catch (err: any) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchInvoice();
     }, [searchParams]);
 
-    if (!invoiceData) {
+    if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
                 <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-                <p className="text-gray-400 font-bold">Generating secure invoice...</p>
+                <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Generating Secure Billing Statement...</p>
+            </div>
+        );
+    }
+
+    if (error || !invoiceData) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
+                <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mb-6">
+                    <AlertCircle className="w-8 h-8" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Billing Error</h2>
+                <p className="text-gray-500 max-w-sm">{error || "The requested invoice could not be found."}</p>
             </div>
         );
     }
 
     return (
-        <div className="container mx-auto px-6 py-12">
+        <div className="container mx-auto">
             <InvoiceView data={invoiceData} />
         </div>
     );

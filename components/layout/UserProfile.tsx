@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { UserSession } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-import { LogOut, User, ChevronDown, Settings, CreditCard } from "lucide-react";
+import { LogOut, User, ChevronDown, Settings, CreditCard, ClipboardList } from "lucide-react";
 
 interface UserProfileProps {
     session: UserSession;
@@ -59,7 +59,17 @@ export default function UserProfile({ session }: UserProfileProps) {
                             </div>
                         </div>
 
-
+                        <div className="py-1">
+                            {session.role === "customer" && (
+                                <Link
+                                    href="/customer/profile/bookings"
+                                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#0f0f0f] transition-colors"
+                                >
+                                    <ClipboardList className="h-4 w-4" />
+                                    My Bookings
+                                </Link>
+                            )}
+                        </div>
 
                         <div className="mt-1 pt-1 border-t border-gray-50">
                             <button

@@ -22,7 +22,7 @@ export const admin = mysqlTable("admin", {
 export const booking = mysqlTable("booking", {
 	bookingId: int("booking_id").autoincrement().notNull(),
 	serviceCategoryId: int("service_category_id").references(() => serviceCategory.categoryId),
-	userId: int("user_id").references(() => users.id),
+	userId: int("user_id").references(() => users.userId),
 	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId),
 
 	// Rental Details
@@ -35,17 +35,18 @@ export const booking = mysqlTable("booking", {
 	customerPhoneNumber2: varchar("customer_phone_number2", { length: 15 }),
 	customerLicenseNo: varchar("customer_license_no", { length: 50 }),
 	customerNicNo: varchar("customer_nic_no", { length: 20 }),
-	customerEmail: varchar("customer_email", { length: 100 }),
+	customerAddress: text("customer_address"),
+
 	customerDrivingLicencePdf: varchar("customer_driving_licence_pdf", { length: 255 }),
 	customerIdPdf: varchar("customer_id_pdf", { length: 255 }),
 
 	// Location & Pricing (Restored from reservation)
 	pickupLocation: varchar("pickup_location", { length: 255 }),
 	dropoffLocation: varchar("dropoff_location", { length: 255 }),
-	returnTrip: boolean("return_trip").default(false),
+
 	distance: decimal({ precision: 10, scale: 2 }),
 	totalFare: decimal("total_fare", { precision: 10, scale: 2 }),
-	bookingStatus: varchar("booking_status", { length: 30 }).default("PENDING"),
+	status: varchar("booking_status", { length: 30 }).default("PENDING"),
 	rejectionReason: text("rejection_reason"),
 
 	// Terms Acceptance
@@ -69,13 +70,16 @@ export const booking = mysqlTable("booking", {
 	message: text("message"),
 
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
-	status: boolean("status").default(false),
+
+	assignedEmployeeId: int("assigned_employee_id").references(() => employee.employeeId),
+	paymentslip: varchar("paymentslip", { length: 255 }),
 },
 	(table) => [
 		primaryKey({ columns: [table.bookingId], name: "booking_pk" }),
 		index("service_category_id_idx").on(table.serviceCategoryId),
 		index("user_id_idx").on(table.userId),
 		index("vehicle_id_idx").on(table.vehicleId),
+		index("assigned_employee_id_idx").on(table.assignedEmployeeId),
 	]);
 
 export const inspection = mysqlTable("inspection", {
@@ -139,7 +143,9 @@ export const employee = mysqlTable("employee", {
 	name: varchar({ length: 100 }),
 	email: varchar({ length: 100 }),
 	phone: varchar({ length: 15 }),
-	password: varchar({ length: 255 }),
+		password: varchar({ length: 255 }),
+	status: varchar({ length: 20 }).default("PENDING"),
+
 },
 	(table) => [
 		primaryKey({ columns: [table.employeeId], name: "employee_employee_id" }),
@@ -175,10 +181,12 @@ export const notification = mysqlTable("notification", {
 	notificationDate: datetime("notification_date", { mode: 'string' }),
 	status: varchar({ length: 20 }),
 	adminId: int("admin_id").references(() => admin.adminId),
+	userId: int("user_id").references(() => users.userId),
 },
 	(table) => [
 		index("booking_id_idx").on(table.bookingId),
 		index("admin_id_idx").on(table.adminId),
+		index("user_id_idx").on(table.userId),
 		primaryKey({ columns: [table.notificationId], name: "notification_notification_id" }),
 	]);
 
@@ -213,14 +221,18 @@ export const report = mysqlTable("report", {
 export const review = mysqlTable("review", {
 	reviewId: int("review_id").autoincrement().notNull(),
 	bookingId: int("booking_id").references(() => booking.bookingId),
+	userId: int("user_id").references(() => users.userId),
 	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId),
-	rating: int(),
+	employeeId: int("employee_id").references(() => employee.employeeId),
+	rating: int().notNull(),
 	comment: text(),
-	reviewDate: date("review_date", { mode: 'string' }),
+	reviewDate: datetime("review_date").default(sql`CURRENT_TIMESTAMP`),
 },
 	(table) => [
 		index("booking_id_idx").on(table.bookingId),
+		index("userId_idx").on(table.userId),
 		index("vehicle_id_idx").on(table.vehicleId),
+		index("employee_id_idx").on(table.employeeId),
 		primaryKey({ columns: [table.reviewId], name: "review_review_id" }),
 		check("review_chk_1", sql`(\`rating\` between 1 and 5)`),
 	]);
@@ -287,26 +299,27 @@ export const vehicle = mysqlTable("vehicle", {
 	]);
 
 export const users = mysqlTable("users", {
-	id: int("id").autoincrement().notNull(),
+	userId: int("user_id").autoincrement().notNull(),
 	email: varchar({ length: 100 }),
 	passwordHash: varchar("password_hash", { length: 255 }),
 	role: varchar({ length: 20 }),
 	relatedId: int("related_id"),
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
-	status: varchar({ length: 20 }).default("active"),
+	status: varchar({ length: 20 }).default("pending"),
+	emailVerified: boolean("email_verified").default(false),
+	verificationToken: varchar("verification_token", { length: 255 }),
+	tokenExpiry: datetime("token_expiry"),
 	name: varchar({ length: 100 }),
 	phone: varchar({ length: 15 }),
-	emailVerified: boolean("email_verified").default(false),
-	emailVerifiedAt: datetime("email_verified_at"),
 },
 	(table) => [
-		primaryKey({ columns: [table.id], name: "users_id" }),
+		primaryKey({ columns: [table.userId], name: "users_id" }),
 		unique("email").on(table.email),
 	]);
 
 export const emailVerificationTokens = mysqlTable("email_verification_tokens", {
 	id: int("id").autoincrement().notNull(),
-	userId: int("user_id").references(() => users.id).notNull(),
+	userId: int("user_id").references(() => users.userId).notNull(),
 	token: varchar("token", { length: 255 }).notNull(),
 	expiresAt: datetime("expires_at").notNull(),
 },
@@ -317,7 +330,7 @@ export const emailVerificationTokens = mysqlTable("email_verification_tokens", {
 
 export const passwordResetTokens = mysqlTable("password_reset_tokens", {
 	id: int("id").autoincrement().notNull(),
-	userId: int("user_id").references(() => users.id).notNull(),
+	userId: int("user_id").references(() => users.userId).notNull(),
 	token: varchar("token", { length: 255 }).notNull(),
 	expiresAt: datetime("expires_at").notNull(),
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
@@ -327,39 +340,9 @@ export const passwordResetTokens = mysqlTable("password_reset_tokens", {
 		unique("token").on(table.token),
 	]);
 
-export const pickupRequests = mysqlTable("pickup_requests", {
-	id: int("id").autoincrement().notNull(),
-	customerId: int("customer_id").references(() => users.id).notNull(),
-	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId).notNull(),
-	driverId: int("driver_id").references(() => driver.driverId),
-	// Locations
-	pickupLocation: varchar("pickup_location", { length: 255 }).notNull(),
-	dropLocation: varchar("drop_location", { length: 255 }).notNull(),
-	// Timing
-	pickupTime: datetime("pickup_time").notNull(),
-	returnTime: datetime("return_time"),
-	// Trip details
-	isReturnTrip: boolean("is_return_trip").default(false),
-	travelers: int("travelers").notNull(),
-	luggageCount: int("luggage_count").default(0),
-	distanceKm: decimal("distance_km", { precision: 10, scale: 2 }).notNull(),
-	price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-	// Customer contact
-	customerFullName: varchar("customer_full_name", { length: 100 }).notNull(),
-	customerPhone: varchar("customer_phone", { length: 20 }).notNull(),
-	// Booking lifecycle
-	status: varchar("status", { length: 20 }).default("PENDING").notNull(),
-	rejectionReason: text("rejection_reason"),
-	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [
-	primaryKey({ columns: [table.id], name: "pickup_requests_pk" }),
-	index("pr_customer_id_idx").on(table.customerId),
-	index("pr_vehicle_id_idx").on(table.vehicleId),
-]);
-
 export const airportBookings = mysqlTable("airport_bookings", {
 	id: int("id").autoincrement().notNull(),
-	customerId: int("customer_id").references(() => users.id).notNull(),
+	customerId: int("customer_id").references(() => users.userId).notNull(),
 	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId).notNull(),
 	// Airport Transfer Details
 	transferType: mysqlEnum("transfer_type", ["pickup", "drop"]).notNull(),
@@ -373,7 +356,7 @@ export const airportBookings = mysqlTable("airport_bookings", {
 	// Customer Contact
 	customerFullName: varchar("customer_full_name", { length: 100 }).notNull(),
 	customerPhone: varchar("customer_phone", { length: 20 }).notNull(),
-	customerEmail: varchar("customer_email", { length: 100 }),
+
 	// Pickup/Drop Location (customer's address, not airport)
 	transferLocation: varchar("transfer_location", { length: 255 }).notNull(),
 	// Lifecycle

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { ArrowLeft, Briefcase, AlertCircle, Eye, EyeOff } from "lucide-react";
 
 export default function EmployeeRegistrationPage() {
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,6 +31,7 @@ export default function EmployeeRegistrationPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
+                    name,
                     email,
                     password,
                     confirmPassword,
@@ -93,6 +95,23 @@ export default function EmployeeRegistrationPage() {
                     {/* Form */}
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div className="space-y-5">
+                            {/* Name Field */}
+                            <div>
+                                <label htmlFor="name" className="block text-sm font-bold mb-2 px-1">
+                                    Full Name
+                                </label>
+                                <input
+                                    id="name"
+                                    name="name"
+                                    type="text"
+                                    required
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="ek-input focus:border-[#dc2626] focus:ring-1 focus:ring-[#dc2626]/10"
+                                    placeholder="John Doe"
+                                />
+                            </div>
+
                             {/* Email Field */}
                             <div>
                                 <label htmlFor="email" className="block text-sm font-bold mb-2 px-1">

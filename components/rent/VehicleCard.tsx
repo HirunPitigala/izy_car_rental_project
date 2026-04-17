@@ -22,7 +22,7 @@ export default function VehicleCard({ vehicle, baseUrl = "/rent" }: VehicleCardP
             </div>
 
             {/* Content */}
-            <div className="p-6 flex flex-col flex-grow">
+            <div className="p-6 flex flex-col grow">
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         <h3 className="text-2xl font-black text-gray-900 leading-tight mb-2">

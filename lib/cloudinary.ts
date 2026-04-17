@@ -1,4 +1,5 @@
 import { v2 as cloudinary } from 'cloudinary';
+import crypto from 'crypto';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -9,14 +10,10 @@ cloudinary.config({
 });
 
 /**
- * Uploads a file to Cloudinary.
- * @param file - The file to upload. Can be a base64 string or a file path (for server-side temp files).
- *               For client-side uploads sent as FormData, we might need to buffer it first.
- * @param folder - The folder in Cloudinary to upload to.
- * @param resourceType - The resource type ("image", "raw", "auto"). Use "raw" or "auto" for PDFs.
+ * Uploads a file buffer to Cloudinary (Server-side helper).
  */
 export async function uploadToCloudinary(
-    file: string | Buffer,
+    file: Buffer,
     folder: string = 'car-rental',
     resourceType: 'image' | 'video' | 'raw' | 'auto' = 'auto'
 ): Promise<{ secure_url: string; public_id: string }> {
@@ -42,38 +39,61 @@ export async function uploadToCloudinary(
                 });
             }
         );
-
-        if (Buffer.isBuffer(file)) {
-            uploadStream.end(file);
-        } else {
-            // If it's a string (base64 or path), we can't easily stream it into upload_stream directly 
-            // without knowing if it's a path or base64. 
-            // For Base64 that might come from vehicle form, we can actually use cloudinary.uploader.upload directly.
-            // But to keep it unified, let's handle specific cases or just use the direct upload for strings.
-
-            // However, the prompt implies we might receive files from FormData (Buffers) or Base64 strings.
-            // Let's split logic:
-            reject(new Error("String input not supported in this stream helper. Use uploadToCloudinaryString for base64/paths."));
-        }
+        uploadStream.end(file);
     });
 }
 
+/**
+ * Uploads a Base64 string directly to Cloudinary.
+ * Useful for images from frontend croppers/previews.
+ */
 export async function uploadBase64ToCloudinary(
     base64String: string,
-    folder: string = 'car-rental',
-    resourceType: 'image' | 'video' | 'raw' | 'auto' = 'auto'
+    folder: string = 'car-rental'
 ): Promise<{ secure_url: string; public_id: string }> {
     try {
         const result = await cloudinary.uploader.upload(base64String, {
             folder,
-            resource_type: resourceType
+            resource_type: 'auto',
         });
         return {
             secure_url: result.secure_url,
-            public_id: result.public_id
+            public_id: result.public_id,
         };
     } catch (error) {
         console.error("Cloudinary Base64 Upload Error:", error);
         throw error;
     }
+}
+
+/**
+ * Generates a signature for a signed upload from the client.
+ */
+export function generateCloudinarySignature(params: Record<string, any>) {
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    const secret = process.env.CLOUDINARY_API_SECRET?.trim();
+    
+    if (!secret) {
+        throw new Error("CLOUDINARY_API_SECRET is missing from environment variables.");
+    }
+
+    // Sort parameters and sign
+    const signature = cloudinary.utils.api_sign_request(
+        { ...params, timestamp },
+        secret
+    );
+
+    const stringToSign = Object.keys({ ...params, timestamp }).sort()
+        .map(key => `${key}=${({ ...params, timestamp } as any)[key]}`)
+        .join('&');
+
+    console.log(`[Cloudinary Signature Debug] Signing: "${stringToSign}" with secret starting with: ${secret.substring(0, 4)}...`);
+    
+    return {
+        timestamp,
+        signature,
+        apiKey: process.env.CLOUDINARY_API_KEY,
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+        debugStringToSign: stringToSign
+    };
 }

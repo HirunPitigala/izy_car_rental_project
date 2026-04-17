@@ -30,7 +30,7 @@ export default function VehicleDetailModal({ vehicle, isOpen, onClose }: Vehicle
     const rentPerMonth = parseFloat(vehicle.rentPerMonth || vehicle.ratePerMonth || "0");
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300">
             <div className="w-full max-w-5xl max-h-[90vh] overflow-hidden bg-white rounded-3xl shadow-2xl flex flex-col animate-in fade-in zoom-in duration-300">
                 {/* Header */}
                 <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
@@ -59,7 +59,7 @@ export default function VehicleDetailModal({ vehicle, isOpen, onClose }: Vehicle
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                         {/* Left Column: Image and Status */}
                         <div className="lg:col-span-4 space-y-6">
-                            <div className="aspect-[4/3] w-full overflow-hidden rounded-[2.5rem] bg-gray-50 border border-gray-100 shadow-inner">
+                            <div className="aspect-4/3 w-full overflow-hidden rounded-[2.5rem] bg-gray-50 border border-gray-100 shadow-inner">
                                 {vehicle.image ? (
                                     <img
                                         src={vehicle.image.startsWith('data:') || vehicle.image.startsWith('http') ? vehicle.image : `data:image/jpeg;base64,${vehicle.image}`}
@@ -67,7 +67,7 @@ export default function VehicleDetailModal({ vehicle, isOpen, onClose }: Vehicle
                                         className="h-full w-full object-cover"
                                     />
                                 ) : (
-                                    <div className="h-full w-full flex flex-col items-center justify-center text-gray-300 bg-gradient-to-br from-gray-50 to-gray-100">
+                                    <div className="h-full w-full flex flex-col items-center justify-center text-gray-300 bg-linear-to-br from-gray-50 to-gray-100">
                                         <Box className="h-12 w-12 mb-2 opacity-20" />
                                         <span className="text-sm font-bold opacity-30">No Visualization</span>
                                     </div>
@@ -147,7 +147,7 @@ export default function VehicleDetailModal({ vehicle, isOpen, onClose }: Vehicle
 
                             <div className="pt-6 border-t border-gray-100">
                                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 mb-3">Vehicle Remarks</h3>
-                                <div className="p-5 rounded-[2rem] bg-gray-50/50 border border-gray-100">
+                                <div className="p-5 rounded-4xl bg-gray-50/50 border border-gray-100">
                                     <p className="text-sm text-gray-600 leading-relaxed italic">
                                         "{vehicle.description || "The administrator hasn't provided extra remarks for this configuration."}"
                                     </p>
@@ -161,7 +161,7 @@ export default function VehicleDetailModal({ vehicle, isOpen, onClose }: Vehicle
                 <div className="px-8 py-6 border-t border-gray-100 bg-white flex justify-end">
                     <button
                         onClick={onClose}
-                        className="h-12 px-12 rounded-2xl text-sm font-bold text-white bg-[#0f0f0f] hover:bg-[#262626] shadow-xl shadow-gray-200 transition-all active:scale-95"
+                        className="h-12 px-12 rounded-2xl text-sm font-bold text-white bg-primary hover:bg-[#262626] shadow-xl shadow-gray-200 transition-all active:scale-95"
                     >
                         Dismiss
                     </button>
@@ -187,7 +187,7 @@ function SpecItem({ icon: Icon, label, value, bgColor, iconColor }: any) {
 
 function PriceCard({ label, amount, icon: Icon, accentColor, destaque }: any) {
     return (
-        <div className={`flex flex-col p-5 rounded-[2rem] border transition-all duration-300 ${destaque
+        <div className={`flex flex-col p-5 rounded-4xl border transition-all duration-300 ${destaque
             ? "bg-white border-yellow-200 shadow-xl shadow-yellow-500/5 ring-4 ring-yellow-50"
             : "bg-[#fcfcfc] border-gray-100 hover:bg-white hover:shadow-lg hover:shadow-gray-200/50"
             }`}>

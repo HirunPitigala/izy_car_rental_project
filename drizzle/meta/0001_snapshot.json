@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "7ee928fb-8da4-470d-b717-b695daf2ac8d",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "abacf8aa-49bd-49b4-9910-b85255b52a0f",
+  "prevId": "3f8e656c-980d-4192-b859-ca9948301e7a",
   "tables": {
     "admin": {
       "name": "admin",
@@ -56,272 +56,635 @@
       },
       "checkConstraint": {}
     },
-    "agreement": {
-      "name": "agreement",
+    "airport_bookings": {
+      "name": "airport_bookings",
       "columns": {
-        "agreement_id": {
-          "name": "agreement_id",
+        "id": {
+          "name": "id",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": true
         },
-        "reservation_id": {
-          "name": "reservation_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "document_url": {
-          "name": "document_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "agreement_date": {
-          "name": "agreement_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "approval_status": {
-          "name": "approval_status",
-          "type": "varchar(30)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "terms_accepted": {
-          "name": "terms_accepted",
-          "type": "tinyint",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "reservation_id": {
-          "name": "reservation_id",
-          "columns": [
-            "reservation_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "agreement_reservation_id_reservation_reservation_id_fk": {
-          "name": "agreement_reservation_id_reservation_reservation_id_fk",
-          "tableFrom": "agreement",
-          "tableTo": "reservation",
-          "columnsFrom": [
-            "reservation_id"
-          ],
-          "columnsTo": [
-            "reservation_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "agreement_agreement_id": {
-          "name": "agreement_agreement_id",
-          "columns": [
-            "agreement_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "checklist": {
-      "name": "checklist",
-      "columns": {
-        "checklist_id": {
-          "name": "checklist_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "reservation_id": {
-          "name": "reservation_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "inspection_date": {
-          "name": "inspection_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "inspection_type": {
-          "name": "inspection_type",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "remarks": {
-          "name": "remarks",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "reservation_id": {
-          "name": "reservation_id",
-          "columns": [
-            "reservation_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "checklist_reservation_id_reservation_reservation_id_fk": {
-          "name": "checklist_reservation_id_reservation_reservation_id_fk",
-          "tableFrom": "checklist",
-          "tableTo": "reservation",
-          "columnsFrom": [
-            "reservation_id"
-          ],
-          "columnsTo": [
-            "reservation_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "checklist_checklist_id": {
-          "name": "checklist_checklist_id",
-          "columns": [
-            "checklist_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "customer": {
-      "name": "customer",
-      "columns": {
         "customer_id": {
           "name": "customer_id",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
-        "full_name": {
-          "name": "full_name",
-          "type": "varchar(100)",
+        "vehicle_id": {
+          "name": "vehicle_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "transfer_type": {
+          "name": "transfer_type",
+          "type": "enum('pickup','drop')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "airport": {
+          "name": "airport",
+          "type": "enum('katunayaka','mattala')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pickup_date": {
+          "name": "pickup_date",
+          "type": "datetime",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "nic": {
-          "name": "nic",
+        "pickup_time": {
+          "name": "pickup_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "drop_date": {
+          "name": "drop_date",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "drop_time": {
+          "name": "drop_time",
+          "type": "time",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "passengers": {
+          "name": "passengers",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "luggage_count": {
+          "name": "luggage_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "customer_full_name": {
+          "name": "customer_full_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "customer_phone": {
+          "name": "customer_phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "transfer_location": {
+          "name": "transfer_location",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
           "type": "varchar(20)",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'PENDING'"
         },
-        "email": {
-          "name": "email",
-          "type": "varchar(100)",
+        "booking_type": {
+          "name": "booking_type",
+          "type": "varchar(30)",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false
+          "autoincrement": false,
+          "default": "'airport_rental'"
         },
-        "phone": {
-          "name": "phone",
-          "type": "varchar(15)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "address": {
-          "name": "address",
+        "rejection_reason": {
+          "name": "rejection_reason",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "username": {
-          "name": "username",
+        "handled_by_employee_id": {
+          "name": "handled_by_employee_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "ab_customer_id_idx": {
+          "name": "ab_customer_id_idx",
+          "columns": [
+            "customer_id"
+          ],
+          "isUnique": false
+        },
+        "ab_vehicle_id_idx": {
+          "name": "ab_vehicle_id_idx",
+          "columns": [
+            "vehicle_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "airport_bookings_customer_id_users_user_id_fk": {
+          "name": "airport_bookings_customer_id_users_user_id_fk",
+          "tableFrom": "airport_bookings",
+          "tableTo": "users",
+          "columnsFrom": [
+            "customer_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "airport_bookings_vehicle_id_vehicle_vehicle_id_fk": {
+          "name": "airport_bookings_vehicle_id_vehicle_vehicle_id_fk",
+          "tableFrom": "airport_bookings",
+          "tableTo": "vehicle",
+          "columnsFrom": [
+            "vehicle_id"
+          ],
+          "columnsTo": [
+            "vehicle_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "airport_bookings_handled_by_employee_id_employee_employee_id_fk": {
+          "name": "airport_bookings_handled_by_employee_id_employee_employee_id_fk",
+          "tableFrom": "airport_bookings",
+          "tableTo": "employee",
+          "columnsFrom": [
+            "handled_by_employee_id"
+          ],
+          "columnsTo": [
+            "employee_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "airport_bookings_pk": {
+          "name": "airport_bookings_pk",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "booking": {
+      "name": "booking",
+      "columns": {
+        "booking_id": {
+          "name": "booking_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "service_category_id": {
+          "name": "service_category_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "vehicle_id": {
+          "name": "vehicle_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "rental_date": {
+          "name": "rental_date",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "return_date": {
+          "name": "return_date",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "customer_full_name": {
+          "name": "customer_full_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "customer_phone_number1": {
+          "name": "customer_phone_number1",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "customer_phone_number2": {
+          "name": "customer_phone_number2",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "customer_license_no": {
+          "name": "customer_license_no",
           "type": "varchar(50)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "password": {
-          "name": "password",
+        "customer_nic_no": {
+          "name": "customer_nic_no",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "customer_address": {
+          "name": "customer_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "customer_driving_licence_pdf": {
+          "name": "customer_driving_licence_pdf",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "license_number": {
-          "name": "license_number",
-          "type": "varchar(50)",
+        "customer_id_pdf": {
+          "name": "customer_id_pdf",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "registration_date": {
-          "name": "registration_date",
-          "type": "date",
+        "pickup_location": {
+          "name": "pickup_location",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "terms_accepted": {
-          "name": "terms_accepted",
-          "type": "tinyint",
+        "dropoff_location": {
+          "name": "dropoff_location",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "distance": {
+          "name": "distance",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "total_fare": {
+          "name": "total_fare",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "booking_status": {
+          "name": "booking_status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'PENDING'"
+        },
+        "rejection_reason": {
+          "name": "rejection_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "terms1": {
+          "name": "terms1",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "terms2_confirmation": {
+          "name": "terms2_confirmation",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "guarantee_fullname": {
+          "name": "guarantee_fullname",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "guarantee_address": {
+          "name": "guarantee_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "guarantee_phone_no1": {
+          "name": "guarantee_phone_no1",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "guarantee_phone_no2": {
+          "name": "guarantee_phone_no2",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "guarantee_nic_no": {
+          "name": "guarantee_nic_no",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "guarantee_nic_pdf": {
+          "name": "guarantee_nic_pdf",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "guarantee_license_pdf": {
+          "name": "guarantee_license_pdf",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "no_of_travellers": {
+          "name": "no_of_travellers",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "no_of_luggages": {
+          "name": "no_of_luggages",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "assigned_employee_id": {
+          "name": "assigned_employee_id",
+          "type": "int",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
+      "indexes": {
+        "service_category_id_idx": {
+          "name": "service_category_id_idx",
+          "columns": [
+            "service_category_id"
+          ],
+          "isUnique": false
+        },
+        "user_id_idx": {
+          "name": "user_id_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "vehicle_id_idx": {
+          "name": "vehicle_id_idx",
+          "columns": [
+            "vehicle_id"
+          ],
+          "isUnique": false
+        },
+        "assigned_employee_id_idx": {
+          "name": "assigned_employee_id_idx",
+          "columns": [
+            "assigned_employee_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "booking_service_category_id_service_category_category_id_fk": {
+          "name": "booking_service_category_id_service_category_category_id_fk",
+          "tableFrom": "booking",
+          "tableTo": "service_category",
+          "columnsFrom": [
+            "service_category_id"
+          ],
+          "columnsTo": [
+            "category_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "booking_user_id_users_user_id_fk": {
+          "name": "booking_user_id_users_user_id_fk",
+          "tableFrom": "booking",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "booking_vehicle_id_vehicle_vehicle_id_fk": {
+          "name": "booking_vehicle_id_vehicle_vehicle_id_fk",
+          "tableFrom": "booking",
+          "tableTo": "vehicle",
+          "columnsFrom": [
+            "vehicle_id"
+          ],
+          "columnsTo": [
+            "vehicle_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "booking_assigned_employee_id_employee_employee_id_fk": {
+          "name": "booking_assigned_employee_id_employee_employee_id_fk",
+          "tableFrom": "booking",
+          "tableTo": "employee",
+          "columnsFrom": [
+            "assigned_employee_id"
+          ],
+          "columnsTo": [
+            "employee_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {
-        "customer_customer_id": {
-          "name": "customer_customer_id",
+        "booking_pk": {
+          "name": "booking_pk",
           "columns": [
-            "customer_id"
+            "booking_id"
           ]
         }
       },
-      "uniqueConstraints": {
-        "nic": {
-          "name": "nic",
-          "columns": [
-            "nic"
-          ]
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "damage_reports": {
+      "name": "damage_reports",
+      "columns": {
+        "damage_id": {
+          "name": "damage_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
         },
-        "email": {
-          "name": "email",
-          "columns": [
-            "email"
-          ]
+        "inspection_id": {
+          "name": "inspection_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
-        "username": {
-          "name": "username",
+        "damage_type": {
+          "name": "damage_type",
+          "type": "enum('SMALL_MARK','SCRATCH','DENT','CRACK')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "x_position": {
+          "name": "x_position",
+          "type": "float",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "y_position": {
+          "name": "y_position",
+          "type": "float",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "inspection_id_idx": {
+          "name": "inspection_id_idx",
           "columns": [
-            "username"
+            "inspection_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "damage_reports_inspection_id_inspection_inspection_id_fk": {
+          "name": "damage_reports_inspection_id_inspection_inspection_id_fk",
+          "tableFrom": "damage_reports",
+          "tableTo": "inspection",
+          "columnsFrom": [
+            "inspection_id"
+          ],
+          "columnsTo": [
+            "inspection_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "damage_reports_pk": {
+          "name": "damage_reports_pk",
+          "columns": [
+            "damage_id"
           ]
         }
       },
+      "uniqueConstraints": {},
       "checkConstraint": {}
     },
     "driver": {
@@ -368,10 +731,66 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "vehicle_id": {
+          "name": "vehicle_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "admin_id": {
+          "name": "admin_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
+      "indexes": {
+        "vehicle_id": {
+          "name": "vehicle_id",
+          "columns": [
+            "vehicle_id"
+          ],
+          "isUnique": false
+        },
+        "admin_id": {
+          "name": "admin_id",
+          "columns": [
+            "admin_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "driver_vehicle_id_vehicle_vehicle_id_fk": {
+          "name": "driver_vehicle_id_vehicle_vehicle_id_fk",
+          "tableFrom": "driver",
+          "tableTo": "vehicle",
+          "columnsFrom": [
+            "vehicle_id"
+          ],
+          "columnsTo": [
+            "vehicle_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "driver_admin_id_admin_admin_id_fk": {
+          "name": "driver_admin_id_admin_admin_id_fk",
+          "tableFrom": "driver",
+          "tableTo": "admin",
+          "columnsFrom": [
+            "admin_id"
+          ],
+          "columnsTo": [
+            "admin_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {
         "driver_driver_id": {
           "name": "driver_driver_id",
@@ -381,6 +800,72 @@
         }
       },
       "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "email_verification_tokens": {
+      "name": "email_verification_tokens",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "token": {
+          "name": "token",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "email_verification_tokens_user_id_users_user_id_fk": {
+          "name": "email_verification_tokens_user_id_users_user_id_fk",
+          "tableFrom": "email_verification_tokens",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "email_verification_tokens_id": {
+          "name": "email_verification_tokens_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "token": {
+          "name": "token",
+          "columns": [
+            "token"
+          ]
+        }
+      },
       "checkConstraint": {}
     },
     "employee": {
@@ -420,6 +905,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'PENDING'"
         }
       },
       "indexes": {},
@@ -442,95 +935,196 @@
       },
       "checkConstraint": {}
     },
-    "guarantor": {
-      "name": "guarantor",
+    "inspection": {
+      "name": "inspection",
       "columns": {
-        "guarantor_id": {
-          "name": "guarantor_id",
+        "inspection_id": {
+          "name": "inspection_id",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": true
         },
-        "full_name": {
-          "name": "full_name",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "nic": {
-          "name": "nic",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "phone": {
-          "name": "phone",
-          "type": "varchar(15)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "email": {
-          "name": "email",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "address": {
-          "name": "address",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "relationship_to_customer": {
-          "name": "relationship_to_customer",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "customer_id": {
-          "name": "customer_id",
+        "booking_id": {
+          "name": "booking_id",
           "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "inspection_type": {
+          "name": "inspection_type",
+          "type": "enum('BEFORE','AFTER')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "inspection_date": {
+          "name": "inspection_date",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "overall_remarks": {
+          "name": "overall_remarks",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         }
       },
       "indexes": {
-        "customer_id": {
-          "name": "customer_id",
+        "booking_id_idx": {
+          "name": "booking_id_idx",
           "columns": [
-            "customer_id"
+            "booking_id"
+          ],
+          "isUnique": false
+        },
+        "employee_id_idx": {
+          "name": "employee_id_idx",
+          "columns": [
+            "employee_id"
           ],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "guarantor_customer_id_customer_customer_id_fk": {
-          "name": "guarantor_customer_id_customer_customer_id_fk",
-          "tableFrom": "guarantor",
-          "tableTo": "customer",
+        "inspection_booking_id_booking_booking_id_fk": {
+          "name": "inspection_booking_id_booking_booking_id_fk",
+          "tableFrom": "inspection",
+          "tableTo": "booking",
           "columnsFrom": [
-            "customer_id"
+            "booking_id"
           ],
           "columnsTo": [
-            "customer_id"
+            "booking_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "inspection_employee_id_employee_employee_id_fk": {
+          "name": "inspection_employee_id_employee_employee_id_fk",
+          "tableFrom": "inspection",
+          "tableTo": "employee",
+          "columnsFrom": [
+            "employee_id"
+          ],
+          "columnsTo": [
+            "employee_id"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
-        "guarantor_guarantor_id": {
-          "name": "guarantor_guarantor_id",
+        "inspection_pk": {
+          "name": "inspection_pk",
           "columns": [
-            "guarantor_id"
+            "inspection_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "inspection_items": {
+      "name": "inspection_items",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "inspection_id": {
+          "name": "inspection_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "enum('OK','NOT_OK')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "remarks": {
+          "name": "remarks",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "inspection_id_idx": {
+          "name": "inspection_id_idx",
+          "columns": [
+            "inspection_id"
+          ],
+          "isUnique": false
+        },
+        "item_id_idx": {
+          "name": "item_id_idx",
+          "columns": [
+            "item_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "inspection_items_inspection_id_inspection_inspection_id_fk": {
+          "name": "inspection_items_inspection_id_inspection_inspection_id_fk",
+          "tableFrom": "inspection_items",
+          "tableTo": "inspection",
+          "columnsFrom": [
+            "inspection_id"
+          ],
+          "columnsTo": [
+            "inspection_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "inspection_items_item_id_item_item_id_fk": {
+          "name": "inspection_items_item_id_item_item_id_fk",
+          "tableFrom": "inspection_items",
+          "tableTo": "item",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "item_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "inspection_items_pk": {
+          "name": "inspection_items_pk",
+          "columns": [
+            "id"
           ]
         }
       },
@@ -651,8 +1245,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "customer_id": {
-          "name": "customer_id",
+        "booking_id": {
+          "name": "booking_id",
           "type": "int",
           "primaryKey": false,
           "notNull": false,
@@ -678,27 +1272,81 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "admin_id": {
+          "name": "admin_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {
-        "customer_id": {
-          "name": "customer_id",
+        "booking_id_idx": {
+          "name": "booking_id_idx",
           "columns": [
-            "customer_id"
+            "booking_id"
+          ],
+          "isUnique": false
+        },
+        "admin_id_idx": {
+          "name": "admin_id_idx",
+          "columns": [
+            "admin_id"
+          ],
+          "isUnique": false
+        },
+        "user_id_idx": {
+          "name": "user_id_idx",
+          "columns": [
+            "user_id"
           ],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "notification_customer_id_customer_customer_id_fk": {
-          "name": "notification_customer_id_customer_customer_id_fk",
+        "notification_booking_id_booking_booking_id_fk": {
+          "name": "notification_booking_id_booking_booking_id_fk",
           "tableFrom": "notification",
-          "tableTo": "customer",
+          "tableTo": "booking",
           "columnsFrom": [
-            "customer_id"
+            "booking_id"
           ],
           "columnsTo": [
-            "customer_id"
+            "booking_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "notification_admin_id_admin_admin_id_fk": {
+          "name": "notification_admin_id_admin_admin_id_fk",
+          "tableFrom": "notification",
+          "tableTo": "admin",
+          "columnsFrom": [
+            "admin_id"
+          ],
+          "columnsTo": [
+            "admin_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "notification_user_id_users_user_id_fk": {
+          "name": "notification_user_id_users_user_id_fk",
+          "tableFrom": "notification",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -715,6 +1363,80 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
+    "password_reset_tokens": {
+      "name": "password_reset_tokens",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "token": {
+          "name": "token",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "password_reset_tokens_user_id_users_user_id_fk": {
+          "name": "password_reset_tokens_user_id_users_user_id_fk",
+          "tableFrom": "password_reset_tokens",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "password_reset_tokens_id": {
+          "name": "password_reset_tokens_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "token": {
+          "name": "token",
+          "columns": [
+            "token"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
     "payment": {
       "name": "payment",
       "columns": {
@@ -725,8 +1447,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "reservation_id": {
-          "name": "reservation_id",
+        "booking_id": {
+          "name": "booking_id",
           "type": "int",
           "primaryKey": false,
           "notNull": false,
@@ -769,24 +1491,24 @@
         }
       },
       "indexes": {
-        "reservation_id": {
-          "name": "reservation_id",
+        "booking_id_idx": {
+          "name": "booking_id_idx",
           "columns": [
-            "reservation_id"
+            "booking_id"
           ],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "payment_reservation_id_reservation_reservation_id_fk": {
-          "name": "payment_reservation_id_reservation_reservation_id_fk",
+        "payment_booking_id_booking_booking_id_fk": {
+          "name": "payment_booking_id_booking_booking_id_fk",
           "tableFrom": "payment",
-          "tableTo": "reservation",
+          "tableTo": "booking",
           "columnsFrom": [
-            "reservation_id"
+            "booking_id"
           ],
           "columnsTo": [
-            "reservation_id"
+            "booking_id"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -797,6 +1519,235 @@
           "name": "payment_payment_id",
           "columns": [
             "payment_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "pickup_requests": {
+      "name": "pickup_requests",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "customer_id": {
+          "name": "customer_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "vehicle_id": {
+          "name": "vehicle_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "driver_id": {
+          "name": "driver_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "pickup_location": {
+          "name": "pickup_location",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "drop_location": {
+          "name": "drop_location",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pickup_time": {
+          "name": "pickup_time",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "return_time": {
+          "name": "return_time",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_return_trip": {
+          "name": "is_return_trip",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "travelers": {
+          "name": "travelers",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "luggage_count": {
+          "name": "luggage_count",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": 0
+        },
+        "distance_km": {
+          "name": "distance_km",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "price": {
+          "name": "price",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "customer_full_name": {
+          "name": "customer_full_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "customer_phone": {
+          "name": "customer_phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'PENDING'"
+        },
+        "rejection_reason": {
+          "name": "rejection_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "assigned_employee_id": {
+          "name": "assigned_employee_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "pr_customer_id_idx": {
+          "name": "pr_customer_id_idx",
+          "columns": [
+            "customer_id"
+          ],
+          "isUnique": false
+        },
+        "pr_vehicle_id_idx": {
+          "name": "pr_vehicle_id_idx",
+          "columns": [
+            "vehicle_id"
+          ],
+          "isUnique": false
+        },
+        "pr_assigned_employee_id_idx": {
+          "name": "pr_assigned_employee_id_idx",
+          "columns": [
+            "assigned_employee_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "pickup_requests_customer_id_users_user_id_fk": {
+          "name": "pickup_requests_customer_id_users_user_id_fk",
+          "tableFrom": "pickup_requests",
+          "tableTo": "users",
+          "columnsFrom": [
+            "customer_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "pickup_requests_vehicle_id_vehicle_vehicle_id_fk": {
+          "name": "pickup_requests_vehicle_id_vehicle_vehicle_id_fk",
+          "tableFrom": "pickup_requests",
+          "tableTo": "vehicle",
+          "columnsFrom": [
+            "vehicle_id"
+          ],
+          "columnsTo": [
+            "vehicle_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "pickup_requests_driver_id_driver_driver_id_fk": {
+          "name": "pickup_requests_driver_id_driver_driver_id_fk",
+          "tableFrom": "pickup_requests",
+          "tableTo": "driver",
+          "columnsFrom": [
+            "driver_id"
+          ],
+          "columnsTo": [
+            "driver_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "pickup_requests_assigned_employee_id_employee_employee_id_fk": {
+          "name": "pickup_requests_assigned_employee_id_employee_employee_id_fk",
+          "tableFrom": "pickup_requests",
+          "tableTo": "employee",
+          "columnsFrom": [
+            "assigned_employee_id"
+          ],
+          "columnsTo": [
+            "employee_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "pickup_requests_pk": {
+          "name": "pickup_requests_pk",
+          "columns": [
+            "id"
           ]
         }
       },
@@ -891,135 +1842,6 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
-    "reservation": {
-      "name": "reservation",
-      "columns": {
-        "reservation_id": {
-          "name": "reservation_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "customer_id": {
-          "name": "customer_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "vehicle_id": {
-          "name": "vehicle_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "start_datetime": {
-          "name": "start_datetime",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "end_datetime": {
-          "name": "end_datetime",
-          "type": "datetime",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "pickup_location": {
-          "name": "pickup_location",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "dropoff_location": {
-          "name": "dropoff_location",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "distance": {
-          "name": "distance",
-          "type": "decimal(10,2)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "total_fare": {
-          "name": "total_fare",
-          "type": "decimal(10,2)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "reservation_status": {
-          "name": "reservation_status",
-          "type": "varchar(30)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "customer_id": {
-          "name": "customer_id",
-          "columns": [
-            "customer_id"
-          ],
-          "isUnique": false
-        },
-        "vehicle_id": {
-          "name": "vehicle_id",
-          "columns": [
-            "vehicle_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "reservation_customer_id_customer_customer_id_fk": {
-          "name": "reservation_customer_id_customer_customer_id_fk",
-          "tableFrom": "reservation",
-          "tableTo": "customer",
-          "columnsFrom": [
-            "customer_id"
-          ],
-          "columnsTo": [
-            "customer_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "reservation_vehicle_id_vehicle_vehicle_id_fk": {
-          "name": "reservation_vehicle_id_vehicle_vehicle_id_fk",
-          "tableFrom": "reservation",
-          "tableTo": "vehicle",
-          "columnsFrom": [
-            "vehicle_id"
-          ],
-          "columnsTo": [
-            "vehicle_id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "reservation_reservation_id": {
-          "name": "reservation_reservation_id",
-          "columns": [
-            "reservation_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
     "review": {
       "name": "review",
       "columns": {
@@ -1030,8 +1852,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "customer_id": {
-          "name": "customer_id",
+        "booking_id": {
+          "name": "booking_id",
           "type": "int",
           "primaryKey": false,
           "notNull": false,
@@ -1067,15 +1889,15 @@
         }
       },
       "indexes": {
-        "customer_id": {
-          "name": "customer_id",
+        "booking_id_idx": {
+          "name": "booking_id_idx",
           "columns": [
-            "customer_id"
+            "booking_id"
           ],
           "isUnique": false
         },
-        "vehicle_id": {
-          "name": "vehicle_id",
+        "vehicle_id_idx": {
+          "name": "vehicle_id_idx",
           "columns": [
             "vehicle_id"
           ],
@@ -1083,15 +1905,15 @@
         }
       },
       "foreignKeys": {
-        "review_customer_id_customer_customer_id_fk": {
-          "name": "review_customer_id_customer_customer_id_fk",
+        "review_booking_id_booking_booking_id_fk": {
+          "name": "review_booking_id_booking_booking_id_fk",
           "tableFrom": "review",
-          "tableTo": "customer",
+          "tableTo": "booking",
           "columnsFrom": [
-            "customer_id"
+            "booking_id"
           ],
           "columnsTo": [
-            "customer_id"
+            "booking_id"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -1140,87 +1962,139 @@
           "name": "category_name",
           "type": "varchar(100)",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "base_fare": {
-          "name": "base_fare",
-          "type": "decimal(10,2)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "additional_rate": {
-          "name": "additional_rate",
-          "type": "decimal(10,2)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "service_category_category_id": {
-          "name": "service_category_category_id",
+        "service_category_pk": {
+          "name": "service_category_pk",
           "columns": [
             "category_id"
           ]
         }
       },
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "category_name": {
+          "name": "category_name",
+          "columns": [
+            "category_name"
+          ]
+        }
+      },
       "checkConstraint": {}
     },
-    "session": {
-      "name": "session",
+    "users": {
+      "name": "users",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
         "user_id": {
           "name": "user_id",
           "type": "int",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "role": {
           "name": "role",
           "type": "varchar(20)",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
-        "expires_at": {
-          "name": "expires_at",
+        "related_id": {
+          "name": "related_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "is_verified": {
+          "name": "is_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
+        "verification_token": {
+          "name": "verification_token",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "token_expiry": {
+          "name": "token_expiry",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "session_id": {
-          "name": "session_id",
+        "users_id": {
+          "name": "users_id",
           "columns": [
-            "id"
+            "user_id"
           ]
         }
       },
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "email": {
+          "name": "email",
+          "columns": [
+            "email"
+          ]
+        }
+      },
       "checkConstraint": {}
     },
     "vehicle": {
@@ -1233,81 +2107,67 @@
           "notNull": true,
           "autoincrement": true
         },
-        "brand": {
-          "name": "brand",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "model": {
-          "name": "model",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "plate_number": {
-          "name": "plate_number",
+        "plate_no": {
+          "name": "plate_no",
           "type": "varchar(20)",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
-        "capacity": {
-          "name": "capacity",
+        "category_id": {
+          "name": "category_id",
           "type": "int",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
-        "transmission_type": {
-          "name": "transmission_type",
-          "type": "varchar(20)",
+        "brand_id": {
+          "name": "brand_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "model_id": {
+          "name": "model_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "vehicle_image": {
+          "name": "vehicle_image",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "fuel_type": {
-          "name": "fuel_type",
-          "type": "varchar(20)",
+        "seating_capacity": {
+          "name": "seating_capacity",
+          "type": "int",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "luggage_capacity": {
           "name": "luggage_capacity",
           "type": "int",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
-        "rate_per_hour": {
-          "name": "rate_per_hour",
-          "type": "decimal(10,2)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "rate_per_day": {
-          "name": "rate_per_day",
-          "type": "decimal(10,2)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "availability_status": {
-          "name": "availability_status",
+        "transmission": {
+          "name": "transmission",
           "type": "varchar(20)",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
-        "image_url": {
-          "name": "image_url",
-          "type": "text",
+        "fuel_type": {
+          "name": "fuel_type",
+          "type": "varchar(20)",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "description": {
@@ -1316,23 +2176,271 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "rent_per_hr": {
+          "name": "rent_per_hr",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "rent_per_day": {
+          "name": "rent_per_day",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "rent_per_month": {
+          "name": "rent_per_month",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "max_kms_per_day": {
+          "name": "max_kms_per_day",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "extra_km_price": {
+          "name": "extra_km_price",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "rent_per_km": {
+          "name": "rent_per_km",
+          "type": "decimal(10,2)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "minimum_rent_days": {
+          "name": "minimum_rent_days",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "chassis_number": {
+          "name": "chassis_number",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "'AVAILABLE'"
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
+      "indexes": {
+        "category_id_idx": {
+          "name": "category_id_idx",
+          "columns": [
+            "category_id"
+          ],
+          "isUnique": false
+        },
+        "brand_id_idx": {
+          "name": "brand_id_idx",
+          "columns": [
+            "brand_id"
+          ],
+          "isUnique": false
+        },
+        "model_id_idx": {
+          "name": "model_id_idx",
+          "columns": [
+            "model_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "vehicle_category_id_service_category_category_id_fk": {
+          "name": "vehicle_category_id_service_category_category_id_fk",
+          "tableFrom": "vehicle",
+          "tableTo": "service_category",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "category_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "vehicle_brand_id_vehicle_brand_brand_id_fk": {
+          "name": "vehicle_brand_id_vehicle_brand_brand_id_fk",
+          "tableFrom": "vehicle",
+          "tableTo": "vehicle_brand",
+          "columnsFrom": [
+            "brand_id"
+          ],
+          "columnsTo": [
+            "brand_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        },
+        "vehicle_model_id_vehicle_model_model_id_fk": {
+          "name": "vehicle_model_id_vehicle_model_model_id_fk",
+          "tableFrom": "vehicle",
+          "tableTo": "vehicle_model",
+          "columnsFrom": [
+            "model_id"
+          ],
+          "columnsTo": [
+            "model_id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "cascade"
+        }
+      },
       "compositePrimaryKeys": {
-        "vehicle_vehicle_id": {
-          "name": "vehicle_vehicle_id",
+        "vehicle_pk": {
+          "name": "vehicle_pk",
           "columns": [
             "vehicle_id"
           ]
         }
       },
       "uniqueConstraints": {
-        "plate_number": {
-          "name": "plate_number",
+        "plate_no_unique": {
+          "name": "plate_no_unique",
           "columns": [
-            "plate_number"
+            "plate_no"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "vehicle_brand": {
+      "name": "vehicle_brand",
+      "columns": {
+        "brand_id": {
+          "name": "brand_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "brand_name": {
+          "name": "brand_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "vehicle_brand_pk": {
+          "name": "vehicle_brand_pk",
+          "columns": [
+            "brand_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "brand_name": {
+          "name": "brand_name",
+          "columns": [
+            "brand_name"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "vehicle_model": {
+      "name": "vehicle_model",
+      "columns": {
+        "model_id": {
+          "name": "model_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "model_name": {
+          "name": "model_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "brand_id": {
+          "name": "brand_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "brand_id_idx": {
+          "name": "brand_id_idx",
+          "columns": [
+            "brand_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "vehicle_model_brand_id_vehicle_brand_brand_id_fk": {
+          "name": "vehicle_model_brand_id_vehicle_brand_brand_id_fk",
+          "tableFrom": "vehicle_model",
+          "tableTo": "vehicle_brand",
+          "columnsFrom": [
+            "brand_id"
+          ],
+          "columnsTo": [
+            "brand_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "vehicle_model_pk": {
+          "name": "vehicle_model_pk",
+          "columns": [
+            "model_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "brand_model_unique": {
+          "name": "brand_model_unique",
+          "columns": [
+            "brand_id",
+            "model_name"
           ]
         }
       },

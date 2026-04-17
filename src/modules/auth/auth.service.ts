@@ -21,18 +21,19 @@ export class AuthService {
 
             // Try to find if this admin is in the DB to get their actual ID
             const dbUser = await authRepository.findUserByEmail(email);
-            const userId = dbUser?.id || 0;
+            const userId = dbUser?.userId || 0;
             const relatedId = dbUser?.relatedId || 0;
 
             const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-            const token = await encrypt({ userId, role, relatedId, expiresAt });
+            const name = dbUser?.name || "System Admin";
+            const token = await encrypt({ userId, role, relatedId, expiresAt, name, email: adminEmail });
 
             return {
                 success: true,
                 token,
                 role,
                 expiresAt,
-                user: { id: userId, role, email: adminEmail, name: dbUser?.name || "System Admin" }
+                user: { id: userId, role, email: adminEmail, name }
             };
         }
 
@@ -51,24 +52,20 @@ export class AuthService {
             return { success: false, error: "Account is disabled", status: 403 };
         }
 
-        // Bypass verification for admins even if stored in DB
-        if (user.role !== "admin" && !user.emailVerified) {
-            return { success: false, error: "Please verify your email address before logging in.", status: 403 };
-        }
-
         const role = user.role as "admin" | "manager" | "employee" | "customer";
-        const userId = user.id;
+        const userId = user.userId;
         const relatedId = user.relatedId || undefined;
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-        const token = await encrypt({ userId, role, relatedId, expiresAt });
+        const name = user.name || "User";
+        const token = await encrypt({ userId, role, relatedId, expiresAt, name, email: user.email });
 
         return {
             success: true,
             token,
             role,
             expiresAt,
-            user: { id: userId, role, email: user.email, name: user.name || "User" }
+            user: { id: userId, role, email: user.email, name }
         };
     }
 
@@ -96,8 +93,7 @@ export class AuthService {
             passwordHash: hashedPassword,
             role: "customer",
             name: "New Customer",
-            status: "active",
-            emailVerified: false,
+            status: "pending",
         });
 
         const token = generateToken();
@@ -110,14 +106,25 @@ export class AuthService {
     }
 
     async verifyEmail(token: string) {
-        const record = await authRepository.findToken(token);
+        console.log("Starting email verification for token:", token);
 
-        if (!record || record.expiresAt < new Date()) {
-            throw new Error("Token expired or invalid");
+        const user = await authRepository.findUserByToken(token);
+
+        if (!user) {
+            console.error("Verification failed: Token not found in database");
+            throw new Error("Invalid verification token");
         }
 
-        await authRepository.markEmailVerified(record.userId);
-        await authRepository.deleteToken(record.id);
+        if (user.tokenExpiry && user.tokenExpiry < new Date()) {
+            console.error("Verification failed: Token expired for user:", user.email);
+            throw new Error("Verification link has expired");
+        }
+
+        console.log("User found for verification:", user.email);
+
+        await authRepository.markEmailVerified(user.userId);
+        
+        console.log("User successfully verified and activated:", user.email);
 
         return { success: true, message: "Email verified successfully" };
     }
@@ -154,8 +161,7 @@ export class AuthService {
             role: "manager",
             relatedId: managerId,
             name: "New Manager",
-            status: "active",
-            emailVerified: false,
+            status: "pending",
         });
 
         const token = generateToken();
@@ -168,7 +174,7 @@ export class AuthService {
     }
 
     async registerEmployee(dto: RegisterEmployeeDto) {
-        const { email, password, confirmPassword } = dto;
+        const { name, email, password, confirmPassword } = dto;
 
         if (password !== confirmPassword) {
             throw new Error("Passwords do not match");
@@ -187,7 +193,7 @@ export class AuthService {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const employeeId = await authRepository.createEmployee({
-            name: "New Employee",
+            name,
             email,
             password: hashedPassword,
             phone: "", 
@@ -198,9 +204,8 @@ export class AuthService {
             passwordHash: hashedPassword,
             role: "employee",
             relatedId: employeeId,
-            name: "New Employee",
-            status: "active",
-            emailVerified: false,
+            name,
+            status: "pending",
         });
 
         const token = generateToken();
@@ -223,8 +228,8 @@ export class AuthService {
         const token = randomBytes(32).toString("hex");
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
-        await authRepository.deleteResetToken(user.id);
-        await authRepository.saveResetToken(user.id, token, expiresAt);
+        await authRepository.deleteResetToken(user.userId);
+        await authRepository.saveResetToken(user.userId, token, expiresAt);
         await sendPasswordResetEmail(email, token);
 
         return { success: true, message: "If an account exists with this email, you will receive a password reset link shortly." };

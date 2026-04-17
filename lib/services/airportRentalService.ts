@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import {
-    airportBookings,
+    booking,
     vehicle,
     vehicleBrand,
     vehicleModel,
@@ -10,6 +10,8 @@ import {
 } from "@/src/db/schema";
 import { eq, and, gte, sql, or, notInArray } from "drizzle-orm";
 import { getAvailableVehicles } from "@/lib/actions/vehicleActions";
+import { SERVICE_CATEGORIES } from "@/lib/constants";
+import { checkVehicleAvailability } from "../actions/availabilityActions";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -33,8 +35,9 @@ export interface AirportBookingData {
     luggageCount: number;
     customerFullName: string;
     customerPhone: string;
-    customerEmail?: string;
+
     transferLocation: string; // customer's address
+    paymentslip?: string;
 }
 
 export interface ValidationError {
@@ -64,7 +67,7 @@ export async function searchAvailableAirportVehicles(
     const endD = endDate || startD;
     const endT = endTime || "23:59";
 
-    const result = await getAvailableVehicles(startD, startT, endD, endT, "Airport Rental");
+    const result = await getAvailableVehicles(startD, startT, endD, endT, SERVICE_CATEGORIES.AIRPORT_RENTAL);
     
     if (result.success && result.data) {
         // Further filter by seating and luggage capacity for airport specifics
@@ -123,23 +126,64 @@ export function validateAirportBooking(data: AirportBookingData): ValidationErro
 // ──────────────────────────────────────────────────────────────
 
 export async function createAirportBooking(data: AirportBookingData) {
-    const [result] = await db.insert(airportBookings).values({
-        customerId: data.customerId,
+    // 0. Check availability before insert
+    const transferDate = data.transferType === "pickup" ? data.pickupDate : data.dropDate;
+    const transferTime = data.transferType === "pickup" ? data.pickupTime : data.dropTime;
+    const rentalDate = transferDate ? new Date(`${transferDate}T${transferTime || "00:00"}`) : new Date();
+    // For one-way airport rental, we assume a 4-hour window
+    const checkEnd = new Date(rentalDate.getTime() + 4 * 60 * 60 * 1000);
+
+    const isAvailable = await checkVehicleAvailability(data.vehicleId, rentalDate, checkEnd);
+    if (!isAvailable) {
+        throw new Error("This vehicle is no longer available for the selected time slot.");
+    }
+
+    // 1. Get Service Category ID for "Airport Rental"
+    const categories = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, SERVICE_CATEGORIES.AIRPORT_RENTAL));
+    const categoryId = categories[0]?.categoryId;
+
+    if (!categoryId) {
+        throw new Error(`Service category "${SERVICE_CATEGORIES.AIRPORT_RENTAL}" not found.`);
+    }
+
+    // 2. Map Transfer logic
+    // Pickup: Airport -> Address
+    // Drop: Address -> Airport
+    const airportLabel = data.airport === "katunayaka" ? "BIA - Katunayaka" : "HRI - Mattala";
+    const pickupLocation = data.transferType === "pickup" ? airportLabel : data.transferLocation;
+    const dropoffLocation = data.transferType === "pickup" ? data.transferLocation : airportLabel;
+
+    // 3. Map Timing (Reusing variables from step 0)
+    
+    const [result] = await db.insert(booking).values({
+        serviceCategoryId: categoryId,
+        userId: data.customerId,
         vehicleId: data.vehicleId,
-        transferType: data.transferType,
-        airport: data.airport,
-        pickupDate: data.pickupDate ? new Date(data.pickupDate) : null,
-        pickupTime: data.pickupTime ?? null,
-        dropDate: data.dropDate ? new Date(data.dropDate) : null,
-        dropTime: data.dropTime ?? null,
-        passengers: data.passengers,
-        luggageCount: data.luggageCount ?? 0,
+        
+        rentalDate: rentalDate,
+        returnDate: null, // One-way transfer
+
         customerFullName: data.customerFullName,
-        customerPhone: data.customerPhone,
-        customerEmail: data.customerEmail ?? null,
-        transferLocation: data.transferLocation,
+        customerPhoneNumber1: data.customerPhone,
+        customerPhoneNumber2: "", // Default for unified table
+        customerLicenseNo: "N/A",  // Default for unified table
+        customerNicNo: "N/A",      // Default for unified table
+        customerAddress: data.transferLocation,
+
+        pickupLocation: pickupLocation,
+        dropoffLocation: dropoffLocation,
+
+        distance: "0.00",
+        totalFare: "0.00",
+
+        numberOfTravelers: data.passengers,
+        numberOfLuggages: data.luggageCount ?? 0,
+
+        message: `Airport: ${data.airport.toUpperCase()} | Type: ${data.transferType.toUpperCase()}`,
         status: "PENDING",
-        bookingType: "airport_rental",
+        terms1: true,
+        terms2Confirmation: true,
+        paymentslip: data.paymentslip,
     });
 
     return (result as any).insertId as number;
@@ -148,26 +192,26 @@ export async function createAirportBooking(data: AirportBookingData) {
 /**
  * Fetch all airport bookings filtered by status (for employee/admin).
  */
-export async function getAirportBookingsByStatus(status = "PENDING") {
+export async function getAirportBookingsByStatus(status = "PENDING", employeeId?: number) {
+    const categories = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, SERVICE_CATEGORIES.AIRPORT_RENTAL));
+    const categoryId = categories[0]?.categoryId;
+
     return db
         .select({
-            id: airportBookings.id,
-            transferType: airportBookings.transferType,
-            airport: airportBookings.airport,
-            pickupDate: airportBookings.pickupDate,
-            pickupTime: airportBookings.pickupTime,
-            dropDate: airportBookings.dropDate,
-            dropTime: airportBookings.dropTime,
-            passengers: airportBookings.passengers,
-            luggageCount: airportBookings.luggageCount,
-            customerFullName: airportBookings.customerFullName,
-            customerPhone: airportBookings.customerPhone,
-            customerEmail: airportBookings.customerEmail,
-            transferLocation: airportBookings.transferLocation,
-            status: airportBookings.status,
-            rejectionReason: airportBookings.rejectionReason,
-            createdAt: airportBookings.createdAt,
-            handledByEmployeeId: airportBookings.handledByEmployeeId,
+            id: booking.bookingId,
+            pickupDate: booking.rentalDate,
+            passengers: booking.numberOfTravelers,
+            luggageCount: booking.numberOfLuggages,
+            customerFullName: booking.customerFullName,
+            customerPhone: booking.customerPhoneNumber1,
+
+            transferLocation: booking.customerAddress,
+            pickupLocation: booking.pickupLocation,
+            dropoffLocation: booking.dropoffLocation,
+            status: booking.status,
+            rejectionReason: booking.rejectionReason,
+            createdAt: booking.createdAt,
+            handledByEmployeeId: booking.assignedEmployeeId,
             vehicleBrand: vehicleBrand.brandName,
             vehicleModel: vehicleModel.modelName,
             vehiclePlate: vehicle.plateNumber,
@@ -175,54 +219,63 @@ export async function getAirportBookingsByStatus(status = "PENDING") {
             customerName: users.name,
             customerAccountEmail: users.email,
             handledByName: employee.name,
+            paymentslip: booking.paymentslip,
         })
-        .from(airportBookings)
-        .leftJoin(vehicle, eq(airportBookings.vehicleId, vehicle.vehicleId))
+        .from(booking)
+        .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
         .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
         .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-        .leftJoin(users, eq(airportBookings.customerId, users.id))
-        .leftJoin(employee, eq(airportBookings.handledByEmployeeId, employee.employeeId))
-        .where(eq(airportBookings.status, status))
-        .orderBy(airportBookings.createdAt);
+        .leftJoin(users, eq(booking.userId, users.userId))
+        .leftJoin(employee, eq(booking.assignedEmployeeId, employee.employeeId))
+        .where(
+            and(
+                eq(booking.serviceCategoryId, categoryId),
+                employeeId 
+                    ? and(eq(booking.status, status), eq(booking.assignedEmployeeId, employeeId))
+                    : eq(booking.status, status)
+            )
+        )
+        .orderBy(booking.createdAt);
 }
 
 /**
  * Fetch all airport bookings regardless of status (for admin dashboard).
  */
 export async function getAllAirportBookings() {
+    const categories = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, SERVICE_CATEGORIES.AIRPORT_RENTAL));
+    const categoryId = categories[0]?.categoryId;
+
     return db
         .select({
-            id: airportBookings.id,
-            transferType: airportBookings.transferType,
-            airport: airportBookings.airport,
-            pickupDate: airportBookings.pickupDate,
-            pickupTime: airportBookings.pickupTime,
-            dropDate: airportBookings.dropDate,
-            dropTime: airportBookings.dropTime,
-            passengers: airportBookings.passengers,
-            luggageCount: airportBookings.luggageCount,
-            customerFullName: airportBookings.customerFullName,
-            customerPhone: airportBookings.customerPhone,
-            customerEmail: airportBookings.customerEmail,
-            transferLocation: airportBookings.transferLocation,
-            status: airportBookings.status,
-            rejectionReason: airportBookings.rejectionReason,
-            createdAt: airportBookings.createdAt,
-            handledByEmployeeId: airportBookings.handledByEmployeeId,
+            id: booking.bookingId,
+            pickupDate: booking.rentalDate,
+            passengers: booking.numberOfTravelers,
+            luggageCount: booking.numberOfLuggages,
+            customerFullName: booking.customerFullName,
+            customerPhone: booking.customerPhoneNumber1,
+
+            transferLocation: booking.customerAddress,
+            pickupLocation: booking.pickupLocation,
+            dropoffLocation: booking.dropoffLocation,
+            status: booking.status,
+            rejectionReason: booking.rejectionReason,
+            createdAt: booking.createdAt,
+            handledByEmployeeId: booking.assignedEmployeeId,
             vehicleBrand: vehicleBrand.brandName,
             vehicleModel: vehicleModel.modelName,
             vehiclePlate: vehicle.plateNumber,
-            customerName: users.name,
             customerAccountEmail: users.email,
             handledByName: employee.name,
+            paymentslip: booking.paymentslip,
         })
-        .from(airportBookings)
-        .leftJoin(vehicle, eq(airportBookings.vehicleId, vehicle.vehicleId))
+        .from(booking)
+        .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
         .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
         .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-        .leftJoin(users, eq(airportBookings.customerId, users.id))
-        .leftJoin(employee, eq(airportBookings.handledByEmployeeId, employee.employeeId))
-        .orderBy(airportBookings.createdAt);
+        .leftJoin(users, eq(booking.userId, users.userId))
+        .leftJoin(employee, eq(booking.assignedEmployeeId, employee.employeeId))
+        .where(eq(booking.serviceCategoryId, categoryId))
+        .orderBy(booking.createdAt);
 }
 
 /**
@@ -235,43 +288,50 @@ export async function updateAirportBookingStatus(
     employeeId?: number
 ) {
     await db
-        .update(airportBookings)
+        .update(booking)
         .set({
             status,
             rejectionReason: status === "REJECTED" ? (rejectionReason ?? null) : null,
-            handledByEmployeeId: employeeId ?? null,
+            assignedEmployeeId: employeeId ?? null,
         })
-        .where(eq(airportBookings.id, id));
+        .where(eq(booking.bookingId, id));
+
+    if (status === "ACCEPTED") {
+        const [b] = await db.select({ vehicleId: booking.vehicleId }).from(booking).where(eq(booking.bookingId, id));
+        if (b?.vehicleId) {
+            await db.update(vehicle).set({ status: "UNAVAILABLE" }).where(eq(vehicle.vehicleId, b.vehicleId));
+        }
+    }
 }
 
 /**
  * Fetch airport bookings for a specific customer.
  */
 export async function getCustomerAirportBookings(customerId: number) {
+    const categories = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, SERVICE_CATEGORIES.AIRPORT_RENTAL));
+    const categoryId = categories[0]?.categoryId;
+
     return db
         .select({
-            id: airportBookings.id,
-            transferType: airportBookings.transferType,
-            airport: airportBookings.airport,
-            pickupDate: airportBookings.pickupDate,
-            pickupTime: airportBookings.pickupTime,
-            dropDate: airportBookings.dropDate,
-            dropTime: airportBookings.dropTime,
-            passengers: airportBookings.passengers,
-            luggageCount: airportBookings.luggageCount,
-            transferLocation: airportBookings.transferLocation,
-            status: airportBookings.status,
-            rejectionReason: airportBookings.rejectionReason,
-            createdAt: airportBookings.createdAt,
+            id: booking.bookingId,
+            pickupDate: booking.rentalDate,
+            passengers: booking.numberOfTravelers,
+            luggageCount: booking.numberOfLuggages,
+            transferLocation: booking.customerAddress,
+            pickupLocation: booking.pickupLocation,
+            dropoffLocation: booking.dropoffLocation,
+            status: booking.status,
+            rejectionReason: booking.rejectionReason,
+            createdAt: booking.createdAt,
             vehicleBrand: vehicleBrand.brandName,
             vehicleModel: vehicleModel.modelName,
             vehiclePlate: vehicle.plateNumber,
             vehicleImage: vehicle.vehicleImage,
         })
-        .from(airportBookings)
-        .leftJoin(vehicle, eq(airportBookings.vehicleId, vehicle.vehicleId))
+        .from(booking)
+        .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
         .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
         .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-        .where(eq(airportBookings.customerId, customerId))
-        .orderBy(airportBookings.createdAt);
+        .where(and(eq(booking.userId, customerId), eq(booking.serviceCategoryId, categoryId)))
+        .orderBy(booking.createdAt);
 }

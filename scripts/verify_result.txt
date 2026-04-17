@@ -1,3 +1,0 @@
-Admin found: id=2, name=Admin User, email=admin@example.com
-Password comparison check for "admin123": MATCHES
-Hash in DB: $2b$10$Lhd5KpTLUJynwR0aY2Zvxu23etXrsXLTps6BMW4pgxVlclp1NgCAi

@@ -1,30 +1,33 @@
 "use server";
 
-import { db } from "@/lib/db";
-import { booking, vehicle, vehicleBrand, vehicleModel } from "@/src/db/schema";
+import { db } from "@/src/db";
+import { booking, vehicle, vehicleBrand, vehicleModel, users, review } from "@/src/db/schema";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { validateNIC } from "@/lib/validation";
-import { v4 as uuidv4 } from "uuid";
+import { sendNotification, notifyAdmins } from "./notificationActions";
+import { sendBookingStatusEmail } from "@/lib/email";
+import { checkVehicleAvailability } from "./availabilityActions";
 
 // Helper to upload file to Cloudinary
-async function saveFileToCloudinary(file: File | null, folder: string): Promise<string | null> {
+export async function saveFileToCloudinary(file: File | null, folder: string): Promise<string | null> {
     if (!file || file.size === 0) return null;
 
     try {
         const buffer = Buffer.from(await file.arrayBuffer());
-        // Use the new helper
-        // We need to import it dynamically or at the top if we change imports
-        // But since this is a server action file, dynamic import is cleaner if we want to avoid top-level issues, 
-        // though top-level is better. I'll add the import in a separate chunk.
-        // For now, let's assume I'll add the import.
         const { uploadToCloudinary } = await import("@/lib/cloudinary");
-        const result = await uploadToCloudinary(buffer, `bookings/${folder}`, "auto");
+        
+        // Use 'image' for PDFs as Cloudinary handles them as documents this way, 
+        // allowing browser viewing and transformations. 'raw' often forces download.
+        const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+        const resourceType = isPDF ? "image" : "image"; 
+        
+        const result = await uploadToCloudinary(buffer, `bookings/${folder}`, resourceType);
         return result.secure_url;
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Cloudinary upload error:", error);
-        throw new Error(`Failed to upload document: ${error.message || "Unknown error"}`);
+        return null;
     }
 }
 
@@ -47,6 +50,8 @@ export async function createBooking(formData: FormData) {
         const customerPhone1 = formData.get("customerPhone1") as string;
         const customerLicenseNo = formData.get("customerLicenseNo") as string;
         const customerNicNo = formData.get("customerNicNo") as string;
+
+        const customerAddress = formData.get("customerAddress") as string;
 
         const guaranteeFullname = formData.get("guaranteeFullname") as string;
         const guaranteeAddress = formData.get("guaranteeAddress") as string;
@@ -71,22 +76,30 @@ export async function createBooking(formData: FormData) {
             return { success: false, error: `Guarantor NIC: ${guaranteeNicValidation.error}` };
         }
 
-        // Process Files - Upload to Cloudinary
-        const licensePath = await saveFileToCloudinary(formData.get("customerLicensePdf") as File, "license");
-        const idPath = await saveFileToCloudinary(formData.get("customerIdPdf") as File, "id");
-        const gNicPath = await saveFileToCloudinary(formData.get("guaranteeNicPdf") as File, "guarantor-nic");
-        const gLicensePath = await saveFileToCloudinary(formData.get("guaranteeLicensePdf") as File, "guarantor-license");
+        // Process Files - Now receiving URLs from frontend directly
+        const licensePath = formData.get("customerLicensePdf") as string | null;
+        const idPath = formData.get("customerIdPdf") as string | null;
+        const gNicPath = formData.get("guaranteeNicPdf") as string | null;
+        const gLicensePath = formData.get("guaranteeLicensePdf") as string | null;
+        const paymentslipPath = formData.get("paymentslip") as string | null;
+
+        // Check availability before creating booking
+        const isAvailable = await checkVehicleAvailability(vehicleId, new Date(rentalDate), new Date(returnDate));
+        if (!isAvailable) {
+            return { success: false, error: "This vehicle is no longer available for the selected dates. Someone else might have just booked it." };
+        }
 
         // Log data for debugging
         console.log("Creating booking with files:", {
             userId,
             vehicleId,
             licensePath,
-            idPath
+            idPath,
+            paymentslipPath
         });
 
-        // Insert into database
-        await (db.insert(booking) as any).values({
+        // Insert into database — capture insertId for notification
+        const [insertResult] = await (db.insert(booking) as any).values({
             userId: userId,
             vehicleId: vehicleId,
             serviceCategoryId: serviceCategoryId,
@@ -96,6 +109,7 @@ export async function createBooking(formData: FormData) {
             customerPhoneNumber1: customerPhone1,
             customerLicenseNo,
             customerNicNo,
+            customerAddress,
             customerDrivingLicencePdf: licensePath,
             customerIdPdf: idPath,
             guaranteeFullname,
@@ -105,14 +119,23 @@ export async function createBooking(formData: FormData) {
             guaranteeNicPdf: gNicPath,
             guaranteeLicensePdf: gLicensePath,
             totalFare: totalFare,
-            bookingStatus: "PENDING",
+            status: "PENDING",
             terms1: true,
             terms2Confirmation: true,
+            paymentslip: paymentslipPath,
         });
+
+        const newBookingId: number | undefined = (insertResult as any)?.insertId;
 
         revalidatePath("/admin/bookings/requested");
 
-        return { success: true };
+        // Notify Admins — include bookingId and serviceType for navigation
+        await notifyAdmins(
+            `New Rent-a-Car booking request from ${customerFullName}${newBookingId ? ` (#${newBookingId})` : ""}`,
+            newBookingId,
+            "rent-a-car"
+        );
+        return { success: true, bookingId: newBookingId };
     } catch (error) {
         console.error("Booking creation error:", error);
         const errorMessage = error instanceof Error ? error.message : "Failed to process your booking request";
@@ -120,19 +143,29 @@ export async function createBooking(formData: FormData) {
     }
 }
 
-export async function getPendingBookings() {
+export async function getPendingBookings(employeeId?: number) {
     try {
         const results = await db.select({
             bookingId: booking.bookingId,
             customerName: booking.customerFullName,
+            customerAddress: booking.customerAddress,
             phone: booking.customerPhoneNumber1,
             nic: booking.customerNicNo,
             license: booking.customerLicenseNo,
             rentalDate: booking.rentalDate,
             returnDate: booking.returnDate,
             totalFare: booking.totalFare,
-            status: booking.bookingStatus,
+            status: booking.status,
             rejectionReason: booking.rejectionReason,
+            createdAt: booking.createdAt,
+            terms1: booking.terms1,
+            guaranteeFullname: booking.guaranteeFullname,
+            guaranteeAddress: booking.guaranteeAddress,
+            guaranteePhoneNo1: booking.guaranteePhoneNo1,
+            guaranteeNicNo: booking.guaranteeNicNo,
+            guaranteeLicensePdf: booking.guaranteeLicensePdf,
+            paymentslip: booking.paymentslip,
+            email: users.email,
             vehicle: {
                 brand: vehicleBrand.brandName,
                 model: vehicleModel.modelName,
@@ -143,7 +176,12 @@ export async function getPendingBookings() {
             .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
             .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
-            .where(eq(booking.bookingStatus, "PENDING"))
+            .leftJoin(users, eq(booking.userId, users.userId))
+            .where(
+                employeeId
+                    ? and(eq(booking.status, "PENDING"), eq(booking.assignedEmployeeId, employeeId))
+                    : eq(booking.status, "PENDING")
+            )
             .orderBy(booking.createdAt);
 
         return { success: true, data: results };
@@ -153,14 +191,159 @@ export async function getPendingBookings() {
     }
 }
 
-export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" | "REJECTED", formData?: FormData) {
+export async function getAssignedBookings(employeeId: number) {
+    try {
+        const results = await db.select({
+            bookingId: booking.bookingId,
+            customerName: booking.customerFullName,
+            customerAddress: booking.customerAddress,
+            phone: booking.customerPhoneNumber1,
+            nic: booking.customerNicNo,
+            license: booking.customerLicenseNo,
+            rentalDate: booking.rentalDate,
+            returnDate: booking.returnDate,
+            totalFare: booking.totalFare,
+            status: booking.status,
+            rejectionReason: booking.rejectionReason,
+            createdAt: booking.createdAt,
+            terms1: booking.terms1,
+            guaranteeFullname: booking.guaranteeFullname,
+            guaranteeAddress: booking.guaranteeAddress,
+            guaranteePhoneNo1: booking.guaranteePhoneNo1,
+            guaranteeNicNo: booking.guaranteeNicNo,
+            guaranteeLicensePdf: booking.guaranteeLicensePdf,
+            paymentslip: booking.paymentslip,
+            email: users.email,
+            vehicle: {
+                brand: vehicleBrand.brandName,
+                model: vehicleModel.modelName,
+                plateNumber: vehicle.plateNumber
+            }
+        })
+            .from(booking)
+            .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
+            .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
+            .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
+            .leftJoin(users, eq(booking.userId, users.userId))
+            .where(
+                and(eq(booking.status, "ACCEPTED"), eq(booking.assignedEmployeeId, employeeId))
+            )
+            .orderBy(booking.createdAt);
+
+        return { success: true, data: results };
+    } catch (error) {
+        console.error("Error fetching assigned bookings:", error);
+        return { success: false, error: "Failed to fetch assigned bookings" };
+    }
+}
+
+
+export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" | "REJECTED", formData?: FormData, assignedEmployeeId?: number) {
     try {
         await db.update(booking)
-            .set({ bookingStatus: status, rejectionReason: formData?.get("rejectionReason") as string })
+            .set({ 
+                status: status, 
+                rejectionReason: formData?.get("rejectionReason") as string,
+                assignedEmployeeId: assignedEmployeeId ?? undefined
+            })
             .where(eq(booking.bookingId, bookingId));
 
         revalidatePath("/admin/bookings/requested");
-        revalidatePath("/employee/bookings/requested");
+        revalidatePath("/employee/assigned");
+
+        // Handle Notifications & Vehicle Status
+        const [b] = await db.select().from(booking).where(eq(booking.bookingId, bookingId));
+        if (b) {
+            if (status === "ACCEPTED" && b.vehicleId) {
+                await db.update(vehicle).set({ status: "UNAVAILABLE" }).where(eq(vehicle.vehicleId, b.vehicleId));
+            }
+
+            const [u] = await db.select({ email: users.email, name: users.name })
+                .from(users).where(eq(users.userId, b.userId!));
+
+            // Fetch vehicle details for the email
+            const [v] = await db.select({
+                brand: vehicleBrand.brandName,
+                model: vehicleModel.modelName,
+                plateNumber: vehicle.plateNumber,
+                transmission: vehicle.transmission,
+                fuelType: vehicle.fuelType,
+            })
+            .from(vehicle)
+            .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
+            .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
+            .where(eq(vehicle.vehicleId, b.vehicleId!));
+
+            const vehicleSpecs = v ? {
+                brand: v.brand ?? "",
+                model: v.model ?? "",
+                plateNumber: v.plateNumber,
+                transmission: v.transmission,
+                fuelType: v.fuelType,
+            } : undefined;
+
+            const bookingDetails = {
+                rentalDate: b.rentalDate || undefined,
+                returnDate: b.returnDate || undefined,
+                pickupLocation: b.pickupLocation || undefined,
+                dropoffLocation: b.dropoffLocation || undefined,
+                totalFare: b.totalFare || undefined,
+                message: b.message || undefined
+            };
+
+            if (status === "ACCEPTED") {
+                // 1. Notify Customer — in-app + email
+                if (b.userId) {
+                    try { await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been ACCEPTED.`, bookingId, "rent-a-car"); }
+                    catch (e) { console.error("Notification error:", e); }
+                    try { 
+                        if (u?.email) {
+                            await sendBookingStatusEmail(
+                                u.email, 
+                                u.name ?? "Customer", 
+                                bookingId, 
+                                "Rent-a-Car", 
+                                "ACCEPTED", 
+                                undefined,
+                                vehicleSpecs,
+                                bookingDetails
+                            ); 
+                        }
+                    }
+                    catch (e) { console.error("Email error:", e); }
+                }
+                // 2. Notify Assigned Employee — serviceType enables navigation to booking detail
+                if (assignedEmployeeId) {
+                    try {
+                        const [empUser] = await db.select({ id: users.userId }).from(users).where(eq(users.relatedId, assignedEmployeeId));
+                        if (empUser) await sendNotification(empUser.id, `New Booking Assigned - Rent-a-Car booking #${bookingId}`, bookingId, "rent-a-car");
+                    } catch (e) { console.error("Employee notification error:", e); }
+                }
+            } else if (status === "REJECTED") {
+                // Notify Customer — in-app + email
+                if (b.userId) {
+                    const reason = formData?.get("rejectionReason") as string | undefined;
+                    try { await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been REJECTED.`, bookingId, "rent-a-car"); }
+                    catch (e) { console.error("Notification error:", e); }
+                    try { 
+                        if (u?.email) {
+                            await sendBookingStatusEmail(
+                                u.email, 
+                                u.name ?? "Customer", 
+                                bookingId, 
+                                "Rent-a-Car", 
+                                "REJECTED", 
+                                reason ?? undefined,
+                                vehicleSpecs,
+                                bookingDetails
+                            ); 
+                        }
+                    }
+                    catch (e) { console.error("Email error:", e); }
+                }
+            }
+        }
+
         return { success: true };
     } catch (error) {
         console.error("Error updating booking status:", error);
@@ -174,7 +357,8 @@ export async function getBookingDocuments(bookingId: number) {
             license: booking.customerDrivingLicencePdf,
             customerID: booking.customerIdPdf,
             nic: booking.guaranteeNicPdf,
-            gLicense: booking.guaranteeLicensePdf
+            gLicense: booking.guaranteeLicensePdf,
+            paymentslip: booking.paymentslip
         })
             .from(booking)
             .where(eq(booking.bookingId, bookingId));
@@ -187,11 +371,49 @@ export async function getBookingDocuments(bookingId: number) {
                 license: docs.license,
                 customerID: docs.customerID,
                 nic: docs.nic,
-                gLicense: docs.gLicense
+                gLicense: docs.gLicense,
+                paymentslip: docs.paymentslip
             }
         };
     } catch (error) {
         console.error("Error fetching documents:", error);
         return { success: false, error: "Failed to fetch documents" };
+    }
+}
+
+export async function getCustomerBookings() {
+    try {
+        const session = await getSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const results = await db.select({
+            bookingId: booking.bookingId,
+            vehicleId: booking.vehicleId,
+            rentalDate: booking.rentalDate,
+            returnDate: booking.returnDate,
+            totalFare: booking.totalFare,
+            status: booking.status,
+            createdAt: booking.createdAt,
+            vehicle: {
+                brand: vehicleBrand.brandName,
+                model: vehicleModel.modelName,
+                image: vehicle.vehicleImage,
+            },
+            review: {
+                reviewId: review.reviewId
+            }
+        })
+        .from(booking)
+        .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
+        .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
+        .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
+        .leftJoin(review, eq(booking.bookingId, review.bookingId))
+        .where(eq(booking.userId, session.userId))
+        .orderBy(desc(booking.createdAt));
+
+        return { success: true, data: results };
+    } catch (error) {
+        console.error("Error fetching customer bookings:", error);
+        return { success: false, error: "Failed to fetch bookings" };
     }
 }

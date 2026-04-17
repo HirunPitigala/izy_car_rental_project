@@ -17,7 +17,7 @@ interface Booking {
   } | null;
   rentalDate: string | null | Date;
   returnDate: string | null | Date;
-  bookingStatus: string | null;
+  status: string | null;
 }
 
 interface InspectionCardProps {

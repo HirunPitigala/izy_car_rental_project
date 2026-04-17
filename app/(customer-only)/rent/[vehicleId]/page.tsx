@@ -12,15 +12,29 @@ import {
     Briefcase,
     Gauge,
     Fuel,
-    Info
+    Info,
+    Star
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import BookingSummary from "@/components/rent/BookingSummary";
-import { mockVehicles } from "@/lib/mockVehicles";
-
+import ReviewList from "@/components/customer/ReviewList";
 import { getVehicleById } from "@/lib/actions/vehicleActions";
 import { calculateRentalPrice } from "@/lib/price-helper";
+
+interface VehicleDetail {
+    brand: string | null;
+    model: string | null;
+    plateNumber: string;
+    transmissionType: string;
+    fuelType: string;
+    rentPerDay: string | number;
+    rentPerHour: string | number;
+    seatingCapacity: number;
+    luggageCapacity: number;
+    image: string | null;
+    description: string | null;
+}
 
 function VehicleDetailsContent() {
     const params = useParams();
@@ -28,7 +42,7 @@ function VehicleDetailsContent() {
     const router = useRouter();
     const vehicleId = params.vehicleId as string;
 
-    const [vehicle, setVehicle] = useState<any>(null);
+    const [vehicle, setVehicle] = useState<VehicleDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -37,15 +51,16 @@ function VehicleDetailsContent() {
     const endDate = searchParams.get("rental_end_date") || "";
     const endTime = searchParams.get("rental_end_time") || "";
 
-    // Calculate duration
-    const pricing = vehicle ? calculateRentalPrice(
-        startDate,
-        startTime || "08:00",
-        endDate,
-        endTime || "18:00",
-        vehicle.rentPerDay,
-        vehicle.rentPerHour
-    ) : { totalDays: 0, remainingHours: 0, totalPrice: 0 };
+    const pricing = vehicle
+        ? calculateRentalPrice(
+              startDate,
+              startTime || "08:00",
+              endDate,
+              endTime || "18:00",
+              vehicle.rentPerDay,
+              vehicle.rentPerHour
+          )
+        : { totalDays: 0, remainingHours: 0, totalPrice: 0 };
 
     const totalDays = pricing.totalDays;
     const totalPrice = pricing.totalPrice;
@@ -73,8 +88,8 @@ function VehicleDetailsContent() {
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <Loader2 className="w-12 h-12 text-red-600 animate-spin mb-4" />
-                <p className="text-gray-400 font-black uppercase tracking-widest text-xs">Loading Vehicle details...</p>
+                <Loader2 className="w-10 h-10 text-red-600 animate-spin mb-3" />
+                <p className="text-gray-400 font-medium text-sm">Loading vehicle details...</p>
             </div>
         );
     }
@@ -82,131 +97,160 @@ function VehicleDetailsContent() {
     if (error || !vehicle) {
         return (
             <div className="container mx-auto px-6 py-24 text-center">
-                <h2 className="text-2xl font-black text-[#0f0f0f] mb-4 uppercase">Vehicle not found</h2>
-                <Link href="/rent/results" className="text-red-600 font-black hover:underline uppercase tracking-widest text-xs">Return to search</Link>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Vehicle not found</h2>
+                <Link href="/rent/results" className="text-red-600 font-semibold hover:underline text-sm">
+                    Return to search
+                </Link>
             </div>
         );
     }
 
-    // Pricing is already calculated above
-
     return (
-        <div className="container mx-auto px-6 py-12">
-            <Link href={`/rent/results?${searchParams.toString()}`} className="inline-flex items-center gap-3 text-[10px] font-black text-gray-400 hover:text-[#0f0f0f] uppercase tracking-[0.2em] transition-colors mb-10 group">
-                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        <div className="container mx-auto px-4 sm:px-6 py-8">
+            {/* Back link */}
+            <Link
+                href={`/rent/results?${searchParams.toString()}`}
+                className="inline-flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-gray-800 transition-colors mb-6 group"
+            >
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
                 Back to results
             </Link>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left: Vehicle Details */}
-                <div className="lg:col-span-2 space-y-12">
-                    <section className="bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-xl shadow-gray-50">
-                        <div className="relative h-[520px] w-full bg-[#fcfcfc]">
+                <div className="lg:col-span-2 space-y-5">
+                    {/* Main vehicle card */}
+                    <section className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                        {/* Image */}
+                        <div className="relative h-64 sm:h-72 w-full bg-gray-50">
                             <Image
-                                src={vehicle.image || "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=1000"}
-                                alt={vehicle.brand}
+                                src={
+                                    vehicle.image ||
+                                    "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=1000"
+                                }
+                                alt={vehicle.brand ?? ""}
                                 fill
                                 className="object-cover"
                             />
-                            <div className="absolute top-8 left-8">
-                                <span className="bg-[#0f0f0f] text-white text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-[0.2em] shadow-2xl">
+                            <div className="absolute top-4 left-4">
+                                <span className="bg-gray-900 text-white text-[10px] font-semibold px-3 py-1.5 rounded-md uppercase tracking-wider">
                                     Premium Fleet
                                 </span>
                             </div>
                         </div>
-                        <div className="p-12">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-12">
+
+                        {/* Details */}
+                        <div className="p-5 sm:p-6">
+                            {/* Name + price row */}
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
                                 <div>
-                                    <h1 className="text-4xl font-black text-[#0f0f0f] mb-3 tracking-tight uppercase">{vehicle.brand} <span className="text-gray-400 font-medium">{vehicle.model}</span></h1>
-                                    <div className="flex items-center gap-6">
-                                        <span className="text-xs font-black text-gray-400 uppercase tracking-[0.3em]">{vehicle.plateNumber}</span>
-                                        <div className="h-4 w-px bg-gray-200" />
-                                        <span className="text-xs font-black text-red-600 bg-red-50 px-4 py-1.5 rounded-xl uppercase tracking-widest">
+                                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                                        {vehicle.brand}{" "}
+                                        <span className="text-gray-400 font-medium">{vehicle.model}</span>
+                                    </h1>
+                                    <div className="flex items-center gap-3 mt-1.5">
+                                        <span className="text-xs font-medium text-gray-400 tracking-wide">
+                                            {vehicle.plateNumber}
+                                        </span>
+                                        <span className="w-px h-3 bg-gray-200" />
+                                        <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-md">
                                             {vehicle.transmissionType}
                                         </span>
                                     </div>
                                 </div>
-                                <div className="text-left md:text-right bg-gray-50 md:bg-transparent p-6 md:p-0 rounded-3xl w-full md:w-auto border border-gray-100 md:border-transparent">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Standard Daily Rate</p>
-                                    <p className="text-4xl font-black text-[#0f0f0f]">LKR {Number(vehicle.rentPerDay).toLocaleString()}<span className="text-sm text-gray-400 font-bold tracking-tight uppercase ml-2">/Day</span></p>
+                                <div className="sm:text-right shrink-0">
+                                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                                        Daily Rate
+                                    </p>
+                                    <p className="text-2xl font-bold text-gray-900">
+                                        LKR {Number(vehicle.rentPerDay).toLocaleString()}
+                                        <span className="text-sm text-gray-400 font-normal ml-1">/day</span>
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className="bg-gray-50/50 rounded-[2.5rem] p-10 mb-12 border border-gray-50 shadow-inner">
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 underline decoration-red-600 decoration-2 underline-offset-8">Vehicle Specifications</h3>
-                                <p className="text-gray-600 leading-[1.8] font-medium text-lg">
-                                    {vehicle.description || "The ultimate comfort and performance for your journey. Experience the best of automotive engineering with our premium local fleet."}
+                            {/* Description */}
+                            {vehicle.description && (
+                                <p className="text-sm text-gray-600 leading-relaxed mb-5 pb-5 border-b border-gray-100">
+                                    {vehicle.description}
                                 </p>
-                            </div>
+                            )}
 
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-                                <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
-                                    <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 mb-4">
-                                        <Users className="w-6 h-6" />
-                                    </div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Capacity</p>
-                                    <p className="font-black text-[#0f0f0f]">{vehicle.seatingCapacity} Seats</p>
-                                </div>
-                                <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
-                                    <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 mb-4">
-                                        <Briefcase className="w-6 h-6" />
-                                    </div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Luggage</p>
-                                    <p className="font-black text-[#0f0f0f]">{vehicle.luggageCapacity} Bags</p>
-                                </div>
-                                <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
-                                    <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 mb-4">
-                                        <Gauge className="w-6 h-6" />
-                                    </div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Drive</p>
-                                    <p className="font-black text-[#0f0f0f]">{vehicle.transmissionType}</p>
-                                </div>
-                                <div className="bg-white p-8 rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md">
-                                    <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 mb-4">
-                                        <Fuel className="w-6 h-6" />
-                                    </div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Fuel Type</p>
-                                    <p className="font-black text-[#0f0f0f]">{vehicle.fuelType}</p>
+                            {/* Specs row */}
+                            <div>
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                                    Specifications
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    {[
+                                        { icon: Users, label: "Seats", value: `${vehicle.seatingCapacity} Seats` },
+                                        { icon: Briefcase, label: "Luggage", value: `${vehicle.luggageCapacity} Bags` },
+                                        { icon: Gauge, label: "Drive", value: vehicle.transmissionType },
+                                        { icon: Fuel, label: "Fuel", value: vehicle.fuelType },
+                                    ].map(({ icon: Icon, label, value }) => (
+                                        <div
+                                            key={label}
+                                            className="flex items-center gap-3 bg-gray-50 px-3 py-3 rounded-lg border border-gray-100"
+                                        >
+                                            <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center text-gray-600 border border-gray-100 shrink-0">
+                                                <Icon className="w-4 h-4" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">
+                                                    {label}
+                                                </p>
+                                                <p className="text-xs font-semibold text-gray-800 truncate">{value}</p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    <section className="bg-white rounded-[2.5rem] border border-gray-100 p-12 shadow-xl shadow-gray-50/50">
-                        <h3 className="text-xl font-black text-[#0f0f0f] mb-10 flex items-center gap-4 uppercase tracking-wider">
-                            <ShieldCheck className="w-8 h-8 text-red-600" />
-                            Rental Protection & Includes
+                    {/* Rental Protection */}
+                    <section className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 shadow-sm">
+                        <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-red-600" />
+                            Rental Protection &amp; Includes
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {[
                                 "Collision Damage Waiver",
                                 "Theft Protection Coverage",
                                 "24/7 Roadside Assistance",
                                 "Unlimited Mileage Policy",
                                 "Third Party Liability",
-                                "Fuel Policy: Full to Full"
+                                "Fuel Policy: Full to Full",
                             ].map((item, i) => (
-                                <div key={i} className="flex items-center gap-5 border-b border-gray-50 pb-4">
-                                    <div className="w-6 h-6 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-                                        <CheckCircle2 className="w-4 h-4" />
-                                    </div>
-                                    <span className="font-bold text-sm text-gray-600">{item}</span>
+                                <div key={i} className="flex items-center gap-3">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                    <span className="text-sm text-gray-600">{item}</span>
                                 </div>
                             ))}
                         </div>
                     </section>
+
+                    {/* Customer Reviews */}
+                    <section className="space-y-6">
+                        <div className="flex items-center gap-3 px-2">
+                            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                            <h3 className="text-xl font-bold text-gray-900 tracking-tight">Customer Experiences</h3>
+                        </div>
+                        <ReviewList vehicleId={parseInt(vehicleId)} />
+                    </section>
                 </div>
 
-                {/* Right: Booking Summary sticky */}
-                <div className="space-y-8">
-                    <div className="sticky top-24">
+                {/* Right: Booking Summary */}
+                <div className="space-y-4">
+                    <div className="sticky top-20">
                         <BookingSummary
                             vehicle={{
-                                brand: vehicle.brand,
-                                model: vehicle.model,
+                                brand: vehicle.brand ?? "",
+                                model: vehicle.model ?? "",
                                 plateNumber: vehicle.plateNumber,
                                 ratePerDay: vehicle.rentPerDay,
-                                ratePerHour: vehicle.rentPerHour
+                                ratePerHour: vehicle.rentPerHour,
                             }}
                             startDate={startDate}
                             startTime={startTime || "08:00"}
@@ -217,20 +261,25 @@ function VehicleDetailsContent() {
                             remainingHours={pricing.remainingHours}
                         />
 
+                        {/* CTA */}
                         <button
-                            onClick={() => router.push(`/rent/agreement?${searchParams.toString()}&vehicleId=${vehicleId}&totalPrice=${totalPrice}`)}
-                            className="w-full mt-10 h-20 bg-[#0f0f0f] hover:bg-red-600 text-white font-black rounded-3xl transition-all shadow-2xl shadow-gray-200 flex items-center justify-center gap-4 text-xl group active:scale-[0.98] uppercase tracking-widest"
+                            onClick={() =>
+                                router.push(
+                                    `/rent/agreement?${searchParams.toString()}&vehicleId=${vehicleId}&totalPrice=${totalPrice}`
+                                )
+                            }
+                            className="w-full mt-4 h-11 bg-gray-900 hover:bg-red-600 text-white font-semibold rounded-lg transition-all text-sm flex items-center justify-center gap-2 group active:scale-[0.98]"
                         >
                             Complete Reservation
-                            <ChevronRight className="w-7 h-7 group-hover:translate-x-2 transition-transform" />
+                            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                         </button>
 
-                        <div className="mt-8 flex items-start gap-4 bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100 shadow-inner">
-                            <div className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center shadow-sm flex-shrink-0">
-                                <Info className="w-5 h-5 text-red-600" />
-                            </div>
-                            <p className="text-[11px] font-bold text-gray-500 leading-relaxed uppercase tracking-widest">
-                                Instant approval is not guaranteed. Our team reviews all reservations within 60 minutes during business hours.
+                        {/* Info note */}
+                        <div className="mt-3 flex items-start gap-3 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <Info className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                Instant approval is not guaranteed. Our team reviews all reservations within 60 minutes
+                                during business hours.
                             </p>
                         </div>
                     </div>
@@ -242,12 +291,14 @@ function VehicleDetailsContent() {
 
 export default function VehicleDetailsPage() {
     return (
-        <div className="min-h-screen bg-[#fcfcfc]">
-            <Suspense fallback={
-                <div className="flex items-center justify-center min-h-screen">
-                    <Loader2 className="w-12 h-12 text-red-600 animate-spin" />
-                </div>
-            }>
+        <div className="min-h-screen bg-gray-50">
+            <Suspense
+                fallback={
+                    <div className="flex items-center justify-center min-h-screen">
+                        <Loader2 className="w-10 h-10 text-red-600 animate-spin" />
+                    </div>
+                }
+            >
                 <VehicleDetailsContent />
             </Suspense>
         </div>

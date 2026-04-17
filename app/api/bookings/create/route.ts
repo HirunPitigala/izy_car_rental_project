@@ -32,7 +32,7 @@ export async function POST(req: Request) {
             rentalDate: body.start_datetime ? new Date(body.start_datetime) : null,
             distance: body.distance,
             totalFare: body.total_fare,
-            bookingStatus: body.reservation_status || "PENDING",
+            status: body.reservation_status || "PENDING",
             customerFullName: body.customer_full_name || session.user?.name || "Customer",
             customerPhoneNumber1: body.customer_phone_number1 || "0000000000",
         });

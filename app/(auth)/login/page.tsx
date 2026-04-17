@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Check, Chrome, AlertCircle, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Check, AlertCircle, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
     const router = useRouter();
@@ -189,27 +189,6 @@ export default function LoginPage() {
                         </button>
                     </form>
 
-                    {/* Divider */}
-                    <div className="relative my-8">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-100" />
-                        </div>
-                        <div className="relative flex justify-center text-xs uppercase tracking-widest font-bold">
-                            <span className="bg-white px-4 text-gray-400">
-                                OR
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Social Login */}
-                    <button
-                        type="button"
-                        disabled={loading}
-                        className="flex w-full h-12 items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-bold text-[#0f0f0f] transition-all hover:bg-gray-50 active:scale-[0.98] disabled:opacity-50"
-                    >
-                        <Image src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width={20} height={20} />
-                        Continue with Google
-                    </button>
 
                     {/* Footer */}
                     <div className="mt-10 text-center">

@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { ChevronRight, Car, Truck, Key, Wind } from "lucide-react";
 
+import { SERVICE_CATEGORIES } from "@/lib/constants";
+
 const categories = [
     {
-        name: "Rent a Car",
+        name: SERVICE_CATEGORIES.RENT_A_CAR,
         description: "Standard daily, weekly, and monthly vehicle rentals.",
         icon: Car,
         href: "/admin/vehicles/rent-a-car",
@@ -13,7 +15,7 @@ const categories = [
         color: "bg-blue-50 text-blue-600 border-blue-100 ring-blue-50",
     },
     {
-        name: "Pickups",
+        name: SERVICE_CATEGORIES.PICKUPS,
         description: "Point-to-point pickup and drop-off services.",
         icon: Truck,
         href: "/admin/vehicles/pickup-service",
@@ -21,7 +23,7 @@ const categories = [
         color: "bg-emerald-50 text-emerald-600 border-emerald-100 ring-emerald-50",
     },
     {
-        name: "Airport pickups",
+        name: SERVICE_CATEGORIES.AIRPORT_RENTAL,
         description: "Airport pickup and drop-off vehicle rental services.",
         icon: Key,
         href: "/admin/vehicles/airport-rental",
@@ -29,7 +31,7 @@ const categories = [
         color: "bg-purple-50 text-purple-600 border-purple-100 ring-purple-50",
     },
     {
-        name: "Wedding Car Rental",
+        name: SERVICE_CATEGORIES.WEDDING_CAR_RENTAL,
         description: "Premium and luxury vehicle rental services.",
         icon: Wind,
         href: "/admin/vehicles/wedding-cars",

@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
     Plane, Users, Briefcase, Gauge, Fuel, ArrowLeft,
-    Search, MapPin, Calendar, Clock, AlertCircle
+    Search, Calendar, AlertCircle, Loader2, ChevronRight
 } from "lucide-react";
 import Link from "next/link";
 
@@ -76,6 +76,11 @@ function AirportAvailableContent() {
             ? "BIA — Katunayaka (Colombo)"
             : "HRI — Mattala (Hambantota)";
 
+    const dateDisplay =
+        transferType === "pickup"
+            ? `${pickupDate}${pickupTime ? ` · ${pickupTime}` : ""}`
+            : `${dropDate}${dropTime ? ` · ${dropTime}` : ""}`;
+
     const handleBookNow = (vehicleId: number) => {
         const params = new URLSearchParams({
             transferType,
@@ -91,182 +96,191 @@ function AirportAvailableContent() {
     };
 
     return (
-        <div className="bg-gray-50 min-h-screen pb-20 pt-10">
-            <div className="container mx-auto px-6">
-                {/* Back link */}
-                <Link
-                    href="/airport"
-                    className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold mb-8 transition-colors group"
-                >
-                    <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                    Modify Search
-                </Link>
-
-                {/* Search Summary Card */}
-                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 mb-10 grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-yellow-50 rounded-xl"><Plane className="w-4 h-4 text-yellow-500" /></div>
-                        <div>
-                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Type</p>
-                            <p className="text-sm font-black text-gray-900 capitalize">Airport {transferType}</p>
-                        </div>
+        <div className="container mx-auto px-4 sm:px-6 py-8">
+            {/* Search Info Bar */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-5 mb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5 shadow-sm">
+                <div className="flex flex-wrap items-center gap-4 md:gap-8">
+                    <div className="w-9 h-9 bg-red-50 rounded-lg shrink-0 flex items-center justify-center text-red-600">
+                        <Calendar className="w-4 h-4" />
                     </div>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-yellow-50 rounded-xl"><MapPin className="w-4 h-4 text-yellow-500" /></div>
-                        <div>
-                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Airport</p>
-                            <p className="text-sm font-black text-gray-900">{airportLabel}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-yellow-50 rounded-xl"><Calendar className="w-4 h-4 text-yellow-500" /></div>
-                        <div>
-                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Date &amp; Time</p>
-                            <p className="text-sm font-black text-gray-900">
-                                {transferType === "pickup" 
-                                    ? `${pickupDate} ${pickupTime}` 
-                                    : `${dropDate} ${dropTime}`}
+                    <div className="flex flex-wrap items-center gap-6 md:gap-10">
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Type</p>
+                            <p className="text-sm font-semibold text-gray-900 whitespace-nowrap capitalize">
+                                Airport {transferType}
                             </p>
                         </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-yellow-50 rounded-xl"><Users className="w-4 h-4 text-yellow-500" /></div>
-                        <div>
-                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Capacity</p>
-                            <p className="text-sm font-black text-gray-900">{passengers} pax · {luggage} bags</p>
+                        <div className="h-10 w-px bg-gray-100 hidden md:block" />
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Airport</p>
+                            <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">{airportLabel}</p>
+                        </div>
+                        <div className="h-10 w-px bg-gray-100 hidden md:block" />
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Date &amp; Time</p>
+                            <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">{dateDisplay || "N/A"}</p>
+                        </div>
+                        <div className="h-10 w-px bg-gray-100 hidden md:block" />
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Capacity</p>
+                            <p className="text-sm font-semibold text-gray-900 whitespace-nowrap">{passengers} pax · {luggage} bags</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Header */}
-                <div className="mb-10 flex flex-col items-center">
-                    <h1 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">Available Airport Transfers</h1>
-                    {!loading && !error && (
-                        <p className="text-gray-500 font-medium bg-white px-4 py-1.5 rounded-full border border-gray-100 shadow-sm">
-                            Found <span className="text-gray-900 font-bold">{vehicles.length}</span>{" "}
-                            {vehicles.length === 1 ? "vehicle" : "vehicles"} ready for your journey
-                        </p>
-                    )}
+                <Link
+                    href="/airport"
+                    className="h-9 px-4 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-900 hover:text-white flex items-center justify-center gap-1.5 transition-all whitespace-nowrap shrink-0"
+                >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    Modify Search
+                </Link>
+            </div>
+
+            <div className="mb-5">
+                <h2 className="text-xl font-bold text-gray-900 mb-1">Available Airport Vehicles</h2>
+                <p className="text-sm text-gray-500">
+                    Found <span className="text-red-600 font-semibold">{vehicles.length}</span> vehicle{vehicles.length !== 1 ? "s" : ""} for your transfer
+                </p>
+            </div>
+
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-40 bg-white rounded-[3rem] border border-dashed border-gray-200">
+                    <Loader2 className="w-12 h-12 text-red-600 animate-spin mb-6" />
+                    <p className="text-gray-400 font-black uppercase tracking-[0.2em] text-xs">Finding Available Vehicles...</p>
                 </div>
-
-                {/* Loading */}
-                {loading && (
-                    <div className="flex flex-col items-center justify-center py-32">
-                        <div className="relative">
-                            <div className="h-16 w-16 rounded-full border-4 border-gray-100" />
-                            <div className="absolute top-0 h-16 w-16 rounded-full border-4 border-yellow-400 border-t-transparent animate-spin" />
-                        </div>
-                        <p className="mt-6 text-gray-400 font-bold">Finding available vehicles...</p>
+            ) : error ? (
+                <div className="bg-white border border-red-100 rounded-[3rem] p-16 text-center max-w-2xl mx-auto shadow-xl shadow-red-50">
+                    <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center text-red-600 mx-auto mb-8 shadow-sm">
+                        <AlertCircle className="w-10 h-10" />
                     </div>
-                )}
-
-                {/* Error */}
-                {error && !loading && (
-                    <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-red-100">
-                        <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
-                        <p className="text-gray-700 font-bold text-lg">{error}</p>
-                        <Link href="/airport" className="mt-4 text-yellow-600 font-bold hover:underline">Try Again</Link>
+                    <h3 className="text-2xl font-black text-gray-900 mb-3 uppercase">Availability Error</h3>
+                    <p className="text-gray-500 font-medium mb-10 leading-relaxed">{error}</p>
+                    <Link
+                        href="/airport"
+                        className="inline-block bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-gray-900 transition-all shadow-xl shadow-red-100"
+                    >
+                        Try Again
+                    </Link>
+                </div>
+            ) : vehicles.length === 0 ? (
+                <div className="bg-white border border-gray-100 rounded-[3rem] p-16 text-center max-w-2xl mx-auto shadow-sm">
+                    <div className="w-20 h-20 bg-gray-50 rounded-3xl flex items-center justify-center text-gray-400 mx-auto mb-8">
+                        <Search className="w-10 h-10" />
                     </div>
-                )}
+                    <h3 className="text-2xl font-black text-gray-900 mb-3 uppercase">No Availability</h3>
+                    <p className="text-gray-500 font-medium mb-10 leading-relaxed">
+                        No vehicles can accommodate <strong>{passengers} passengers</strong> with <strong>{luggage} bags</strong>. Try reducing the count.
+                    </p>
+                    <Link
+                        href="/airport"
+                        className="inline-block bg-gray-900 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red-600 transition-all shadow-xl shadow-gray-100"
+                    >
+                        Modify Search
+                    </Link>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    {vehicles.map((v) => (
+                        <div
+                            key={v.vehicleId}
+                            className="group bg-white rounded-2xl border border-gray-100 transition-all duration-300 shadow-sm overflow-hidden flex flex-col sm:flex-row hover:shadow-md hover:border-gray-200"
+                        >
+                            {/* Image */}
+                            <div className="relative sm:w-52 sm:shrink-0 h-44 sm:h-auto bg-gray-50 overflow-hidden">
+                                {v.image ? (
+                                    <Image
+                                        src={v.image}
+                                        alt={`${v.brand} ${v.model}`}
+                                        fill
+                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <Plane className="w-12 h-12 text-gray-200" />
+                                    </div>
+                                )}
+                                <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wide shadow-sm bg-white text-gray-700">
+                                    Airport Transfer
+                                </span>
+                            </div>
 
-                {/* No vehicles */}
-                {!loading && !error && vehicles.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-dashed border-gray-200">
-                        <Search className="w-12 h-12 text-gray-200 mb-4" />
-                        <h2 className="text-xl font-black text-gray-400">No vehicles available</h2>
-                        <p className="text-sm text-gray-400 mt-2 text-center max-w-sm">
-                            No vehicles can accommodate <strong>{passengers} passengers</strong> with <strong>{luggage} bags</strong>. Try reducing the count.
-                        </p>
-                        <Link href="/airport" className="mt-6 text-yellow-600 font-bold hover:underline flex items-center gap-1">
-                            <ArrowLeft className="w-4 h-4" /> Modify Search
-                        </Link>
-                    </div>
-                )}
-
-                {/* Vehicle Grid */}
-                {!loading && !error && vehicles.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {vehicles.map((v) => (
-                            <div
-                                key={v.vehicleId}
-                                className="bg-white rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all overflow-hidden group"
-                            >
-                                {/* Image */}
-                                <div className="relative h-52 bg-gray-100 overflow-hidden">
-                                    {v.image ? (
-                                        <Image
-                                            src={v.image}
-                                            alt={`${v.brand} ${v.model}`}
-                                            fill
-                                            className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <Plane className="w-16 h-16 text-gray-200" />
-                                        </div>
-                                    )}
-                                    <div className="absolute top-3 left-3 bg-yellow-400 text-gray-900 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
-                                        Airport Service
+                            {/* Content */}
+                            <div className="flex flex-col flex-1 p-4 sm:p-5 gap-3">
+                                {/* Title row */}
+                                <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                        <h3 className="text-base font-bold text-gray-900 leading-tight">
+                                            {v.brand}{" "}
+                                            <span className="font-medium text-gray-500">{v.model}</span>
+                                        </h3>
+                                        <p className="text-[11px] font-medium text-gray-400 mt-0.5 tracking-wide">
+                                            {v.plateNumber}
+                                        </p>
                                     </div>
                                 </div>
 
-                                <div className="p-6">
-                                    {/* Title + Price */}
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div>
-                                            <h3 className="text-lg font-black text-gray-900 leading-tight">
-                                                {v.brand} {v.model}
-                                            </h3>
-                                            <span className="text-xs text-gray-400 font-mono">{v.plateNumber}</span>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-xl font-black text-gray-900">
-                                                LKR {parseFloat(v.rentPerDay).toLocaleString()}
-                                            </p>
-                                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Fixed Rate</p>
-                                        </div>
-                                    </div>
+                                {/* Specs row */}
+                                <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
+                                    <span className="flex items-center gap-1 text-gray-700 whitespace-nowrap">
+                                        <Users className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                        <span className="text-xs font-medium">{v.seatingCapacity} Seats</span>
+                                    </span>
+                                    <span className="flex items-center gap-1 text-gray-700 whitespace-nowrap">
+                                        <Briefcase className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                        <span className="text-xs font-medium">{v.luggageCapacity} Bags</span>
+                                    </span>
+                                    <span className="flex items-center gap-1 text-gray-700 whitespace-nowrap">
+                                        <Gauge className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                        <span className="text-xs font-medium">{v.transmission}</span>
+                                    </span>
+                                    <span className="flex items-center gap-1 text-gray-700 whitespace-nowrap">
+                                        <Fuel className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                        <span className="text-xs font-medium">{v.fuelType}</span>
+                                    </span>
+                                </div>
 
-                                    {/* Spec Pills */}
-                                    <div className="flex flex-wrap gap-2 mb-5">
-                                        <span className="inline-flex items-center gap-1 text-xs font-bold bg-gray-50 text-gray-600 px-3 py-1.5 rounded-full">
-                                            <Users className="w-3 h-3" /> {v.seatingCapacity} seats
-                                        </span>
-                                        <span className="inline-flex items-center gap-1 text-xs font-bold bg-gray-50 text-gray-600 px-3 py-1.5 rounded-full">
-                                            <Briefcase className="w-3 h-3" /> {v.luggageCapacity} bags
-                                        </span>
-                                        <span className="inline-flex items-center gap-1 text-xs font-bold bg-gray-50 text-gray-600 px-3 py-1.5 rounded-full">
-                                            <Gauge className="w-3 h-3" /> {v.transmission}
-                                        </span>
-                                        <span className="inline-flex items-center gap-1 text-xs font-bold bg-gray-50 text-gray-600 px-3 py-1.5 rounded-full">
-                                            <Fuel className="w-3 h-3" /> {v.fuelType}
-                                        </span>
+                                {/* Divider */}
+                                <div className="border-t border-gray-50" />
+
+                                {/* Price + CTA */}
+                                <div className="flex items-center justify-between gap-3 mt-auto">
+                                    <div>
+                                        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-0.5">
+                                            Fixed Rate
+                                        </p>
+                                        <p className="text-lg font-bold text-gray-900 leading-none">
+                                            LKR {parseFloat(v.rentPerDay).toLocaleString()}
+                                        </p>
                                     </div>
 
                                     <button
                                         onClick={() => handleBookNow(v.vehicleId)}
-                                        className="w-full h-11 bg-gray-900 hover:bg-yellow-400 hover:text-gray-900 text-white rounded-2xl text-sm font-black transition-all active:scale-95"
+                                        className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-xs font-semibold transition-all whitespace-nowrap shrink-0 bg-gray-900 text-white hover:bg-gray-700 active:scale-95"
                                     >
                                         Book Now
+                                        <ChevronRight className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }
 
 export default function AirportAvailablePage() {
     return (
-        <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="h-12 w-12 rounded-full border-4 border-yellow-400 border-t-transparent animate-spin" />
-            </div>
-        }>
-            <AirportAvailableContent />
-        </Suspense>
+        <div className="min-h-screen bg-gray-50">
+            <Suspense fallback={
+                <div className="flex items-center justify-center min-h-screen">
+                    <Loader2 className="w-12 h-12 text-red-600 animate-spin" />
+                </div>
+            }>
+                <AirportAvailableContent />
+            </Suspense>
+        </div>
     );
 }

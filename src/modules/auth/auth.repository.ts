@@ -15,11 +15,15 @@ export class AuthRepository {
     }
 
     async saveVerificationToken(userId: number, token: string, expiresAt: Date) {
-        await db.insert(emailVerificationTokens).values({
-            userId,
-            token,
-            expiresAt,
-        });
+        await db.update(users).set({
+            verificationToken: token,
+            tokenExpiry: expiresAt,
+        }).where(eq(users.userId, userId));
+    }
+
+    async findUserByToken(token: string) {
+        const [user] = await db.select().from(users).where(eq(users.verificationToken, token)).limit(1);
+        return user;
     }
 
     async findToken(token: string) {
@@ -29,8 +33,13 @@ export class AuthRepository {
 
     async markEmailVerified(userId: number) {
         await db.update(users)
-            .set({ emailVerified: true, emailVerifiedAt: new Date() })
-            .where(eq(users.id, userId));
+            .set({
+                emailVerified: true,
+                status: "active",
+                verificationToken: null,
+                tokenExpiry: null,
+            })
+            .where(eq(users.userId, userId));
     }
 
     async deleteToken(id: number) {
@@ -73,7 +82,7 @@ export class AuthRepository {
     }
 
     async updateUserPassword(userId: number, hash: string) {
-        await db.update(users).set({ passwordHash: hash }).where(eq(users.id, userId));
+        await db.update(users).set({ passwordHash: hash }).where(eq(users.userId, userId));
     }
 
     async deleteResetTokenById(id: number) {

@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { Car, Clock, Calendar, CheckCircle, XCircle, MapPin, Loader2, FileText } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import ReviewModal from "@/components/customer/ReviewModal";
+import { Star, MessageSquareQuote } from "lucide-react";
 
 type ViewTab = "all" | "past" | "pending" | "approved" | "rejected";
 
@@ -23,6 +25,10 @@ interface Booking {
     rejectionReason: string | null;
     createdAt: string;
     vehicle: BookingVehicle | null;
+    review?: {
+        reviewId: number | null;
+    };
+    vehicleId: number;
 }
 
 export default function CustomerBookingsPage() {
@@ -30,6 +36,8 @@ export default function CustomerBookingsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<ViewTab>("all");
+    const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
@@ -57,6 +65,11 @@ export default function CustomerBookingsPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleReviewClick = (bookingItem: Booking) => {
+        setSelectedBooking(bookingItem);
+        setIsReviewModalOpen(true);
     };
 
     useEffect(() => {
@@ -215,9 +228,22 @@ export default function CustomerBookingsPage() {
                                         </span>
                                     </div>
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                                        <p className="text-xs text-gray-400">
-                                            Requested on {formatDate(booking.createdAt)}
-                                        </p>
+                                        {(booking.status === "COMPLETED" || booking.status === "RETURNED") && (
+                                            booking.review?.reviewId ? (
+                                                <div className="flex items-center gap-2 bg-yellow-50 px-4 py-2 rounded-xl text-yellow-600">
+                                                    <Star className="w-3.5 h-3.5 fill-yellow-600" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Reviewed</span>
+                                                </div>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => handleReviewClick(booking)}
+                                                    className="flex items-center gap-2 bg-gray-950 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-yellow-400 hover:text-gray-950 transition-all active:scale-95 shadow-lg shadow-gray-200"
+                                                >
+                                                    <MessageSquareQuote className="w-3.5 h-3.5" />
+                                                    Rate Service
+                                                </button>
+                                            )
+                                        )}
                                         <Link 
                                             href={`/rent/invoice?bookingId=${booking.bookingId}`}
                                             className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors uppercase tracking-widest"
@@ -231,6 +257,20 @@ export default function CustomerBookingsPage() {
                         </div>
                     ))}
                 </div>
+            )}
+
+            {/* Review Modal */}
+            {selectedBooking && (
+                <ReviewModal 
+                    isOpen={isReviewModalOpen}
+                    onClose={() => setIsReviewModalOpen(false)}
+                    bookingId={selectedBooking.bookingId}
+                    vehicleId={selectedBooking.vehicleId}
+                    vehicleName={`${selectedBooking.vehicle?.brand} ${selectedBooking.vehicle?.model}`}
+                    onSuccess={() => {
+                        fetchBookings(activeTab);
+                    }}
+                />
             )}
         </div>
     );

@@ -10,6 +10,7 @@ import {
 } from "@/src/db/schema";
 import { eq, and, gte, sql } from "drizzle-orm";
 import { SERVICE_CATEGORIES } from "@/lib/constants";
+import { checkVehicleAvailability } from "../actions/availabilityActions";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -158,6 +159,13 @@ export function validatePickupBooking(data: PickupBookingData): ValidationError[
 // ──────────────────────────────────────────────────────────────
 
 export async function createPickupBooking(data: PickupBookingData) {
+    // 0. Check availability
+    const checkEnd = data.isReturnTrip && data.returnTime ? data.returnTime : new Date(data.pickupTime.getTime() + 4 * 60 * 60 * 1000); 
+    const isAvailable = await checkVehicleAvailability(data.vehicleId, data.pickupTime, checkEnd);
+    if (!isAvailable) {
+        throw new Error("This vehicle is no longer available for the selected dates.");
+    }
+
     const categoryId = await getPickupCategoryId();
 
     const [result] = await db.insert(booking).values({

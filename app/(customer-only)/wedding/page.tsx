@@ -182,11 +182,6 @@ export default function WeddingRentalPage() {
                                                 <Heart className="h-3 w-3 fill-white" />
                                                 Wedding Special
                                             </div>
-                                            {car.rentPerDay && (
-                                                <div className="absolute top-3 right-3 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-[#0f0f0f]">
-                                                    LKR {Number(car.rentPerDay).toLocaleString()} / day
-                                                </div>
-                                            )}
                                         </div>
                                         <div className="p-5">
                                             <h3 className="font-bold text-lg text-[#0f0f0f] mb-1">{car.brand} {car.model}</h3>

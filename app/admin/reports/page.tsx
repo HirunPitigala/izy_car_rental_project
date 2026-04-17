@@ -9,28 +9,16 @@ export default function ReportsPage() {
             <h1 className="text-2xl font-bold text-[#0f0f0f] mb-2">Reports</h1>
             <p className="text-gray-500 mb-8">Access and manage your system reports</p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-                {/* Download Reports Card */}
-                <div className="ek-card flex flex-col items-center justify-center text-center p-10 hover:border-gray-200 cursor-pointer group">
-                    <div className="h-16 w-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-gray-100 transition-colors">
-                        <Download className="h-8 w-8 text-gray-600 group-hover:text-[#0f0f0f] transition-colors" />
-                    </div>
-                    <h3 className="text-xl font-bold text-[#0f0f0f] mb-2">Download Reports</h3>
-                    <p className="text-gray-500 mb-8 max-w-xs">Export your data in CSV or PDF format for offline analysis.</p>
-                    <button className="ek-button ek-button-outline w-full max-w-[200px]">
-                        Download
-                    </button>
-                </div>
-
+            <div className="max-w-md mx-auto">
                 {/* View Reports Card */}
                 <Link href="/admin/reports/view" className="block h-full">
-                    <div className="ek-card flex flex-col items-center justify-center text-center p-10 h-full hover:border-red-100 group transition-all">
-                        <div className="h-16 w-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-red-100 transition-colors">
-                            <BarChart2 className="h-8 w-8 text-[#dc2626]" />
+                    <div className="ek-card flex flex-col items-center justify-center text-center p-12 h-full hover:border-red-100 group transition-all">
+                        <div className="h-20 w-20 bg-red-50 rounded-3xl flex items-center justify-center mb-8 group-hover:bg-red-100 transition-colors">
+                            <BarChart2 className="h-10 w-10 text-[#dc2626]" />
                         </div>
-                        <h3 className="text-xl font-bold text-[#0f0f0f] mb-2">View Reports</h3>
-                        <p className="text-gray-500 mb-8 max-w-xs">Visualize your revenue and booking data directly in the dashboard.</p>
-                        <span className="ek-button ek-button-secondary w-full max-w-[200px]">
+                        <h3 className="text-2xl font-black text-[#0f0f0f] mb-3 uppercase tracking-tight">View Reports</h3>
+                        <p className="text-gray-500 mb-10 max-w-xs text-sm font-medium leading-relaxed">Visualize your revenue and booking data directly in the professional dashboard.</p>
+                        <span className="ek-button ek-button-secondary w-full py-4 text-xs font-black uppercase tracking-widest shadow-lg shadow-red-100">
                             View Analytics
                         </span>
                     </div>

@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { notifyAdmins, sendNotification } from "./notificationActions";
 
 import { SERVICE_CATEGORIES } from "@/lib/constants";
+import { checkVehicleAvailability } from "./availabilityActions";
 
 // ----------------------------------------------------------------------------
 // Helper: Get or create "Wedding Car Rental" category
@@ -107,6 +108,14 @@ export async function createWeddingCarInquiry(data: {
     message?: string;
 }) {
     try {
+        // Check availability
+        const eventDateObj = new Date(data.eventDate);
+        const eventDateEnd = new Date(eventDateObj.getTime() + 24 * 60 * 60 * 1000 - 1000); // End of the day
+        const isAvailable = await checkVehicleAvailability(data.vehicleId, eventDateObj, eventDateEnd);
+        if (!isAvailable) {
+            return { success: false, error: "This vehicle is already booked for the selected date." };
+        }
+
         const weddingCategoryId = await getWeddingCategoryId();
 
         // Insert inquiry into booking table

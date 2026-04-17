@@ -14,7 +14,7 @@ interface VehicleFormProps {
     defaultCategory?: string;
 }
 
-export default function VehicleForm({ mode, defaultValues, redirectPath = "/admin/vehicles/rent-a-car", defaultCategory = SERVICE_CATEGORIES.RENT_A_CAR }: VehicleFormProps) {
+export default function VehicleForm({ mode, defaultValues, redirectPath, defaultCategory = SERVICE_CATEGORIES.RENT_A_CAR }: VehicleFormProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState(() => {
@@ -64,7 +64,28 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
             const result = await saveVehicle(formData);
 
             if (result.success) {
-                router.push(redirectPath);
+                // Determine redirect path based on category if not explicitly provided
+                let targetPath = redirectPath;
+                if (!targetPath) {
+                    switch (formData.serviceCategory) {
+                        case SERVICE_CATEGORIES.RENT_A_CAR:
+                            targetPath = "/admin/vehicles/rent-a-car";
+                            break;
+                        case SERVICE_CATEGORIES.AIRPORT_RENTAL:
+                            targetPath = "/admin/vehicles/airport-rental";
+                            break;
+                        case SERVICE_CATEGORIES.PICKUPS:
+                            targetPath = "/admin/vehicles/pickup-service";
+                            break;
+                        case SERVICE_CATEGORIES.WEDDING_CAR_RENTAL:
+                            targetPath = "/admin/vehicles/wedding-cars";
+                            break;
+                        default:
+                            targetPath = "/admin/vehicles/rent-a-car";
+                    }
+                }
+
+                router.push(targetPath);
                 router.refresh();
             } else {
                 alert(result.error || "Something went wrong");
@@ -394,7 +415,29 @@ export default function VehicleForm({ mode, defaultValues, redirectPath = "/admi
                 <button
                     type="button"
                     disabled={loading}
-                    onClick={() => router.push(redirectPath)}
+                    onClick={() => {
+                        if (redirectPath) {
+                            router.push(redirectPath);
+                        } else {
+                            // Fallback to category-based list or general vehicles list
+                            switch (formData.serviceCategory) {
+                                case SERVICE_CATEGORIES.RENT_A_CAR:
+                                    router.push("/admin/vehicles/rent-a-car");
+                                    break;
+                                case SERVICE_CATEGORIES.AIRPORT_RENTAL:
+                                    router.push("/admin/vehicles/airport-rental");
+                                    break;
+                                case SERVICE_CATEGORIES.PICKUPS:
+                                    router.push("/admin/vehicles/pickup-service");
+                                    break;
+                                case SERVICE_CATEGORIES.WEDDING_CAR_RENTAL:
+                                    router.push("/admin/vehicles/wedding-cars");
+                                    break;
+                                default:
+                                    router.push("/admin/vehicles");
+                            }
+                        }
+                    }}
                     className="w-full h-14 rounded-xl border-2 border-primary bg-transparent text-primary font-bold text-base transition-all hover:bg-gray-50 disabled:opacity-50"
                 >
                     Cancel

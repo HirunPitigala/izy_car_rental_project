@@ -221,14 +221,18 @@ export const report = mysqlTable("report", {
 export const review = mysqlTable("review", {
 	reviewId: int("review_id").autoincrement().notNull(),
 	bookingId: int("booking_id").references(() => booking.bookingId),
+	userId: int("user_id").references(() => users.userId),
 	vehicleId: int("vehicle_id").references(() => vehicle.vehicleId),
-	rating: int(),
+	employeeId: int("employee_id").references(() => employee.employeeId),
+	rating: int().notNull(),
 	comment: text(),
-	reviewDate: date("review_date", { mode: 'string' }),
+	reviewDate: datetime("review_date").default(sql`CURRENT_TIMESTAMP`),
 },
 	(table) => [
 		index("booking_id_idx").on(table.bookingId),
+		index("userId_idx").on(table.userId),
 		index("vehicle_id_idx").on(table.vehicleId),
+		index("employee_id_idx").on(table.employeeId),
 		primaryKey({ columns: [table.reviewId], name: "review_review_id" }),
 		check("review_chk_1", sql`(\`rating\` between 1 and 5)`),
 	]);

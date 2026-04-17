@@ -44,6 +44,29 @@ export async function uploadToCloudinary(
 }
 
 /**
+ * Uploads a Base64 string directly to Cloudinary.
+ * Useful for images from frontend croppers/previews.
+ */
+export async function uploadBase64ToCloudinary(
+    base64String: string,
+    folder: string = 'car-rental'
+): Promise<{ secure_url: string; public_id: string }> {
+    try {
+        const result = await cloudinary.uploader.upload(base64String, {
+            folder,
+            resource_type: 'auto',
+        });
+        return {
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+        };
+    } catch (error) {
+        console.error("Cloudinary Base64 Upload Error:", error);
+        throw error;
+    }
+}
+
+/**
  * Generates a signature for a signed upload from the client.
  */
 export function generateCloudinarySignature(params: Record<string, any>) {

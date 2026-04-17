@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { db } from "@/src/db";
-import { booking, vehicle, vehicleBrand, vehicleModel } from "@/src/db/schema";
+import { booking, vehicle, vehicleBrand, vehicleModel, review } from "@/src/db/schema";
 import { eq, and, lt, desc } from "drizzle-orm";
 
 export async function GET(req: Request) {
@@ -35,6 +35,7 @@ export async function GET(req: Request) {
 
         const results = await db.select({
             bookingId: booking.bookingId,
+            vehicleId: booking.vehicleId,
             rentalDate: booking.rentalDate,
             returnDate: booking.returnDate,
             totalFare: booking.totalFare,
@@ -46,12 +47,16 @@ export async function GET(req: Request) {
                 model: vehicleModel.modelName,
                 plateNumber: vehicle.plateNumber,
                 vehicleImage: vehicle.vehicleImage
+            },
+            review: {
+                reviewId: review.reviewId
             }
         })
             .from(booking)
             .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
             .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
+            .leftJoin(review, eq(booking.bookingId, review.bookingId))
             .where(and(...conditions))
             .orderBy(desc(booking.createdAt));
 

@@ -11,6 +11,7 @@ import {
 import { eq, and, gte, sql, or, notInArray } from "drizzle-orm";
 import { getAvailableVehicles } from "@/lib/actions/vehicleActions";
 import { SERVICE_CATEGORIES } from "@/lib/constants";
+import { checkVehicleAvailability } from "../actions/availabilityActions";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -125,6 +126,18 @@ export function validateAirportBooking(data: AirportBookingData): ValidationErro
 // ──────────────────────────────────────────────────────────────
 
 export async function createAirportBooking(data: AirportBookingData) {
+    // 0. Check availability before insert
+    const transferDate = data.transferType === "pickup" ? data.pickupDate : data.dropDate;
+    const transferTime = data.transferType === "pickup" ? data.pickupTime : data.dropTime;
+    const rentalDate = transferDate ? new Date(`${transferDate}T${transferTime || "00:00"}`) : new Date();
+    // For one-way airport rental, we assume a 4-hour window
+    const checkEnd = new Date(rentalDate.getTime() + 4 * 60 * 60 * 1000);
+
+    const isAvailable = await checkVehicleAvailability(data.vehicleId, rentalDate, checkEnd);
+    if (!isAvailable) {
+        throw new Error("This vehicle is no longer available for the selected time slot.");
+    }
+
     // 1. Get Service Category ID for "Airport Rental"
     const categories = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, SERVICE_CATEGORIES.AIRPORT_RENTAL));
     const categoryId = categories[0]?.categoryId;
@@ -140,11 +153,8 @@ export async function createAirportBooking(data: AirportBookingData) {
     const pickupLocation = data.transferType === "pickup" ? airportLabel : data.transferLocation;
     const dropoffLocation = data.transferType === "pickup" ? data.transferLocation : airportLabel;
 
-    // 3. Map Timing
-    const transferDate = data.transferType === "pickup" ? data.pickupDate : data.dropDate;
-    const transferTime = data.transferType === "pickup" ? data.pickupTime : data.dropTime;
-    const rentalDate = transferDate ? new Date(`${transferDate}T${transferTime || "00:00"}`) : new Date();
-
+    // 3. Map Timing (Reusing variables from step 0)
+    
     const [result] = await db.insert(booking).values({
         serviceCategoryId: categoryId,
         userId: data.customerId,

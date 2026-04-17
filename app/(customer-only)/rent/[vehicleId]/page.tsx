@@ -12,15 +12,29 @@ import {
     Briefcase,
     Gauge,
     Fuel,
-    Info
+    Info,
+    Star
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import BookingSummary from "@/components/rent/BookingSummary";
-import { mockVehicles } from "@/lib/mockVehicles";
-
+import ReviewList from "@/components/customer/ReviewList";
 import { getVehicleById } from "@/lib/actions/vehicleActions";
 import { calculateRentalPrice } from "@/lib/price-helper";
+
+interface VehicleDetail {
+    brand: string | null;
+    model: string | null;
+    plateNumber: string;
+    transmissionType: string;
+    fuelType: string;
+    rentPerDay: string | number;
+    rentPerHour: string | number;
+    seatingCapacity: number;
+    luggageCapacity: number;
+    image: string | null;
+    description: string | null;
+}
 
 function VehicleDetailsContent() {
     const params = useParams();
@@ -28,7 +42,7 @@ function VehicleDetailsContent() {
     const router = useRouter();
     const vehicleId = params.vehicleId as string;
 
-    const [vehicle, setVehicle] = useState<any>(null);
+    const [vehicle, setVehicle] = useState<VehicleDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -114,7 +128,7 @@ function VehicleDetailsContent() {
                                     vehicle.image ||
                                     "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80&w=1000"
                                 }
-                                alt={vehicle.brand}
+                                alt={vehicle.brand ?? ""}
                                 fill
                                 className="object-cover"
                             />
@@ -144,7 +158,7 @@ function VehicleDetailsContent() {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="sm:text-right flex-shrink-0">
+                                <div className="sm:text-right shrink-0">
                                     <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
                                         Daily Rate
                                     </p>
@@ -178,7 +192,7 @@ function VehicleDetailsContent() {
                                             key={label}
                                             className="flex items-center gap-3 bg-gray-50 px-3 py-3 rounded-lg border border-gray-100"
                                         >
-                                            <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center text-gray-600 border border-gray-100 flex-shrink-0">
+                                            <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center text-gray-600 border border-gray-100 shrink-0">
                                                 <Icon className="w-4 h-4" />
                                             </div>
                                             <div className="min-w-0">
@@ -210,11 +224,20 @@ function VehicleDetailsContent() {
                                 "Fuel Policy: Full to Full",
                             ].map((item, i) => (
                                 <div key={i} className="flex items-center gap-3">
-                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                                     <span className="text-sm text-gray-600">{item}</span>
                                 </div>
                             ))}
                         </div>
+                    </section>
+
+                    {/* Customer Reviews */}
+                    <section className="space-y-6">
+                        <div className="flex items-center gap-3 px-2">
+                            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                            <h3 className="text-xl font-bold text-gray-900 tracking-tight">Customer Experiences</h3>
+                        </div>
+                        <ReviewList vehicleId={parseInt(vehicleId)} />
                     </section>
                 </div>
 
@@ -223,8 +246,8 @@ function VehicleDetailsContent() {
                     <div className="sticky top-20">
                         <BookingSummary
                             vehicle={{
-                                brand: vehicle.brand,
-                                model: vehicle.model,
+                                brand: vehicle.brand ?? "",
+                                model: vehicle.model ?? "",
                                 plateNumber: vehicle.plateNumber,
                                 ratePerDay: vehicle.rentPerDay,
                                 ratePerHour: vehicle.rentPerHour,
@@ -253,7 +276,7 @@ function VehicleDetailsContent() {
 
                         {/* Info note */}
                         <div className="mt-3 flex items-start gap-3 bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                            <Info className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
                             <p className="text-xs text-gray-500 leading-relaxed">
                                 Instant approval is not guaranteed. Our team reviews all reservations within 60 minutes
                                 during business hours.

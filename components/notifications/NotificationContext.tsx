@@ -132,7 +132,7 @@ export function NotificationProvider({
 
     // ── Load from DB ──────────────────────────────────────────────────────────
     const fetchFromDb = useCallback(async () => {
-        if (!session) return;
+        if (!session || session.role === 'manager') return;
         try {
             const res = await fetch("/api/notifications");
             const data = await res.json();
@@ -158,7 +158,7 @@ export function NotificationProvider({
 
     // ── SSE real-time stream ───────────────────────────────────────────────────
     useEffect(() => {
-        if (!session) return;
+        if (!session || session.role === 'manager') return;
 
         let retryDelay = 1000;
         let retryTimeout: ReturnType<typeof setTimeout> | null = null;

@@ -1,13 +1,14 @@
 "use server";
 
 import { db } from "@/src/db";
-import { booking, vehicle, vehicleBrand, vehicleModel, users } from "@/src/db/schema";
+import { booking, vehicle, vehicleBrand, vehicleModel, users, review } from "@/src/db/schema";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { validateNIC } from "@/lib/validation";
 import { sendNotification, notifyAdmins } from "./notificationActions";
 import { sendBookingStatusEmail } from "@/lib/email";
+import { checkVehicleAvailability } from "./availabilityActions";
 
 // Helper to upload file to Cloudinary
 export async function saveFileToCloudinary(file: File | null, folder: string): Promise<string | null> {
@@ -81,6 +82,12 @@ export async function createBooking(formData: FormData) {
         const gNicPath = formData.get("guaranteeNicPdf") as string | null;
         const gLicensePath = formData.get("guaranteeLicensePdf") as string | null;
         const paymentslipPath = formData.get("paymentslip") as string | null;
+
+        // Check availability before creating booking
+        const isAvailable = await checkVehicleAvailability(vehicleId, new Date(rentalDate), new Date(returnDate));
+        if (!isAvailable) {
+            return { success: false, error: "This vehicle is no longer available for the selected dates. Someone else might have just booked it." };
+        }
 
         // Log data for debugging
         console.log("Creating booking with files:", {
@@ -254,12 +261,55 @@ export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" 
             const [u] = await db.select({ email: users.email, name: users.name })
                 .from(users).where(eq(users.userId, b.userId!));
 
+            // Fetch vehicle details for the email
+            const [v] = await db.select({
+                brand: vehicleBrand.brandName,
+                model: vehicleModel.modelName,
+                plateNumber: vehicle.plateNumber,
+                transmission: vehicle.transmission,
+                fuelType: vehicle.fuelType,
+            })
+            .from(vehicle)
+            .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
+            .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
+            .where(eq(vehicle.vehicleId, b.vehicleId!));
+
+            const vehicleSpecs = v ? {
+                brand: v.brand ?? "",
+                model: v.model ?? "",
+                plateNumber: v.plateNumber,
+                transmission: v.transmission,
+                fuelType: v.fuelType,
+            } : undefined;
+
+            const bookingDetails = {
+                rentalDate: b.rentalDate || undefined,
+                returnDate: b.returnDate || undefined,
+                pickupLocation: b.pickupLocation || undefined,
+                dropoffLocation: b.dropoffLocation || undefined,
+                totalFare: b.totalFare || undefined,
+                message: b.message || undefined
+            };
+
             if (status === "ACCEPTED") {
                 // 1. Notify Customer — in-app + email
                 if (b.userId) {
                     try { await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been ACCEPTED.`, bookingId, "rent-a-car"); }
                     catch (e) { console.error("Notification error:", e); }
-                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", bookingId, "Rent-a-Car", "ACCEPTED"); }
+                    try { 
+                        if (u?.email) {
+                            await sendBookingStatusEmail(
+                                u.email, 
+                                u.name ?? "Customer", 
+                                bookingId, 
+                                "Rent-a-Car", 
+                                "ACCEPTED", 
+                                undefined,
+                                vehicleSpecs,
+                                bookingDetails
+                            ); 
+                        }
+                    }
                     catch (e) { console.error("Email error:", e); }
                 }
                 // 2. Notify Assigned Employee — serviceType enables navigation to booking detail
@@ -275,7 +325,20 @@ export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" 
                     const reason = formData?.get("rejectionReason") as string | undefined;
                     try { await sendNotification(b.userId, `Your Rent-a-Car booking (#${bookingId}) has been REJECTED.`, bookingId, "rent-a-car"); }
                     catch (e) { console.error("Notification error:", e); }
-                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", bookingId, "Rent-a-Car", "REJECTED", reason ?? undefined); }
+                    try { 
+                        if (u?.email) {
+                            await sendBookingStatusEmail(
+                                u.email, 
+                                u.name ?? "Customer", 
+                                bookingId, 
+                                "Rent-a-Car", 
+                                "REJECTED", 
+                                reason ?? undefined,
+                                vehicleSpecs,
+                                bookingDetails
+                            ); 
+                        }
+                    }
                     catch (e) { console.error("Email error:", e); }
                 }
             }
@@ -315,5 +378,42 @@ export async function getBookingDocuments(bookingId: number) {
     } catch (error) {
         console.error("Error fetching documents:", error);
         return { success: false, error: "Failed to fetch documents" };
+    }
+}
+
+export async function getCustomerBookings() {
+    try {
+        const session = await getSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const results = await db.select({
+            bookingId: booking.bookingId,
+            vehicleId: booking.vehicleId,
+            rentalDate: booking.rentalDate,
+            returnDate: booking.returnDate,
+            totalFare: booking.totalFare,
+            status: booking.status,
+            createdAt: booking.createdAt,
+            vehicle: {
+                brand: vehicleBrand.brandName,
+                model: vehicleModel.modelName,
+                image: vehicle.vehicleImage,
+            },
+            review: {
+                reviewId: review.reviewId
+            }
+        })
+        .from(booking)
+        .leftJoin(vehicle, eq(booking.vehicleId, vehicle.vehicleId))
+        .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
+        .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
+        .leftJoin(review, eq(booking.bookingId, review.bookingId))
+        .where(eq(booking.userId, session.userId))
+        .orderBy(desc(booking.createdAt));
+
+        return { success: true, data: results };
+    } catch (error) {
+        console.error("Error fetching customer bookings:", error);
+        return { success: false, error: "Failed to fetch bookings" };
     }
 }

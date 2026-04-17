@@ -4,9 +4,9 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState, useEffect, Suspense } from "react";
 import {
-    ArrowLeft, Users, Fuel, Gauge, Plane, Shield, Briefcase,
+    ArrowLeft, Users, Fuel, Gauge, Plane, Briefcase,
     MapPin, Clock, ShieldCheck, CheckCircle2, AlertCircle,
-    Phone, Mail, User as UserIcon, Loader2
+    Phone, User as UserIcon, Loader2, Info, ChevronRight
 } from "lucide-react";
 import { validateAddress } from "@/lib/validation";
 import { uploadFileToCloudinary } from "@/lib/utils/cloudinaryClient";
@@ -29,7 +29,6 @@ interface AirportVehicle {
 interface BookingFormState {
     customerFullName: string;
     customerPhone: string;
-
     transferLocation: string;
 }
 
@@ -45,7 +44,6 @@ function AirportDetailContent() {
     const router = useRouter();
     const vehicleId = params.id as string;
 
-    // Search context from previous page
     const transferType = searchParams.get("transferType") || "pickup";
     const airport = searchParams.get("airport") || "katunayaka";
     const pickupDate = searchParams.get("pickupDate") || "";
@@ -60,7 +58,6 @@ function AirportDetailContent() {
     const [booking, setBooking] = useState<BookingFormState>({
         customerFullName: "",
         customerPhone: "",
-
         transferLocation: "",
     });
     const [errors, setErrors] = useState<FormErrors>({});
@@ -69,7 +66,6 @@ function AirportDetailContent() {
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [paymentslip, setPaymentslip] = useState<File | null>(null);
 
-    // Fetch vehicle details
     useEffect(() => {
         const fetchVehicle = async () => {
             try {
@@ -96,12 +92,8 @@ function AirportDetailContent() {
         const e: FormErrors = {};
         if (!booking.customerFullName.trim()) e.customerFullName = "Full name is required.";
         if (!booking.customerPhone.trim()) e.customerPhone = "Phone number is required.";
-        
         const addressVal = validateAddress(booking.transferLocation);
-        if (!addressVal.valid) {
-            e.transferLocation = addressVal.error;
-        }
-        
+        if (!addressVal.valid) e.transferLocation = addressVal.error;
         setErrors(e);
         return Object.keys(e).length === 0;
     };
@@ -119,10 +111,8 @@ function AirportDetailContent() {
         setSubmitError(null);
 
         try {
-            // 1. Upload payment slip to Cloudinary from client-side
             const paymentslipUrl = await uploadFileToCloudinary(paymentslip, "pay-slips/airport");
 
-            // 2. Build FormData with URL instead of File
             const formData = new FormData();
             formData.append("vehicle_id", vehicle.vehicleId.toString());
             formData.append("transfer_type", transferType);
@@ -166,207 +156,237 @@ function AirportDetailContent() {
 
     if (loadingVehicle) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
-                <div className="relative">
-                    <div className="h-16 w-16 rounded-full border-4 border-gray-100" />
-                    <div className="absolute top-0 h-16 w-16 rounded-full border-4 border-yellow-400 border-t-transparent animate-spin" />
-                </div>
+            <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                <Loader2 className="w-10 h-10 text-red-600 animate-spin mb-3" />
+                <p className="text-gray-400 font-medium text-sm">Loading vehicle details...</p>
             </div>
         );
     }
 
     if (!vehicle) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
-                <div className="text-center">
-                    <Plane className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                    <h1 className="text-2xl font-black text-gray-900 mb-4 tracking-tight">Vehicle Not Found</h1>
-                    <Link href="/airport/available" className="text-yellow-600 font-bold hover:underline">
-                        Back to Airport Fleet
-                    </Link>
-                </div>
+            <div className="container mx-auto px-6 py-24 text-center">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Vehicle not found</h2>
+                <Link href="/airport/available" className="text-red-600 font-semibold hover:underline text-sm">
+                    Return to search
+                </Link>
             </div>
         );
     }
 
     return (
-        <div className="bg-[#f8fafc] min-h-screen pb-20">
-            <div className="container mx-auto px-6 pt-10">
-                {/* Back Button */}
-                <button
-                    onClick={() => router.back()}
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-bold mb-8 transition-colors group"
-                >
-                    <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                    Back to airport fleet
-                </button>
+        <div className="container mx-auto px-4 sm:px-6 py-8">
+            {/* Back link */}
+            <button
+                onClick={() => router.back()}
+                className="inline-flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-gray-800 transition-colors mb-6 group"
+            >
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                Back to airport fleet
+            </button>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    {/* Left: Vehicle Info */}
-                    <div className="lg:col-span-2 space-y-8">
-                        {/* Vehicle Photo + Main Info */}
-                        <div className="bg-white rounded-[40px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100">
-                            <div className="relative h-[380px]">
-                                {vehicle.image ? (
-                                    <Image
-                                        src={vehicle.image}
-                                        alt={`${vehicle.brand} ${vehicle.model}`}
-                                        fill
-                                        className="object-cover"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-yellow-50 to-gray-100 flex items-center justify-center">
-                                        <Plane className="w-24 h-24 text-yellow-200" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left: Vehicle Details */}
+                <div className="lg:col-span-2 space-y-5">
+                    {/* Main vehicle card */}
+                    <section className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                        {/* Image */}
+                        <div className="relative h-64 sm:h-72 w-full bg-gray-50">
+                            {vehicle.image ? (
+                                <Image
+                                    src={vehicle.image}
+                                    alt={`${vehicle.brand} ${vehicle.model}`}
+                                    fill
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                                    <Plane className="w-20 h-20 text-gray-200" />
+                                </div>
+                            )}
+                            <div className="absolute top-4 left-4">
+                                <span className="bg-gray-900 text-white text-[10px] font-semibold px-3 py-1.5 rounded-md uppercase tracking-wider">
+                                    Airport Service
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="p-5 sm:p-6">
+                            {/* Name + price row */}
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+                                        {vehicle.brand}{" "}
+                                        <span className="text-gray-400 font-medium">{vehicle.model}</span>
+                                    </h1>
+                                    <div className="flex items-center gap-3 mt-1.5">
+                                        <span className="text-xs font-medium text-gray-400 tracking-wide">
+                                            {vehicle.plateNumber}
+                                        </span>
+                                        <span className="w-px h-3 bg-gray-200" />
+                                        <span className="text-xs font-semibold text-red-600 bg-red-50 px-2.5 py-1 rounded-md">
+                                            {vehicle.transmission}
+                                        </span>
                                     </div>
-                                )}
-                                <div className="absolute top-6 left-6 bg-gray-900/80 backdrop-blur-md px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">
-                                    <Plane className="w-4 h-4" /> Airport Service
+                                </div>
+                                <div className="sm:text-right shrink-0">
+                                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                                        Fixed Transfer Rate
+                                    </p>
+                                    <p className="text-2xl font-bold text-gray-900">
+                                        LKR {parseFloat(vehicle.rentPerDay).toLocaleString()}
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className="p-8 md:p-10">
-                                <div className="flex flex-col sm:flex-row justify-between items-start mb-8 gap-4">
-                                    <div>
-                                        <h1 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">
-                                            {vehicle.brand} <span className="text-gray-400">{vehicle.model}</span>
-                                        </h1>
-                                        <span className="bg-gray-100 px-3 py-1 rounded-lg text-sm text-gray-500 font-mono">
-                                            {vehicle.plateNumber}
-                                        </span>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-3xl font-black text-gray-900 leading-none">
-                                            LKR {parseFloat(vehicle.rentPerDay).toLocaleString()}
-                                        </p>
-                                        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px] mt-1 italic">
-                                            Fixed Transfer Rate
-                                        </p>
-                                    </div>
-                                </div>
+                            {/* Description */}
+                            {vehicle.description && (
+                                <p className="text-sm text-gray-600 leading-relaxed mb-5 pb-5 border-b border-gray-100">
+                                    {vehicle.description}
+                                </p>
+                            )}
 
-                                {vehicle.description && (
-                                    <p className="text-gray-600 text-base leading-relaxed mb-8 border-l-4 border-yellow-400 pl-6 italic font-medium">
-                                        "{vehicle.description}"
-                                    </p>
-                                )}
-
-                                {/* Specs */}
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {/* Specs row */}
+                            <div>
+                                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                                    Specifications
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                     {[
-                                        { icon: <Users className="w-8 h-8 mx-auto mb-3 text-yellow-500" />, label: "Capacity", value: `${vehicle.seatingCapacity} Seats` },
-                                        { icon: <Gauge className="w-8 h-8 mx-auto mb-3 text-yellow-500" />, label: "Gearbox", value: vehicle.transmission },
-                                        { icon: <Fuel className="w-8 h-8 mx-auto mb-3 text-yellow-500" />, label: "Fuel", value: vehicle.fuelType },
-                                        { icon: <Briefcase className="w-8 h-8 mx-auto mb-3 text-yellow-500" />, label: "Luggage", value: `${vehicle.luggageCapacity} Bags` },
-                                    ].map((s) => (
-                                        <div key={s.label} className="bg-gray-50 p-5 rounded-3xl text-center hover:bg-white hover:shadow-md transition-all border border-transparent hover:border-gray-100">
-                                            {s.icon}
-                                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{s.label}</p>
-                                            <p className="text-base font-black text-gray-900">{s.value}</p>
+                                        { icon: Users, label: "Seats", value: `${vehicle.seatingCapacity} Seats` },
+                                        { icon: Briefcase, label: "Luggage", value: `${vehicle.luggageCapacity} Bags` },
+                                        { icon: Gauge, label: "Drive", value: vehicle.transmission },
+                                        { icon: Fuel, label: "Fuel", value: vehicle.fuelType },
+                                    ].map(({ icon: Icon, label, value }) => (
+                                        <div
+                                            key={label}
+                                            className="flex items-center gap-3 bg-gray-50 px-3 py-3 rounded-lg border border-gray-100"
+                                        >
+                                            <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center text-gray-600 border border-gray-100 shrink-0">
+                                                <Icon className="w-4 h-4" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">
+                                                    {label}
+                                                </p>
+                                                <p className="text-xs font-semibold text-gray-800 truncate">{value}</p>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         </div>
+                    </section>
 
-                        {/* Service Inclusions */}
-                        <div className="bg-white rounded-[40px] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100">
-                            <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-3">
-                                <Shield className="w-6 h-6 text-yellow-500" /> Service Inclusions
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {["Professional Driver", "60 Min Free Wait", "Flight Tracking", "Fixed Pricing", "Door-to-Door Service", "Luggage Assistance"].map(item => (
-                                    <div key={item} className="flex items-center gap-3 p-3 rounded-2xl bg-gray-50">
-                                        <CheckCircle2 className="w-5 h-5 text-yellow-500 flex-shrink-0" />
-                                        <span className="font-bold text-gray-700 text-sm">{item}</span>
-                                    </div>
-                                ))}
-                            </div>
+                    {/* Service Inclusions */}
+                    <section className="bg-white rounded-xl border border-gray-200 p-5 sm:p-6 shadow-sm">
+                        <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-red-600" />
+                            Service Inclusions
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {[
+                                "Professional Driver",
+                                "60 Min Free Wait",
+                                "Flight Tracking",
+                                "Fixed Pricing",
+                                "Door-to-Door Service",
+                                "Luggage Assistance",
+                            ].map((item, i) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                                    <span className="text-sm text-gray-600">{item}</span>
+                                </div>
+                            ))}
                         </div>
-                    </div>
+                    </section>
+                </div>
 
-                    {/* Right: Booking Sidebar */}
-                    <div className="space-y-6">
+                {/* Right: Sidebar */}
+                <div className="space-y-4">
+                    <div className="sticky top-20 space-y-4">
                         {/* Transfer Summary */}
-                        <div className="bg-white rounded-[40px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100">
-                            <h3 className="text-lg font-black text-gray-900 mb-5 tracking-tight">Transfer Summary</h3>
-                            <div className="space-y-3">
+                        <section className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                            <h3 className="text-sm font-semibold text-gray-800 mb-4">Transfer Summary</h3>
+                            <div className="space-y-2">
                                 {[
-                                    { icon: <Plane className="w-4 h-4 text-gray-400" />, label: "Type", value: `Airport ${transferType}` },
-                                    { icon: <MapPin className="w-4 h-4 text-gray-400" />, label: "Airport", value: airportLabel },
-                                    { 
-                                        icon: <Clock className="w-4 h-4 text-gray-400" />, 
-                                        label: "Date & Time", 
-                                        value: transferType === "pickup" ? `${pickupDate} at ${pickupTime}` : `${dropDate} at ${dropTime}`
+                                    { icon: Plane, label: "Type", value: `Airport ${transferType}` },
+                                    { icon: MapPin, label: "Airport", value: airportLabel },
+                                    {
+                                        icon: Clock,
+                                        label: "Date & Time",
+                                        value: transferType === "pickup"
+                                            ? `${pickupDate} at ${pickupTime}`
+                                            : `${dropDate} at ${dropTime}`
                                     },
-                                    { icon: <Users className="w-4 h-4 text-gray-400" />, label: "Passengers", value: `${passengers} pax` },
-                                    { icon: <Briefcase className="w-4 h-4 text-gray-400" />, label: "Luggage", value: `${luggage} bags` },
-                                    { icon: <ShieldCheck className="w-4 h-4 text-gray-400" />, label: "Rate", value: `LKR ${parseFloat(vehicle.rentPerDay).toLocaleString()}` },
-                                ].map((row) => (
-                                    <div key={row.label} className="flex items-center justify-between p-3 rounded-2xl bg-gray-50">
-                                        <div className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest">
-                                            {row.icon} {row.label}
+                                    { icon: Users, label: "Passengers", value: `${passengers} pax` },
+                                    { icon: Briefcase, label: "Luggage", value: `${luggage} bags` },
+                                    { icon: ShieldCheck, label: "Rate", value: `LKR ${parseFloat(vehicle.rentPerDay).toLocaleString()}` },
+                                ].map(({ icon: Icon, label, value }) => (
+                                    <div key={label} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2.5 border border-gray-100">
+                                        <div className="flex items-center gap-2 text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                            <Icon className="w-3.5 h-3.5" /> {label}
                                         </div>
-                                        <span className="font-bold text-gray-900 text-sm text-right max-w-[140px]">{row.value}</span>
+                                        <span className="font-semibold text-gray-900 text-xs text-right max-w-35">{value}</span>
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        </section>
 
                         {/* Booking Form */}
-                        <div className="bg-white rounded-[40px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border-t-8 border-yellow-400">
-                            <h3 className="text-lg font-black text-gray-900 mb-6 tracking-tight">Your Details</h3>
+                        <section className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+                            <h3 className="text-sm font-semibold text-gray-800 mb-4">Your Details</h3>
 
                             {submitSuccess ? (
                                 <div className="text-center py-8">
-                                    <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto mb-4" />
-                                    <h4 className="text-lg font-black text-gray-900 mb-2">Booking Submitted!</h4>
+                                    <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
+                                    <h4 className="text-base font-bold text-gray-900 mb-2">Booking Submitted!</h4>
                                     <p className="text-sm text-gray-500">Redirecting to your bookings...</p>
                                 </div>
                             ) : (
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     {/* Full Name */}
                                     <div>
-                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-2">
-                                            <UserIcon className="w-3.5 h-3.5" /> Full Name *
+                                        <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+                                            <UserIcon className="w-3 h-3" /> Full Name *
                                         </label>
                                         <input
                                             type="text"
                                             placeholder="John Perera"
                                             value={booking.customerFullName}
                                             onChange={e => { setBooking(p => ({ ...p, customerFullName: e.target.value })); setErrors(p => ({ ...p, customerFullName: undefined })); }}
-                                            className={`w-full h-12 bg-gray-50 border-2 rounded-2xl px-4 text-sm font-bold text-gray-900 outline-none transition-all ${errors.customerFullName ? "border-red-400" : "border-transparent focus:border-yellow-400"}`}
+                                            className={`w-full h-10 bg-gray-50 border-2 rounded-lg px-3 text-sm font-medium text-gray-900 outline-none transition-all ${errors.customerFullName ? "border-red-400" : "border-transparent focus:border-gray-300"}`}
                                         />
-                                        {errors.customerFullName && <p className="text-xs text-red-500 font-semibold mt-1">{errors.customerFullName}</p>}
+                                        {errors.customerFullName && <p className="text-xs text-red-500 font-medium mt-1">{errors.customerFullName}</p>}
                                     </div>
 
                                     {/* Phone */}
                                     <div>
-                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-2">
-                                            <Phone className="w-3.5 h-3.5" /> Phone Number *
+                                        <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+                                            <Phone className="w-3 h-3" /> Phone Number *
                                         </label>
                                         <input
                                             type="tel"
                                             placeholder="+94 77 123 4567"
                                             value={booking.customerPhone}
                                             onChange={e => { setBooking(p => ({ ...p, customerPhone: e.target.value })); setErrors(p => ({ ...p, customerPhone: undefined })); }}
-                                            className={`w-full h-12 bg-gray-50 border-2 rounded-2xl px-4 text-sm font-bold text-gray-900 outline-none transition-all ${errors.customerPhone ? "border-red-400" : "border-transparent focus:border-yellow-400"}`}
+                                            className={`w-full h-10 bg-gray-50 border-2 rounded-lg px-3 text-sm font-medium text-gray-900 outline-none transition-all ${errors.customerPhone ? "border-red-400" : "border-transparent focus:border-gray-300"}`}
                                         />
-                                        {errors.customerPhone && <p className="text-xs text-red-500 font-semibold mt-1">{errors.customerPhone}</p>}
+                                        {errors.customerPhone && <p className="text-xs text-red-500 font-medium mt-1">{errors.customerPhone}</p>}
                                     </div>
-
-
 
                                     {/* Pickup/Drop Address */}
                                     <div>
-                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 mb-2">
-                                            <MapPin className="w-3.5 h-3.5" /> {transferType === "pickup" ? "Drop-off" : "Pickup"} Address *
+                                        <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+                                            <MapPin className="w-3 h-3" /> {transferType === "pickup" ? "Drop-off" : "Pickup"} Address *
                                         </label>
                                         <input
                                             type="text"
                                             placeholder="Your home / hotel address"
                                             value={booking.transferLocation}
-                                            onChange={e => { 
-                                                setBooking(p => ({ ...p, transferLocation: e.target.value })); 
+                                            onChange={e => {
+                                                setBooking(p => ({ ...p, transferLocation: e.target.value }));
                                                 const val = validateAddress(e.target.value);
                                                 if (val.valid) {
                                                     setErrors(p => ({ ...p, transferLocation: undefined }));
@@ -374,18 +394,18 @@ function AirportDetailContent() {
                                                     setErrors(p => ({ ...p, transferLocation: val.error }));
                                                 }
                                             }}
-                                            className={`w-full h-12 bg-gray-50 border-2 rounded-2xl px-4 text-sm font-bold text-gray-900 outline-none transition-all ${errors.transferLocation ? "border-red-400 focus:border-red-600" : "border-transparent focus:border-yellow-400"}`}
+                                            className={`w-full h-10 bg-gray-50 border-2 rounded-lg px-3 text-sm font-medium text-gray-900 outline-none transition-all ${errors.transferLocation ? "border-red-400 focus:border-red-600" : "border-transparent focus:border-gray-300"}`}
                                         />
-                                        {errors.transferLocation && <p className="text-xs text-red-500 font-semibold mt-1">{errors.transferLocation}</p>}
+                                        {errors.transferLocation && <p className="text-xs text-red-500 font-medium mt-1">{errors.transferLocation}</p>}
                                     </div>
 
                                     {/* Bank Details */}
-                                    <div className="bg-yellow-50 rounded-2xl p-6 space-y-4">
-                                        <div className="flex items-center gap-2 border-b border-yellow-200 pb-2">
-                                            <ShieldCheck className="w-4 h-4 text-yellow-600" />
-                                            <p className="text-xs font-black text-yellow-800 uppercase tracking-widest">Bank Payment Details</p>
+                                    <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 space-y-3">
+                                        <div className="flex items-center gap-2 border-b border-gray-200 pb-2">
+                                            <ShieldCheck className="w-3.5 h-3.5 text-gray-500" />
+                                            <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Bank Payment Details</p>
                                         </div>
-                                        <div className="grid grid-cols-1 gap-3">
+                                        <div className="grid grid-cols-1 gap-2">
                                             {[
                                                 { label: "Bank", value: "Bank of Ceylon (BOC)" },
                                                 { label: "Account Name", value: "Test User" },
@@ -393,25 +413,25 @@ function AirportDetailContent() {
                                                 { label: "Branch", value: "Colombo Main Branch" },
                                             ].map(({ label, value }) => (
                                                 <div key={label} className="flex justify-between items-center text-[11px]">
-                                                    <span className="text-yellow-600/60 font-black uppercase tracking-widest">{label}</span>
-                                                    <span className="text-yellow-900 font-bold">{value}</span>
+                                                    <span className="text-gray-400 font-semibold uppercase tracking-wider">{label}</span>
+                                                    <span className="text-gray-700 font-semibold">{value}</span>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
 
                                     {/* Pay Slip Upload */}
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                                            <Briefcase className="w-3.5 h-3.5" /> Payment Slip *
+                                    <div>
+                                        <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+                                            <Briefcase className="w-3 h-3" /> Payment Slip *
                                         </label>
-                                        <div className="border-2 border-dashed border-gray-100 rounded-2xl p-4 text-center space-y-3">
-                                            <p className="text-[10px] text-gray-400 font-medium italic">Upload your bank deposit/transfer slip</p>
-                                            <label className="inline-block px-4 py-2 bg-gray-100 text-gray-700 rounded-xl text-[11px] font-black cursor-pointer hover:bg-yellow-400 hover:text-gray-900 transition-all">
+                                        <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center space-y-2">
+                                            <p className="text-[10px] text-gray-400 font-medium">Upload your bank deposit/transfer slip</p>
+                                            <label className="inline-block px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-[11px] font-semibold cursor-pointer hover:bg-gray-700 hover:text-white transition-all">
                                                 {paymentslip ? paymentslip.name : "Choose File"}
-                                                <input 
-                                                    type="file" 
-                                                    className="hidden" 
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
                                                     onChange={(e) => setPaymentslip(e.target.files?.[0] || null)}
                                                     accept="image/*,.pdf"
                                                 />
@@ -420,29 +440,36 @@ function AirportDetailContent() {
                                     </div>
 
                                     {submitError && (
-                                        <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-2xl p-4">
-                                            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-                                            <p className="text-sm text-red-700 font-semibold">{submitError}</p>
+                                        <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-lg p-3">
+                                            <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                                            <p className="text-xs text-red-700 font-medium">{submitError}</p>
                                         </div>
                                     )}
 
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="w-full h-13 py-3 bg-gray-900 hover:bg-yellow-400 hover:text-gray-900 text-white rounded-2xl font-black transition-all hover:translate-y-[-2px] active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                        className="w-full h-11 bg-gray-900 hover:bg-red-600 text-white font-semibold rounded-lg transition-all text-sm flex items-center justify-center gap-2 group active:scale-[0.98] disabled:opacity-50"
                                     >
                                         {submitting ? (
-                                            <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
                                         ) : (
-                                            "Confirm Booking"
+                                            <>
+                                                Confirm Booking
+                                                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                            </>
                                         )}
                                     </button>
-
-                                    <p className="text-center text-xs text-gray-400 font-medium">
-                                        By confirming, you agree to our terms. Booking subject to employee review.
-                                    </p>
                                 </form>
                             )}
+                        </section>
+
+                        {/* Info note */}
+                        <div className="flex items-start gap-3 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <Info className="w-4 h-4 text-gray-400 shrink-0 mt-0.5" />
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                By confirming, you agree to our terms. Booking subject to review within 60 minutes during business hours.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -453,12 +480,14 @@ function AirportDetailContent() {
 
 export default function AirportDetailsPage() {
     return (
-        <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="h-12 w-12 rounded-full border-4 border-yellow-400 border-t-transparent animate-spin" />
-            </div>
-        }>
-            <AirportDetailContent />
-        </Suspense>
+        <div className="min-h-screen bg-gray-50">
+            <Suspense fallback={
+                <div className="flex items-center justify-center min-h-screen">
+                    <Loader2 className="w-10 h-10 text-red-600 animate-spin" />
+                </div>
+            }>
+                <AirportDetailContent />
+            </Suspense>
+        </div>
     );
 }

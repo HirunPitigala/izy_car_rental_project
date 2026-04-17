@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { sendNotification } from './notificationActions';
 import { sendBookingStatusEmail } from "@/lib/email";
 import { db } from '@/lib/db';
-import { booking, users, vehicle } from '@/src/db/schema';
+import { booking, users, vehicle, vehicleBrand, vehicleModel } from '@/src/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function getPendingPickups(employeeId?: number) {
@@ -55,12 +55,55 @@ export async function updatePickupStatus(id: number, status: 'ACCEPTED' | 'REJEC
             const [u] = await db.select({ email: users.email, name: users.name })
                 .from(users).where(eq(users.userId, p.userId!));
 
+            // Fetch vehicle details for the email
+            const [v] = await db.select({
+                brand: vehicleBrand.brandName,
+                model: vehicleModel.modelName,
+                plateNumber: vehicle.plateNumber,
+                transmission: vehicle.transmission,
+                fuelType: vehicle.fuelType,
+            })
+            .from(vehicle)
+            .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
+            .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
+            .where(eq(vehicle.vehicleId, p.vehicleId!));
+
+            const vehicleSpecs = v ? {
+                brand: v.brand ?? "",
+                model: v.model ?? "",
+                plateNumber: v.plateNumber,
+                transmission: v.transmission,
+                fuelType: v.fuelType,
+            } : undefined;
+
+            const bookingDetails = {
+                rentalDate: p.rentalDate || undefined,
+                pickupLocation: p.pickupLocation || undefined,
+                dropoffLocation: p.dropoffLocation || undefined,
+                totalFare: p.totalFare || undefined,
+                passengers: p.numberOfTravelers ?? undefined,
+                message: p.message || undefined
+            };
+
             if (status === 'ACCEPTED') {
                 // 1. Notify Customer — in-app + email
                 if (p.userId) {
                     try { await sendNotification(p.userId, `Your Pickup booking (#${id}) has been ACCEPTED.`, id, "pickup"); }
                     catch (e) { console.error("Notification error:", e); }
-                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", id, "Pickup", "ACCEPTED"); }
+                    try { 
+                        if (u?.email) {
+                            await sendBookingStatusEmail(
+                                u.email, 
+                                u.name ?? "Customer", 
+                                id, 
+                                "Pickup", 
+                                "ACCEPTED", 
+                                undefined,
+                                vehicleSpecs,
+                                bookingDetails
+                            ); 
+                        }
+                    }
                     catch (e) { console.error("Email error:", e); }
                 }
                 // 2. Notify Assigned Employee — serviceType enables navigation
@@ -75,7 +118,20 @@ export async function updatePickupStatus(id: number, status: 'ACCEPTED' | 'REJEC
                 if (p.userId) {
                     try { await sendNotification(p.userId, `Your Pickup booking (#${id}) has been REJECTED.`, id, "pickup"); }
                     catch (e) { console.error("Notification error:", e); }
-                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", id, "Pickup", "REJECTED", reason ?? undefined); }
+                    try { 
+                        if (u?.email) {
+                            await sendBookingStatusEmail(
+                                u.email, 
+                                u.name ?? "Customer", 
+                                id, 
+                                "Pickup", 
+                                "REJECTED", 
+                                reason ?? undefined,
+                                vehicleSpecs,
+                                bookingDetails
+                            ); 
+                        }
+                    }
                     catch (e) { console.error("Email error:", e); }
                 }
             }

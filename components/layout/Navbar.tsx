@@ -27,15 +27,13 @@ const adminNavItems: NavItem[] = [
     { label: 'Requested Bookings', href: '/admin/bookings/requested' },
     { label: 'All Bookings', href: '/admin/bookings/all' },
     { label: 'Vehicles', href: '/admin/vehicles' },
+    { label: 'Manage Reviews', href: '/admin/reviews' },
     { label: 'Reports', href: '/admin/reports' },
 ];
 
 const managerNavItems: NavItem[] = [
     { label: 'Dashboard', href: '/manager/dashboard' },
-    { label: 'Daily Reports', href: '/manager/reports/daily' },
-    { label: 'Revenue', href: '/manager/reports/revenue' },
-    { label: 'Overdue', href: '/manager/reports/overdue' },
-    { label: 'Analytics', href: '/manager/analytics' },
+    { label: 'Reports', href: '/manager/reports' },
 ];
 
 const customerNavItems: NavItem[] = [
@@ -134,7 +132,7 @@ export default function Navbar({ session }: NavbarProps) {
                     <div className="hidden items-center gap-4 lg:flex">
                         {session ? (
                             <div className="flex items-center gap-5">
-                                <NotificationBadge />
+                                {session.role !== 'manager' && <NotificationBadge />}
                                 {session.role === 'admin' && (
                                     <div className="relative group">
                                         <button className="h-10 px-5 rounded-[10px] bg-[#0f0f0f] text-sm font-semibold text-white transition-all hover:bg-[#262626] active:scale-[0.98]">

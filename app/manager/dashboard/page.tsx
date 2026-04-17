@@ -1,95 +1,120 @@
 "use client";
 
-import { Car, CreditCard, Users, AlertCircle, TrendingUp, Calendar, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Car, CreditCard, Users, AlertCircle } from "lucide-react";
 import StatsCard from "../../admin/dashboard/components/StatsCard";
 import Charts from "../../admin/dashboard/components/Charts";
-import Link from "next/link";
+
+interface AnalyticsData {
+    stats: {
+        totalCustomersToday: number;
+        vehiclesOnRent: number;
+        overdueVehicles: number;
+        todayIncome: number;
+    };
+    charts: {
+        last10Days: any[];
+        last30Days: any[];
+        last12Months: any[];
+    };
+}
 
 export default function ManagerDashboard() {
-    return (
-        <div className="min-h-screen bg-[#fcfcfc] font-sans text-[#0f0f0f] pb-20">
-            {/* Header section with Stats Overview */}
-            <header className="bg-white border-b border-gray-100 sticky top-0 z-20 px-4 py-8 md:px-10">
-                <div className="container-custom flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-extrabold tracking-tight">Manager Overview</h1>
-                        <p className="mt-2 text-gray-500">Real-time analytics and fleet performance monitoring.</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                    </div>
-                </div>
-            </header>
+    const [data, setData] = useState<AnalyticsData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-            <main className="container-custom px-4 py-10 md:px-10">
+    useEffect(() => {
+        async function fetchAnalytics() {
+            try {
+                const response = await fetch("/api/admin/analytics");
+                const result = await response.json();
+                if (result.success) {
+                    setData(result.data);
+                } else {
+                    setError(result.error || "Failed to fetch analytics");
+                }
+            } catch (err) {
+                console.error("Error fetching analytics:", err);
+                setError("An error occurred while fetching dashboard data.");
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchAnalytics();
+    }, []);
+
+    if (error) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50 px-4 text-center pb-20">
+                <div className="bg-white p-8 rounded-2xl border border-red-100 shadow-premium max-w-md w-full">
+                    <div className="p-3 bg-red-50 text-red-600 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle className="w-6 h-6" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+                    <p className="text-gray-500 mb-6">{error}</p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="w-full ek-button py-2.5"
+                    >
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const stats = data?.stats;
+
+    return (
+        <div className="min-h-screen bg-gray-50 pb-20">
+            <main className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+                <div className="mb-10">
+                    <h1 className="text-3xl font-black text-[#0f0f0f] tracking-tight">Manager Overview</h1>
+                    <p className="text-sm text-gray-400 font-medium">Real-time statistics and fleet performance monitoring.</p>
+                </div>
+
                 {/* Stats Grid */}
                 <div className="mb-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <StatsCard
-                        label="Total Customers"
-                        value="128"
+                        label="Total Customers Today"
+                        value={loading ? "..." : (stats?.totalCustomersToday.toString() || "0")}
                         icon={Users}
-
                     />
                     <StatsCard
                         label="Vehicles on Rent"
-                        value="45"
+                        value={loading ? "..." : (stats?.vehiclesOnRent.toString() || "0")}
                         icon={Car}
-
                     />
                     <StatsCard
                         label="Overdue Vehicles"
-                        value="3"
+                        value={loading ? "..." : (stats?.overdueVehicles.toString() || "0")}
                         icon={AlertCircle}
-                        isNegative
+                        isNegative={stats && stats.overdueVehicles > 0}
                     />
                     <StatsCard
                         label="Today's Income"
-                        value="LKR2,450"
+                        value={loading ? "..." : `LKR ${stats?.todayIncome.toLocaleString() || "0"}`}
                         icon={CreditCard}
-
                     />
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
-                    {/* Charts Section */}
-                    <div className="xl:col-span-2">
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-xl font-extrabold tracking-tight">Revenue & Performance</h2>
-                            <div className="flex items-center gap-2">
-                                <span className="h-2 w-2 rounded-full bg-[#dc2626]" />
-                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Monthly Growth</span>
-                            </div>
-                        </div>
-                        <div className="ek-card p-8 border border-gray-100">
-                            <Charts />
-                        </div>
-                    </div>
-
-                    {/* Quick Actions & Recent Bookings */}
-                    <div className="space-y-10">
+                {/* Charts Section */}
+                <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-premium-sm">
+                    <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h2 className="text-xl font-extrabold tracking-tight mb-6">Quick Actions</h2>
-                            <div className="grid grid-cols-1 gap-4">
-                                <Link href="/manager/vehicles/add" className="ek-card p-5 border border-gray-100 flex items-center gap-4 hover:border-red-100 group transition-all">
-                                    <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 group-hover:bg-red-50 group-hover:text-[#dc2626] transition-colors">
-                                        <Car className="h-5 w-5" />
-                                    </div>
-
-                                    <ChevronRight className="h-4 w-4 text-gray-300 ml-auto group-hover:translate-x-1" />
-                                </Link>
-                                <button className="ek-card p-5 border border-gray-100 flex items-center gap-4 hover:border-red-100 group transition-all text-left">
-                                    <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-500 group-hover:bg-red-50 group-hover:text-[#dc2626] transition-colors">
-                                        <TrendingUp className="h-5 w-5" />
-                                    </div>
-                                    <span className="font-bold text-sm">Generate Report</span>
-                                    <ChevronRight className="h-4 w-4 text-gray-300 ml-auto group-hover:translate-x-1" />
-                                </button>
-                            </div>
+                            <h3 className="text-lg font-black text-gray-900 tracking-tight">Revenue Analytics</h3>
+                            <p className="text-xs text-gray-400 font-medium">Historical data and growth projections</p>
                         </div>
-
-
+                        <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full">
+                            <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live View</span>
+                        </div>
                     </div>
+                    <Charts data={data?.charts || { last10Days: [], last30Days: [], last12Months: [] }} loading={loading} />
                 </div>
             </main>
-        </div >
+        </div>
     );
 }

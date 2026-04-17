@@ -7,8 +7,8 @@ import {
 import { sendNotification } from "@/lib/actions/notificationActions";
 import { sendBookingStatusEmail } from "@/lib/email";
 import { db } from "@/lib/db";
-import { booking, users } from "@/src/db/schema";
-import { eq } from "drizzle-orm";
+import { booking, users, vehicle, vehicleBrand, vehicleModel } from "@/src/db/schema";
+import { eq, desc } from "drizzle-orm";
 
 /**
  * GET /api/airport-rental/bookings?status=PENDING
@@ -83,12 +83,55 @@ export async function PATCH(req: Request) {
             const [u] = await db.select({ email: users.email, name: users.name })
                 .from(users).where(eq(users.userId, a.userId));
 
+            // Fetch vehicle details for the email
+            const [v] = await db.select({
+                brand: vehicleBrand.brandName,
+                model: vehicleModel.modelName,
+                plateNumber: vehicle.plateNumber,
+                transmission: vehicle.transmission,
+                fuelType: vehicle.fuelType,
+            })
+            .from(vehicle)
+            .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
+            .leftJoin(vehicleModel, eq(vehicle.modelId, vehicleModel.modelId))
+            .where(eq(vehicle.vehicleId, a.vehicleId!));
+
+            const vehicleSpecs = v ? {
+                brand: v.brand ?? "",
+                model: v.model ?? "",
+                plateNumber: v.plateNumber,
+                transmission: v.transmission,
+                fuelType: v.fuelType,
+            } : undefined;
+
+            const bookingDetails = {
+                rentalDate: a.rentalDate || undefined,
+                pickupLocation: a.pickupLocation || undefined,
+                dropoffLocation: a.dropoffLocation || undefined,
+                totalFare: a.totalFare || undefined,
+                passengers: a.numberOfTravelers ?? undefined,
+                message: a.message || undefined
+            };
+
             if (upperStatus === "ACCEPTED") {
                 // 1. Notify Customer — in-app + email
                 if (a.userId) {
                     try { await sendNotification(a.userId, `Your Airport booking (#${id}) has been ACCEPTED.`, parseInt(id, 10), "airport-transfer"); }
                     catch (e) { console.error("Notification error:", e); }
-                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", parseInt(id, 10), "Airport Transfer", "ACCEPTED"); }
+                    try { 
+                        if (u?.email) {
+                            await sendBookingStatusEmail(
+                                u.email, 
+                                u.name ?? "Customer", 
+                                parseInt(id, 10), 
+                                "Airport Transfer", 
+                                "ACCEPTED", 
+                                undefined,
+                                vehicleSpecs,
+                                bookingDetails
+                            ); 
+                        }
+                    }
                     catch (e) { console.error("Email error:", e); }
                 }
                 // 2. Notify Assigned Employee — serviceType enables navigation
@@ -103,7 +146,20 @@ export async function PATCH(req: Request) {
                 if (a.userId) {
                     try { await sendNotification(a.userId, `Your Airport booking (#${id}) has been REJECTED.`, parseInt(id, 10), "airport-transfer"); }
                     catch (e) { console.error("Notification error:", e); }
-                    try { if (u?.email) await sendBookingStatusEmail(u.email, u.name ?? "Customer", parseInt(id, 10), "Airport Transfer", "REJECTED", rejection_reason ?? undefined); }
+                    try { 
+                        if (u?.email) {
+                            await sendBookingStatusEmail(
+                                u.email, 
+                                u.name ?? "Customer", 
+                                parseInt(id, 10), 
+                                "Airport Transfer", 
+                                "REJECTED", 
+                                rejection_reason ?? undefined,
+                                vehicleSpecs,
+                                bookingDetails
+                            ); 
+                        }
+                    }
                     catch (e) { console.error("Email error:", e); }
                 }
             }

@@ -131,11 +131,10 @@ export default function AdminBookingsPage() {
 
                 <div className="flex items-center gap-3 w-full md:w-auto">
                     <div className="relative flex items-center min-w-[200px]">
-                        <ListFilter className="w-4 h-4 text-gray-500 absolute left-3" />
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value as ViewStatus)}
-                            className="block w-full pl-9 pr-8 py-2 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white cursor-pointer appearance-none"
+                            className="block w-full px-4 py-2 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white cursor-pointer appearance-none"
                         >
                             <option value="all">All Statuses</option>
                             <option value="pending">Pending</option>

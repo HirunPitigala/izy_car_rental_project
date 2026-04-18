@@ -5,6 +5,7 @@ import { vehicle, vehicleBrand, vehicleModel, serviceCategory, booking } from "@
 import { eq, sql, desc, and, ne, notInArray, or, lt, gt, lte, gte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { SERVICE_CATEGORIES } from "@/lib/constants";
+import { getSession } from "@/lib/auth";
 
 // ----------------------------------------------------------------------------
 // Helper Functions (Internal)
@@ -51,6 +52,11 @@ async function getCategory(categoryName: string) {
 
 export async function saveVehicle(data: any) {
     try {
+        const session = await getSession();
+        if (!session || session.role !== "admin") {
+            return { success: false, error: "Unauthorized. Admin access required." };
+        }
+
         // 1. Resolve Dependencies (Brand, Model, Category)
         const brandId = await getOrCreateBrand(data.brand);
         const modelId = await getOrCreateModel(brandId, data.model);
@@ -237,6 +243,10 @@ export async function getVehiclesByCategory(categoryName: string) {
 }
 
 export async function getVehicleById(id: number) {
+    if (!id || isNaN(id)) {
+        return { success: false, error: "Invalid vehicle ID provided." };
+    }
+
     try {
         const [v] = await db.select({
             vehicleId: vehicle.vehicleId,

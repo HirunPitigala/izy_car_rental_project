@@ -190,7 +190,7 @@ export default function WeddingDetailsPage() {
                                 ].map((item, i) => (
                                     <div key={i} className="flex items-center gap-3">
                                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                                        <span className="text-sm text-gray-600" dangerouslySetInnerHTML={{ __html: item }} />
+                                        <span className="text-sm text-gray-600">{item}</span>
                                     </div>
                                 ))}
                             </div>

@@ -1,11 +1,25 @@
 import { NextResponse } from "next/server";
 import { authService } from "@/src/modules/auth/auth.service";
 import { cookies } from "next/headers";
+import { isLoginRateLimited, getRetryAfterSeconds } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { email, password } = body;
+
+        // SECURITY FIX (A07): Rate limit login attempts to prevent brute-force attacks.
+        const ip =
+            request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+            request.headers.get("x-real-ip") ??
+            "unknown";
+        if (isLoginRateLimited(ip)) {
+            const retryAfter = getRetryAfterSeconds(ip);
+            return NextResponse.json(
+                { error: "Too many login attempts. Please try again later." },
+                { status: 429, headers: { "Retry-After": String(retryAfter) } }
+            );
+        }
 
         if (!email || !password) {
             return NextResponse.json(
@@ -31,9 +45,11 @@ export async function POST(request: Request) {
             });
         }
 
+        // SECURITY FIX (A02): The JWT is managed exclusively via the httpOnly cookie.
+        // Returning `token` in the response body creates a secondary exposure vector
+        // (e.g., XSS could read it from localStorage if a caller cached it).
         return NextResponse.json({
             success: true,
-            token: result.token, // Optional: return token in body if needed for mobile/other clients
             role: result.role,
             user: result.user
         });

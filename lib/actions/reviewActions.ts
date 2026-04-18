@@ -51,10 +51,11 @@ export async function submitReview(data: ReviewSubmission) {
         }
 
         // 3. Insert review
+        // SECURITY FIX (A04): Use vehicleId from the verified booking (b), not client input.
         await db.insert(review).values({
             bookingId: data.bookingId,
             userId: session.userId,
-            vehicleId: data.vehicleId,
+            vehicleId: b.vehicleId!, 
             employeeId: data.employeeId || b.assignedEmployeeId,
             rating: data.rating,
             comment: data.comment,
@@ -93,6 +94,9 @@ export async function getVehicleReviews(vehicleId: number) {
 
 export async function getVehicleRatingStats(vehicleId: number) {
     try {
+        // SECURITY NOTE (A03 — Injection): These sql<> template literals are safe
+        // because they reference Drizzle ORM column objects, NOT raw user strings.
+        // ⚠️  NEVER interpolate user-supplied input directly into sql<> blocks.
         const [stats] = await db.select({
             averageRating: sql<number>`AVG(${review.rating})`,
             totalReviews: sql<number>`COUNT(${review.reviewId})`,

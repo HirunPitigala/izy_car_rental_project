@@ -5,9 +5,20 @@ import {
     booking, vehicle, vehicleBrand, vehicleModel, users
 } from "@/src/db/schema";
 import { eq, and } from "drizzle-orm";
+import { getSession } from "@/lib/auth";
 
 export async function getAssignmentDetails(category: string, id: number, employeeId: number) {
     try {
+        const session = await getSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
+        const isAdminOrManager = session.role === "admin" || session.role === "manager";
+        const isAssignedEmployee = session.role === "employee" && session.relatedId === employeeId;
+
+        if (!isAdminOrManager && !isAssignedEmployee) {
+            return { success: false, error: "Forbidden: You do not have permission to view these assignment details." };
+        }
+
         if (category === "rent-a-car") {
             const [data] = await db.select({
                 bookingId: booking.bookingId,

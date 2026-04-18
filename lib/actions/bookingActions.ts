@@ -9,6 +9,7 @@ import { validateNIC } from "@/lib/validation";
 import { sendNotification, notifyAdmins } from "./notificationActions";
 import { sendBookingStatusEmail } from "@/lib/email";
 import { checkVehicleAvailability } from "./availabilityActions";
+import { calculateRentalPrice } from "@/lib/price-helper";
 
 // Helper to upload file to Cloudinary
 export async function saveFileToCloudinary(file: File | null, folder: string): Promise<string | null> {
@@ -58,8 +59,31 @@ export async function createBooking(formData: FormData) {
         const guaranteePhone1 = formData.get("guaranteePhone1") as string;
         const guaranteeNicNo = formData.get("guaranteeNicNo") as string;
 
-        const totalFareStr = formData.get("totalPrice") as string;
-        const totalFare = totalFareStr ? parseFloat(totalFareStr).toFixed(2) : "0.00";
+        // SECURITY FIX (A08): Never trust the client-supplied totalPrice.
+        // Always recalculate the fare from the authoritative database values.
+        // A malicious user could manipulate form data to supply any price they want.
+        const [vehicleData] = await db
+            .select({ rentPerDay: vehicle.rentPerDay, rentPerHour: vehicle.rentPerHour })
+            .from(vehicle)
+            .where(eq(vehicle.vehicleId, vehicleId));
+
+        if (!vehicleData) {
+            return { success: false, error: "Vehicle not found" };
+        }
+
+        const rentalStartTime = (formData.get("rental_start_time") as string) || "08:00";
+        const rentalEndTime   = (formData.get("rental_end_time") as string)   || "18:00";
+
+        const pricing = calculateRentalPrice(
+            rentalDate,
+            rentalStartTime,
+            returnDate,
+            rentalEndTime,
+            vehicleData.rentPerDay ?? 0,
+            vehicleData.rentPerHour ?? 0
+        );
+
+        const totalFare = pricing.totalPrice.toFixed(2);
 
         // Validate required fields
         if (!vehicleId || !userId) {
@@ -89,14 +113,6 @@ export async function createBooking(formData: FormData) {
             return { success: false, error: "This vehicle is no longer available for the selected dates. Someone else might have just booked it." };
         }
 
-        // Log data for debugging
-        console.log("Creating booking with files:", {
-            userId,
-            vehicleId,
-            licensePath,
-            idPath,
-            paymentslipPath
-        });
 
         // Insert into database — capture insertId for notification
         const [insertResult] = await (db.insert(booking) as any).values({
@@ -145,6 +161,11 @@ export async function createBooking(formData: FormData) {
 
 export async function getPendingBookings(employeeId?: number) {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager" && session.role !== "employee")) {
+            return { success: false, error: "Unauthorized" };
+        }
+
         const results = await db.select({
             bookingId: booking.bookingId,
             customerName: booking.customerFullName,
@@ -240,6 +261,11 @@ export async function getAssignedBookings(employeeId: number) {
 
 export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" | "REJECTED", formData?: FormData, assignedEmployeeId?: number) {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager" && session.role !== "employee")) {
+            return { success: false, error: "Unauthorized" };
+        }
+
         await db.update(booking)
             .set({ 
                 status: status, 
@@ -353,7 +379,11 @@ export async function updateBookingStatus(bookingId: number, status: "ACCEPTED" 
 
 export async function getBookingDocuments(bookingId: number) {
     try {
+        const session = await getSession();
+        if (!session) return { success: false, error: "Unauthorized" };
+
         const [docs] = await db.select({
+            userId: booking.userId, // Added to check ownership
             license: booking.customerDrivingLicencePdf,
             customerID: booking.customerIdPdf,
             nic: booking.guaranteeNicPdf,
@@ -364,6 +394,12 @@ export async function getBookingDocuments(bookingId: number) {
             .where(eq(booking.bookingId, bookingId));
 
         if (!docs) return { success: false, error: "Documents not found" };
+
+        // SECURITY FIX (A01 - IDOR): Only Admin, Manager, or the owning customer can see these docs.
+        const isAdminOrManager = session.role === "admin" || session.role === "manager";
+        if (!isAdminOrManager && docs.userId !== session.userId) {
+            return { success: false, error: "Forbidden: You do not have permission to view these documents." };
+        }
 
         return {
             success: true,

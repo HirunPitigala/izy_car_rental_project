@@ -7,9 +7,15 @@ import { sendBookingStatusEmail } from "@/lib/email";
 import { db } from '@/lib/db';
 import { booking, users, vehicle, vehicleBrand, vehicleModel } from '@/src/db/schema';
 import { eq } from 'drizzle-orm';
+import { getSession } from '@/lib/auth';
 
 export async function getPendingPickups(employeeId?: number) {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager" && session.role !== "employee")) {
+            return { success: false, error: "Unauthorized" };
+        }
+
         const data = await pickupService.getPickupRequestsByStatus('PENDING', employeeId);
         // Convert distanceKm and price to number if they are strings from DB
         const processed = data.map(item => ({
@@ -26,6 +32,11 @@ export async function getPendingPickups(employeeId?: number) {
 
 export async function getAssignedPickups(employeeId: number) {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager" && session.role !== "employee")) {
+            return { success: false, error: "Unauthorized" };
+        }
+
         const data = await pickupService.getPickupRequestsByStatus('ACCEPTED', employeeId);
         // Convert distanceKm and price to number if they are strings from DB
         const processed = data.map(item => ({
@@ -42,6 +53,11 @@ export async function getAssignedPickups(employeeId: number) {
 
 export async function updatePickupStatus(id: number, status: 'ACCEPTED' | 'REJECTED', reason?: string, assignedEmployeeId?: number) {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager" && session.role !== "employee")) {
+            return { success: false, error: "Unauthorized" };
+        }
+
         await pickupService.updatePickupRequestStatus(id, status, reason, assignedEmployeeId);
         revalidatePath('/admin/bookings/requested');
         revalidatePath('/employee/assigned');

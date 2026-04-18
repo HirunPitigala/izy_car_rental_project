@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1775803917011,
-      "tag": "0000_remarkable_smiling_tiger",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1775809874423,
-      "tag": "0001_purple_silverclaw",
+      "when": 1776412256552,
+      "tag": "0000_setup_db",
       "breakpoints": true
     }
   ]

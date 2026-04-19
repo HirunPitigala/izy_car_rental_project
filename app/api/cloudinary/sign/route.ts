@@ -63,7 +63,10 @@ export async function POST(req: Request) {
             folder: requestedFolder,
         });
 
-        return NextResponse.json(signatureData);
+        return NextResponse.json({
+            ...signatureData,
+            folder: requestedFolder // Return normalized folder for client to use
+        });
     } catch (error) {
         console.error('Cloudinary Sign Error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

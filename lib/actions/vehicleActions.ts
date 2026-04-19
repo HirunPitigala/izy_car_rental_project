@@ -176,6 +176,9 @@ export async function getAvailableVehicles(startDate: string, startTime: string,
             image: vehicle.vehicleImage,
             description: vehicle.description,
             pricePerKm: vehicle.pricePerKm,
+            isLocked: vehicle.isLocked,
+            lockedBy: vehicle.lockedBy,
+            lockExpiresAt: vehicle.lockExpiresAt,
         })
             .from(vehicle)
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
@@ -227,6 +230,9 @@ export async function getVehiclesByCategory(categoryName: string) {
             chassisNumber: vehicle.chassisNumber,
             pricePerKm: vehicle.pricePerKm,
             createdAt: vehicle.createdAt,
+            isLocked: vehicle.isLocked,
+            lockedBy: vehicle.lockedBy,
+            lockExpiresAt: vehicle.lockExpiresAt,
         })
             .from(vehicle)
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))
@@ -274,6 +280,9 @@ export async function getVehicleById(id: number) {
             description: vehicle.description,
             chassisNumber: vehicle.chassisNumber,
             pricePerKm: vehicle.pricePerKm,
+            isLocked: vehicle.isLocked,
+            lockedBy: vehicle.lockedBy,
+            lockExpiresAt: vehicle.lockExpiresAt,
         })
             .from(vehicle)
             .leftJoin(vehicleBrand, eq(vehicle.brandId, vehicleBrand.brandId))

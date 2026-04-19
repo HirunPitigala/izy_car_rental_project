@@ -21,6 +21,7 @@ import BookingSummary from "@/components/rent/BookingSummary";
 import ReviewList from "@/components/customer/ReviewList";
 import { getVehicleById } from "@/lib/actions/vehicleActions";
 import { calculateRentalPrice } from "@/lib/price-helper";
+import { lockVehicle } from "@/lib/actions/lockActions";
 
 interface VehicleDetail {
     brand: string | null;
@@ -34,6 +35,9 @@ interface VehicleDetail {
     luggageCapacity: number;
     image: string | null;
     description: string | null;
+    isLocked?: boolean | null;
+    lockedBy?: number | null;
+    lockExpiresAt?: Date | string | null;
 }
 
 function VehicleDetailsContent() {
@@ -45,6 +49,9 @@ function VehicleDetailsContent() {
     const [vehicle, setVehicle] = useState<VehicleDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const [isLocking, setIsLocking] = useState(false);
+    const [lockingError, setLockingError] = useState<string | null>(null);
 
     const startDate = searchParams.get("rental_start_date") || "";
     const startTime = searchParams.get("rental_start_time") || "";
@@ -262,16 +269,48 @@ function VehicleDetailsContent() {
                         />
 
                         {/* CTA */}
+                        {lockingError && (
+                            <div className="mt-2 p-3 bg-red-50 text-red-600 text-xs rounded-lg border border-red-100">
+                                {lockingError}
+                            </div>
+                        )}
                         <button
-                            onClick={() =>
-                                router.push(
-                                    `/rent/agreement?${searchParams.toString()}&vehicleId=${vehicleId}&totalPrice=${totalPrice}`
-                                )
-                            }
-                            className="w-full mt-4 h-11 bg-gray-900 hover:bg-red-600 text-white font-semibold rounded-lg transition-all text-sm flex items-center justify-center gap-2 group active:scale-[0.98]"
+                            onClick={async () => {
+                                setIsLocking(true);
+                                setLockingError(null);
+                                const res = await lockVehicle(parseInt(vehicleId));
+                                setIsLocking(false);
+
+                                if (res.success) {
+                                    router.push(`/rent/agreement?${searchParams.toString()}&vehicleId=${vehicleId}&totalPrice=${totalPrice}`);
+                                } else {
+                                    if (res.error === "Authentication required to lock a vehicle.") {
+                                        router.push("/login");
+                                    } else {
+                                        setLockingError(res.error || "Failed to lock vehicle.");
+                                    }
+                                }
+                            }}
+                            disabled={isLocking || (() => {
+                                if (!vehicle.isLocked) return false;
+                                if (!vehicle.lockExpiresAt) return false;
+                                const isLockExpired = new Date(vehicle.lockExpiresAt) < new Date();
+                                return !isLockExpired; // If not expired, it's disabled.
+                            })()}
+                            className="w-full mt-4 h-11 bg-gray-900 focus:outline-none hover:bg-red-600 disabled:opacity-50 disabled:hover:bg-gray-900 text-white font-semibold rounded-lg transition-all text-sm flex items-center justify-center gap-2 group active:scale-[0.98]"
                         >
-                            Complete Reservation
-                            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                            {isLocking ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Locking...
+                                </>
+                            ) : (() => {
+                                if (vehicle.isLocked && vehicle.lockExpiresAt && new Date(vehicle.lockExpiresAt) >= new Date()) {
+                                    return "Temporarily Unavailable";
+                                }
+                                return "Complete Reservation";
+                            })()}
+                            {!isLocking && <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />}
                         </button>
 
                         {/* Info note */}

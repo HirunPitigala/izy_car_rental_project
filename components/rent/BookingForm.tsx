@@ -23,6 +23,8 @@ import { createBooking } from "@/lib/actions/bookingActions";
 import { getVehicleById } from "@/lib/actions/vehicleActions";
 import { validateNIC, validateAddress } from "@/lib/validation";
 import { uploadFileToCloudinary } from "@/lib/utils/cloudinaryClient";
+import { unlockVehicle } from "@/lib/actions/lockActions";
+import { Clock } from "lucide-react";
 
 // ─── Country data ──────────────────────────────────────────────────────────────
 interface Country {
@@ -183,6 +185,98 @@ function FieldSuccess({ message }: { message?: string }) {
     return <p className="text-xs text-emerald-600 font-medium pl-0.5 mt-1">{message}</p>;
 }
 
+// ─── Step indicator ───
+const renderStepIndicatorChild = (step: number) => (
+    <div className="flex items-center justify-between max-w-lg mx-auto mb-10 relative">
+        <div className="absolute left-0 top-5 w-full h-px bg-gray-100 -z-10" />
+        {STEPS.map(s => (
+            <div key={s.n} className="flex flex-col items-center gap-2">
+                <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 border text-sm ${
+                        step >= s.n
+                            ? "bg-gray-900 text-white border-gray-900"
+                            : "bg-white text-gray-300 border-gray-200"
+                    }`}
+                >
+                    {step > s.n ? <Check className="w-4 h-4" /> : <s.icon className="w-4 h-4" />}
+                </div>
+                <span
+                    className={`text-[9px] font-bold uppercase tracking-widest ${
+                        step >= s.n ? "text-gray-800" : "text-gray-300"
+                    }`}
+                >
+                    {s.label}
+                </span>
+            </div>
+        ))}
+    </div>
+);
+
+// ─── Shared continue button ───
+const ContinueButton = ({
+    label = "Continue",
+    disabled = false,
+}: {
+    label?: string;
+    disabled?: boolean;
+}) => (
+    <button
+        type="submit"
+        disabled={disabled}
+        className="inline-flex items-center gap-2 px-8 h-10 bg-gray-900 hover:bg-red-600 text-white font-semibold rounded-xl transition-all active:scale-95 text-sm disabled:opacity-40 disabled:cursor-not-allowed group"
+    >
+        {label}
+        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+    </button>
+);
+
+// ─── File upload tile ───
+const FileUploadTile = ({
+    label,
+    file,
+    type,
+    onFileChange,
+}: {
+    label: string;
+    file: File | null;
+    type: string;
+    onFileChange: (e: React.ChangeEvent<HTMLInputElement>, type: any) => void;
+}) => (
+    <label className="block border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-gray-400 hover:bg-gray-50 transition-all cursor-pointer group">
+        <input
+            type="file"
+            className="hidden"
+            onChange={e => onFileChange(e, type)}
+            accept=".pdf,.png,.jpg,.jpeg"
+        />
+        <div className="flex flex-col items-center gap-3">
+            <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
+                    file ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-400 group-hover:scale-110"
+                }`}
+            >
+                {file ? <Check className="w-5 h-5" /> : <Upload className="w-5 h-5" />}
+            </div>
+            <div>
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    {file ? file.name : label}
+                </p>
+                {!file && (
+                    <p className="text-[10px] text-gray-400 mt-0.5">PDF, PNG, JPG</p>
+                )}
+            </div>
+        </div>
+    </label>
+);
+
+// ─── Section heading ───
+const SectionHeading = ({ children }: { children: React.ReactNode }) => (
+    <div className="flex items-center gap-3 mb-6">
+        <h2 className="text-lg font-bold text-gray-900 tracking-tight">{children}</h2>
+        <div className="h-px flex-1 bg-gray-100" />
+    </div>
+);
+
 // ─── Shared input class ───────────────────────────────────────────────────────
 function inputClass(error?: boolean, success?: boolean) {
     const base =
@@ -230,6 +324,35 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
     const [step, setStep] = useState(1);
     const [error, setError] = useState<string | null>(null);
     const [vehicle, setVehicle] = useState<any>(null);
+    
+    // 10-minute countdown for vehicle lock
+    const [timeLeft, setTimeLeft] = useState(600);
+
+    useEffect(() => {
+        if (timeLeft <= 0) {
+            // Timer expired
+            if (searchParams.vehicleId) {
+                unlockVehicle(parseInt(searchParams.vehicleId)).finally(() => {
+                    alert("Booking time expired. The vehicle is no longer locked.");
+                    router.push(`/rent/results?${new URLSearchParams(searchParams).toString()}`);
+                });
+            }
+            return;
+        }
+
+        const timerId = setInterval(() => {
+            setTimeLeft(prev => prev - 1);
+        }, 1000);
+
+        return () => clearInterval(timerId);
+    }, [timeLeft, searchParams, router]);
+
+    // Format mm:ss
+    const formatTimeLeft = () => {
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        return `${m}:${s.toString().padStart(2, "0")}`;
+    };
 
     // Form state — fullName always starts empty (no "New Customer" default)
     const [formData, setFormData] = useState({
@@ -420,97 +543,7 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
     };
 
     // ── Step indicator ──
-    const renderStepIndicator = () => (
-        <div className="flex items-center justify-between max-w-lg mx-auto mb-10 relative">
-            <div className="absolute left-0 top-5 w-full h-px bg-gray-100 -z-10" />
-            {STEPS.map(s => (
-                <div key={s.n} className="flex flex-col items-center gap-2">
-                    <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 border text-sm ${
-                            step >= s.n
-                                ? "bg-gray-900 text-white border-gray-900"
-                                : "bg-white text-gray-300 border-gray-200"
-                        }`}
-                    >
-                        {step > s.n ? <Check className="w-4 h-4" /> : <s.icon className="w-4 h-4" />}
-                    </div>
-                    <span
-                        className={`text-[9px] font-bold uppercase tracking-widest ${
-                            step >= s.n ? "text-gray-800" : "text-gray-300"
-                        }`}
-                    >
-                        {s.label}
-                    </span>
-                </div>
-            ))}
-        </div>
-    );
-
-    // ── Shared continue button ──
-    const ContinueButton = ({
-        label = "Continue",
-        disabled = false,
-    }: {
-        label?: string;
-        disabled?: boolean;
-    }) => (
-        <button
-            type="submit"
-            disabled={disabled}
-            className="inline-flex items-center gap-2 px-8 h-10 bg-gray-900 hover:bg-red-600 text-white font-semibold rounded-xl transition-all active:scale-95 text-sm disabled:opacity-40 disabled:cursor-not-allowed group"
-        >
-            {label}
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-        </button>
-    );
-
-    // ── File upload tile ──
-    const FileUploadTile = ({
-        label,
-        file,
-        type,
-        required,
-    }: {
-        label: string;
-        file: File | null;
-        type: keyof typeof files;
-        required?: boolean;
-    }) => (
-        <label className="block border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-gray-400 hover:bg-gray-50 transition-all cursor-pointer group">
-            {/* No native required — file inputs can't be pre-filled; validate manually */}
-            <input
-                type="file"
-                className="hidden"
-                onChange={e => handleFileChange(e, type)}
-                accept=".pdf,.png,.jpg,.jpeg"
-            />
-            <div className="flex flex-col items-center gap-3">
-                <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-                        file ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-400 group-hover:scale-110"
-                    }`}
-                >
-                    {file ? <Check className="w-5 h-5" /> : <Upload className="w-5 h-5" />}
-                </div>
-                <div>
-                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        {file ? file.name : label}
-                    </p>
-                    {!file && (
-                        <p className="text-[10px] text-gray-400 mt-0.5">PDF, PNG, JPG</p>
-                    )}
-                </div>
-            </div>
-        </label>
-    );
-
-    // ── Section heading ──
-    const SectionHeading = ({ children }: { children: React.ReactNode }) => (
-        <div className="flex items-center gap-3 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 tracking-tight">{children}</h2>
-            <div className="h-px flex-1 bg-gray-100" />
-        </div>
-    );
+    const renderStepIndicator = () => renderStepIndicatorChild(step);
 
     return (
         <div className="max-w-3xl mx-auto bg-white min-h-[90vh] pb-16 pt-8">
@@ -535,6 +568,14 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
                     </div>
                 </div>
             </header>
+
+            {/* Timer Banner */}
+            <div className="mb-6 flex items-center justify-center gap-2 bg-red-50 border border-red-100 py-2 px-4 rounded-full max-w-max mx-auto shadow-sm">
+                <Clock className="w-4 h-4 text-red-600 animate-pulse" />
+                <span className="text-xs font-bold text-red-700">
+                    Vehicle held for <span className="font-mono text-sm tracking-widest">{formatTimeLeft()}</span>
+                </span>
+            </div>
 
             {renderStepIndicator()}
 
@@ -664,11 +705,13 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
                                 label="ID Document (NIC / Passport)"
                                 file={files.idDocument}
                                 type="idDocument"
+                                onFileChange={handleFileChange}
                             />
                             <FileUploadTile
                                 label="Driving License"
                                 file={files.license}
                                 type="license"
+                                onFileChange={handleFileChange}
                             />
                         </div>
                     </div>
@@ -783,11 +826,13 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
                                 label="Guarantor NIC Copy"
                                 file={files.guaranteeNic}
                                 type="guaranteeNic"
+                                onFileChange={handleFileChange}
                             />
                             <FileUploadTile
                                 label="Guarantor Driving License"
                                 file={files.guaranteeLicense}
                                 type="guaranteeLicense"
+                                onFileChange={handleFileChange}
                             />
                         </div>
                     </div>
@@ -1099,7 +1144,7 @@ export default function BookingForm({ searchParams, user }: BookingFormProps) {
                             label="Upload Payment Slip"
                             file={files.paymentslip}
                             type="paymentslip"
-                            required
+                            onFileChange={handleFileChange}
                         />
                         {!files.paymentslip && error && error.includes("Payment slip") && (
                             <FieldError message="Please upload your payment slip to continue." />

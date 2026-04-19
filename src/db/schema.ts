@@ -289,6 +289,9 @@ export const vehicle = mysqlTable("vehicle", {
 	createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`),
 	updatedAt: datetime("updated_at").default(sql`CURRENT_TIMESTAMP`).$onUpdate(() => new Date()),
 	status: varchar("status", { length: 20 }).default("AVAILABLE"),
+	isLocked: boolean("is_locked").default(false),
+	lockedBy: int("locked_by").references(() => users.userId, { onDelete: 'set null' }),
+	lockExpiresAt: datetime("lock_expires_at"),
 },
 	(table) => [
 		primaryKey({ columns: [table.vehicleId], name: "vehicle_pk" }),

@@ -19,10 +19,8 @@ export async function saveFileToCloudinary(file: File | null, folder: string): P
         const buffer = Buffer.from(await file.arrayBuffer());
         const { uploadToCloudinary } = await import("@/lib/cloudinary");
         
-        // Use 'image' for PDFs as Cloudinary handles them as documents this way, 
-        // allowing browser viewing and transformations. 'raw' often forces download.
-        const isPDF = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
-        const resourceType = isPDF ? "image" : "image"; 
+        // Use 'auto' to let Cloudinary detect the file type (PDF, image, etc.)
+        const resourceType = "auto"; 
         
         const result = await uploadToCloudinary(buffer, `bookings/${folder}`, resourceType);
         return result.secure_url;
@@ -63,7 +61,13 @@ export async function createBooking(formData: FormData) {
         // Always recalculate the fare from the authoritative database values.
         // A malicious user could manipulate form data to supply any price they want.
         const [vehicleData] = await db
-            .select({ rentPerDay: vehicle.rentPerDay, rentPerHour: vehicle.rentPerHour })
+            .select({ 
+                rentPerDay: vehicle.rentPerDay, 
+                rentPerHour: vehicle.rentPerHour,
+                isLocked: vehicle.isLocked,
+                lockedBy: vehicle.lockedBy,
+                lockExpiresAt: vehicle.lockExpiresAt
+            })
             .from(vehicle)
             .where(eq(vehicle.vehicleId, vehicleId));
 
@@ -71,14 +75,18 @@ export async function createBooking(formData: FormData) {
             return { success: false, error: "Vehicle not found" };
         }
 
-        const rentalStartTime = (formData.get("rental_start_time") as string) || "08:00";
-        const rentalEndTime   = (formData.get("rental_end_time") as string)   || "18:00";
+        // Extract date and time parts from "YYYY-MM-DD HH:MM:SS"
+        const startDateOnly = rentalDate ? rentalDate.split(" ")[0] : "";
+        const startTimeOnly = rentalDate ? rentalDate.split(" ")[1]?.substring(0, 5) : "08:00";
+        
+        const returnDateOnly = returnDate ? returnDate.split(" ")[0] : "";
+        const returnTimeOnly = returnDate ? returnDate.split(" ")[1]?.substring(0, 5) : "18:00";
 
         const pricing = calculateRentalPrice(
-            rentalDate,
-            rentalStartTime,
-            returnDate,
-            rentalEndTime,
+            startDateOnly,
+            startTimeOnly,
+            returnDateOnly,
+            returnTimeOnly,
             vehicleData.rentPerDay ?? 0,
             vehicleData.rentPerHour ?? 0
         );
@@ -113,6 +121,13 @@ export async function createBooking(formData: FormData) {
             return { success: false, error: "This vehicle is no longer available for the selected dates. Someone else might have just booked it." };
         }
 
+        const now = new Date();
+        const isLockExpired = vehicleData.lockExpiresAt ? new Date(vehicleData.lockExpiresAt) < now : false;
+        
+        if (vehicleData.isLocked && !isLockExpired && vehicleData.lockedBy !== userId) {
+            return { success: false, error: "This vehicle is currently locked by another user." };
+        }
+
 
         // Insert into database — capture insertId for notification
         const [insertResult] = await (db.insert(booking) as any).values({
@@ -140,6 +155,11 @@ export async function createBooking(formData: FormData) {
             terms2Confirmation: true,
             paymentslip: paymentslipPath,
         });
+
+        // Clear the temporary lock since the booking is now physically created
+        await db.update(vehicle)
+            .set({ isLocked: false, lockedBy: null, lockExpiresAt: null })
+            .where(eq(vehicle.vehicleId, vehicleId));
 
         const newBookingId: number | undefined = (insertResult as any)?.insertId;
 

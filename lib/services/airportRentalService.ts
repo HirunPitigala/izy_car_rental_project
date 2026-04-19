@@ -12,6 +12,7 @@ import { eq, and, gte, sql, or, notInArray } from "drizzle-orm";
 import { getAvailableVehicles } from "@/lib/actions/vehicleActions";
 import { SERVICE_CATEGORIES } from "@/lib/constants";
 import { checkVehicleAvailability } from "../actions/availabilityActions";
+import { getSession } from "@/lib/auth";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -138,6 +139,20 @@ export async function createAirportBooking(data: AirportBookingData) {
         throw new Error("This vehicle is no longer available for the selected time slot.");
     }
 
+    // 1.5 Check vehicle lock — block if locked by a different user
+    const now2 = new Date();
+    const [vLock] = await db.select({
+        isLocked: vehicle.isLocked,
+        lockedBy: vehicle.lockedBy,
+        lockExpiresAt: vehicle.lockExpiresAt,
+    }).from(vehicle).where(eq(vehicle.vehicleId, data.vehicleId));
+
+    if (vLock && vLock.isLocked && vLock.lockExpiresAt && new Date(vLock.lockExpiresAt) > now2) {
+        if (vLock.lockedBy !== data.customerId) {
+            throw new Error("This vehicle is currently being booked by another user. Please try again in a few minutes.");
+        }
+    }
+
     // 1. Get Service Category ID for "Airport Rental"
     const categories = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, SERVICE_CATEGORIES.AIRPORT_RENTAL));
     const categoryId = categories[0]?.categoryId;
@@ -186,7 +201,14 @@ export async function createAirportBooking(data: AirportBookingData) {
         paymentslip: data.paymentslip,
     });
 
-    return (result as any).insertId as number;
+    const bookingId = (result as any).insertId as number;
+
+    // Release vehicle lock after successful booking
+    await db.update(vehicle)
+        .set({ isLocked: false, lockedBy: null, lockExpiresAt: null })
+        .where(eq(vehicle.vehicleId, data.vehicleId));
+
+    return bookingId;
 }
 
 /**

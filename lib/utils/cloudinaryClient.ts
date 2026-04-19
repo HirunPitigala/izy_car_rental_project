@@ -8,9 +8,8 @@ export async function uploadFileToCloudinary(
 ): Promise<string> {
     try {
         // 1. Get signed configuration from our own API
-        // We use 'image' for PDFs as Cloudinary handles them better as viewable docs this way
-        const isPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-        const resourceType = 'image'; // Set to image for both images and pdfs as per our backend strategy
+        // Use 'auto' to let Cloudinary detect the file type (PDF, image, etc.)
+        const resourceType = 'auto'; 
 
         const signResponse = await fetch('/api/cloudinary/sign', {
             method: 'POST',
@@ -25,8 +24,7 @@ export async function uploadFileToCloudinary(
             throw new Error('Failed to get Cloudinary signature');
         }
 
-        const { signature, timestamp, apiKey, cloudName, debugStringToSign } = await signResponse.json();
-        console.log("ANTIGRAVITY DEBUG - Server String to Sign:", debugStringToSign);
+        const { signature, timestamp, apiKey, cloudName, folder: signedFolder } = await signResponse.json();
 
         // 2. Prepare Form Data for Cloudinary
         const formData = new FormData();
@@ -34,7 +32,7 @@ export async function uploadFileToCloudinary(
         formData.append('signature', signature);
         formData.append('timestamp', timestamp.toString());
         formData.append('api_key', apiKey);
-        formData.append('folder', folder);
+        formData.append('folder', signedFolder);
 
         // 3. Upload to Cloudinary
         const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;

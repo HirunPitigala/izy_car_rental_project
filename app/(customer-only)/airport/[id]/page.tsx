@@ -6,11 +6,13 @@ import { useState, useEffect, Suspense } from "react";
 import {
     ArrowLeft, Users, Fuel, Gauge, Plane, Briefcase,
     MapPin, Clock, ShieldCheck, CheckCircle2, AlertCircle,
-    Phone, User as UserIcon, Loader2, Info, ChevronRight
+    Phone, User as UserIcon, Loader2, Info, ChevronRight, Lock
 } from "lucide-react";
 import { validateAddress } from "@/lib/validation";
 import { uploadFileToCloudinary } from "@/lib/utils/cloudinaryClient";
 import Link from "next/link";
+import { lockVehicle, unlockVehicle } from "@/lib/actions/lockActions";
+import { checkVehicleAvailability } from "@/lib/actions/availabilityActions";
 
 interface AirportVehicle {
     vehicleId: number;
@@ -66,6 +68,11 @@ function AirportDetailContent() {
     const [submitSuccess, setSubmitSuccess] = useState(false);
     const [paymentslip, setPaymentslip] = useState<File | null>(null);
 
+    // ── Lock state ──────────────────────────────────────────────
+    const [lockStatus, setLockStatus] = useState<"locking" | "locked" | "unavailable" | "idle">("idle");
+    const [lockError, setLockError] = useState<string | null>(null);
+    const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
+
     useEffect(() => {
         const fetchVehicle = async () => {
             try {
@@ -87,6 +94,80 @@ function AirportDetailContent() {
         };
         fetchVehicle();
     }, [vehicleId, passengers, luggage]);
+
+    // ── Auto-lock when vehicle data is ready ────────────────────
+    useEffect(() => {
+        if (!vehicle) return;
+        let cancelled = false;
+
+        const acquireLock = async () => {
+            setLockStatus("locking");
+            setLockError(null);
+
+            // 1. Check actual availability for the requested slot
+            const transferDate = transferType === "pickup" ? pickupDate : dropDate;
+            const transferTimeStr = transferType === "pickup" ? pickupTime : dropTime;
+            const rentalDate = transferDate ? new Date(`${transferDate}T${transferTimeStr || "00:00"}`) : new Date();
+            // Standard 4-hour window for airport transfers
+            const checkEnd = new Date(rentalDate.getTime() + 4 * 60 * 60 * 1000);
+
+            try {
+                const isAvailable = await checkVehicleAvailability(vehicle.vehicleId, rentalDate, checkEnd);
+                if (!isAvailable) {
+                    setLockStatus("unavailable");
+                    setLockError("This vehicle is no longer available for the selected time slot.");
+                    return;
+                }
+
+                // 2. Acquire temporary lock
+                const res = await lockVehicle(vehicle.vehicleId);
+                if (cancelled) return;
+                
+                if (res.success) {
+                    setLockStatus("locked");
+                    setTimeLeft(600);
+                } else {
+                    setLockStatus("unavailable");
+                    setLockError(res.error || "This vehicle is temporarily unavailable.");
+                }
+            } catch (err: any) {
+                setLockStatus("unavailable");
+                setLockError(err.message || "Failed to verify availability.");
+            }
+        };
+
+        acquireLock();
+
+        return () => { cancelled = true; };
+    }, [vehicle]);
+
+    // ── Countdown timer ─────────────────────────────────────────
+    useEffect(() => {
+        if (lockStatus !== "locked") return;
+        if (timeLeft <= 0) {
+            unlockVehicle(vehicle!.vehicleId).finally(() => {
+                setLockStatus("unavailable");
+                setLockError("Your 10-minute hold has expired. Please go back and search again.");
+            });
+            return;
+        }
+        const id = setInterval(() => setTimeLeft(t => t - 1), 1000);
+        return () => clearInterval(id);
+    }, [lockStatus, timeLeft]);
+
+    const formatTimeLeft = () => {
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        return `${m}:${s.toString().padStart(2, "0")}`;
+    };
+
+    // Unlock when user navigates away
+    const handleBack = () => {
+        if (lockStatus === "locked" && vehicle) {
+            unlockVehicle(vehicle.vehicleId);
+        }
+        router.back();
+    };
 
     const validateForm = (): boolean => {
         const e: FormErrors = {};
@@ -163,6 +244,7 @@ function AirportDetailContent() {
         );
     }
 
+    // Back button — release lock
     if (!vehicle) {
         return (
             <div className="container mx-auto px-6 py-24 text-center">
@@ -174,17 +256,40 @@ function AirportDetailContent() {
         );
     }
 
+    const formDisabled = lockStatus !== "locked" || submitting;
+
     return (
         <div className="container mx-auto px-4 sm:px-6 py-8">
             {/* Back link */}
             <button
-                onClick={() => router.back()}
+                onClick={handleBack}
                 className="inline-flex items-center gap-2 text-xs font-medium text-gray-400 hover:text-gray-800 transition-colors mb-6 group"
             >
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
                 Back to airport fleet
             </button>
 
+            {/* Lock status banners */}
+            {lockStatus === "locking" && (
+                <div className="mb-4 flex items-center gap-2 bg-blue-50 border border-blue-100 py-2 px-4 rounded-full max-w-max">
+                    <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                    <span className="text-xs font-bold text-blue-700">Securing your vehicle hold...</span>
+                </div>
+            )}
+            {lockStatus === "locked" && (
+                <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-100 py-2 px-4 rounded-full max-w-max">
+                    <Clock className="w-4 h-4 text-red-600 animate-pulse" />
+                    <span className="text-xs font-bold text-red-700">
+                        Vehicle held for <span className="font-mono text-sm tracking-widest">{formatTimeLeft()}</span>
+                    </span>
+                </div>
+            )}
+            {lockStatus === "unavailable" && lockError && (
+                <div className="mb-4 flex items-center gap-3 bg-amber-50 border border-amber-200 py-2 px-4 rounded-xl max-w-max">
+                    <Lock className="w-4 h-4 text-amber-600" />
+                    <span className="text-xs font-bold text-amber-800">{lockError}</span>
+                </div>
+            )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left: Vehicle Details */}
                 <div className="lg:col-span-2 space-y-5">
@@ -338,7 +443,20 @@ function AirportDetailContent() {
                         <section className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
                             <h3 className="text-sm font-semibold text-gray-800 mb-4">Your Details</h3>
 
-                            {submitSuccess ? (
+                            {lockStatus === "unavailable" ? (
+                                <div className="py-8 text-center space-y-3">
+                                    <Lock className="w-10 h-10 text-amber-400 mx-auto" />
+                                    <p className="text-sm font-semibold text-amber-700">
+                                        {lockError || "This vehicle is temporarily held by another user."}
+                                    </p>
+                                    <button
+                                        onClick={handleBack}
+                                        className="mt-2 text-xs font-bold text-gray-500 hover:text-gray-900 underline transition-colors"
+                                    >
+                                        Go back and choose another vehicle
+                                    </button>
+                                </div>
+                            ) : submitSuccess ? (
                                 <div className="text-center py-8">
                                     <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
                                     <h4 className="text-base font-bold text-gray-900 mb-2">Booking Submitted!</h4>
@@ -448,8 +566,8 @@ function AirportDetailContent() {
 
                                     <button
                                         type="submit"
-                                        disabled={submitting}
-                                        className="w-full h-11 bg-gray-900 hover:bg-red-600 text-white font-semibold rounded-lg transition-all text-sm flex items-center justify-center gap-2 group active:scale-[0.98] disabled:opacity-50"
+                                        disabled={formDisabled}
+                                        className="w-full h-11 bg-gray-900 hover:bg-red-600 text-white font-semibold rounded-lg transition-all text-sm flex items-center justify-center gap-2 group active:scale-[0.98] disabled:opacity-50 disabled:hover:bg-gray-900"
                                     >
                                         {submitting ? (
                                             <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>

@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { employee, users } from "@/src/db/schema";
 import { asc, eq } from "drizzle-orm";
+import { getSession } from "@/lib/auth";
 
 /**
  * Fetches all employees from the database, ordered by name.
@@ -10,6 +11,11 @@ import { asc, eq } from "drizzle-orm";
  */
 export async function getAllEmployees() {
     try {
+        const session = await getSession();
+        if (!session || session.role !== "admin") {
+            return { success: false, error: "Unauthorized" };
+        }
+
         const results = await db.select({
             employeeId: employee.employeeId,
             name: employee.name,
@@ -29,6 +35,11 @@ export async function getAllEmployees() {
 
 export async function updateEmployeeStatus(employeeId: number, status: string) {
     try {
+        const session = await getSession();
+        if (!session || session.role !== "admin") {
+            return { success: false, error: "Unauthorized" };
+        }
+
         await db.update(employee)
             .set({ status })
             .where(eq(employee.employeeId, employeeId));
@@ -59,6 +70,11 @@ export async function updateEmployeeStatus(employeeId: number, status: string) {
 
 export async function deleteEmployee(employeeId: number) {
     try {
+        const session = await getSession();
+        if (!session || session.role !== "admin") {
+            return { success: false, error: "Unauthorized" };
+        }
+
         // Find employee email first to delete user record
         const [emp] = await db.select().from(employee).where(eq(employee.employeeId, employeeId));
         

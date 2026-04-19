@@ -12,6 +12,7 @@ import { eq, and, gte, sql } from "drizzle-orm";
 import { SERVICE_CATEGORIES } from "@/lib/constants";
 import { checkVehicleAvailability } from "../actions/availabilityActions";
 
+
 // ──────────────────────────────────────────────────────────────
 // Types
 // ──────────────────────────────────────────────────────────────
@@ -102,7 +103,13 @@ export async function searchAvailablePickupVehicles(
             and(
                 eq(serviceCategory.categoryName, SERVICE_CATEGORIES.PICKUPS),
                 eq(vehicle.status, "AVAILABLE"),
-                gte(vehicle.seatingCapacity, travelers)
+                gte(vehicle.seatingCapacity, travelers),
+                // Exclude vehicles that are actively locked by another user
+                sql`(
+                    ${vehicle.isLocked} = 0
+                    OR ${vehicle.lockExpiresAt} IS NULL
+                    OR ${vehicle.lockExpiresAt} < NOW()
+                )`
             )
         );
 
@@ -166,6 +173,20 @@ export async function createPickupBooking(data: PickupBookingData) {
         throw new Error("This vehicle is no longer available for the selected dates.");
     }
 
+    // 0.5 Check vehicle lock — block if locked by a different user
+    const now = new Date();
+    const [vLock] = await db.select({
+        isLocked: vehicle.isLocked,
+        lockedBy: vehicle.lockedBy,
+        lockExpiresAt: vehicle.lockExpiresAt,
+    }).from(vehicle).where(eq(vehicle.vehicleId, data.vehicleId));
+
+    if (vLock && vLock.isLocked && vLock.lockExpiresAt && new Date(vLock.lockExpiresAt) > now) {
+        if (vLock.lockedBy !== data.customerId) {
+            throw new Error("This vehicle is currently being booked by another user. Please try again in a few minutes.");
+        }
+    }
+
     const categoryId = await getPickupCategoryId();
 
     const [result] = await db.insert(booking).values({
@@ -199,8 +220,16 @@ export async function createPickupBooking(data: PickupBookingData) {
         paymentslip: data.paymentslip,
     });
 
-    return (result as any).insertId as number;
+    const bookingId = (result as any).insertId as number;
+
+    // Release vehicle lock after successful booking
+    await db.update(vehicle)
+        .set({ isLocked: false, lockedBy: null, lockExpiresAt: null })
+        .where(eq(vehicle.vehicleId, data.vehicleId));
+
+    return bookingId;
 }
+
 
 // ──────────────────────────────────────────────────────────────
 // Read / Update

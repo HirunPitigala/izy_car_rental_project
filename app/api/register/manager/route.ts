@@ -1,8 +1,19 @@
 import { NextResponse } from "next/server";
 import { authService } from "@/src/modules/auth/auth.service";
+import { getSession } from "@/lib/auth";
 
 export async function POST(req: Request) {
     try {
+        // SECURITY FIX (A01): Only Administrators should be able to register new managers.
+        // This endpoint was previously public.
+        const session = await getSession();
+        if (!session || session.role !== "admin") {
+            return NextResponse.json(
+                { error: "Unauthorized. Only administrators can perform this action." },
+                { status: 403 }
+            );
+        }
+
         const body = await req.json();
 
         // Basic validation

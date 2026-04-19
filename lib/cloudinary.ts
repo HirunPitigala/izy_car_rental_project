@@ -83,17 +83,12 @@ export function generateCloudinarySignature(params: Record<string, any>) {
         secret
     );
 
-    const stringToSign = Object.keys({ ...params, timestamp }).sort()
-        .map(key => `${key}=${({ ...params, timestamp } as any)[key]}`)
-        .join('&');
-
-    console.log(`[Cloudinary Signature Debug] Signing: "${stringToSign}" with secret starting with: ${secret.substring(0, 4)}...`);
+    // SECURITY FIX (A05): Removed sensitive debug log that exposed part of API secret
     
     return {
         timestamp,
         signature,
         apiKey: process.env.CLOUDINARY_API_KEY,
         cloudName: process.env.CLOUDINARY_CLOUD_NAME,
-        debugStringToSign: stringToSign
     };
 }

@@ -15,27 +15,32 @@ export interface UserSession {
     };
 }
 
-import fs from "fs";
-import path from "path";
-
-const LOG_FILE = path.join(process.cwd(), "auth_debug.log");
+// ─── Debug Logging ────────────────────────────────────────────────────────────
+// SECURITY FIX (A05): Debug logging is now strictly dev-only.
+// In production, session events containing userId and role are NEVER written
+// to disk. This eliminates the risk of sensitive data being leaked via the
+// auth_debug.log file (which could be exposed or cause excessive disk I/O).
+// ─────────────────────────────────────────────────────────────────────────────
 export function logDebug(message: string) {
+    if (process.env.NODE_ENV === "production") return;
     try {
-        const timestamp = new Date().toISOString();
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const fs = require("fs") as typeof import("fs");
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const path = require("path") as typeof import("path");
         const LOG_FILE = path.join(process.cwd(), "auth_debug.log");
+        const timestamp = new Date().toISOString();
         fs.appendFileSync(LOG_FILE, `[${timestamp}] ${message}\n`);
-    } catch (e: any) {
-        // Ignore logging errors
+    } catch {
+        // Ignore logging errors silently
     }
 }
 
-// This variable will hold the encoded key once it's first retrieved
+// ─── JWT Key ──────────────────────────────────────────────────────────────────
 let _cachedKey: Uint8Array | undefined;
 
 function getSecretKey(): Uint8Array {
-    if (_cachedKey) {
-        return _cachedKey;
-    }
+    if (_cachedKey) return _cachedKey;
 
     const envSecret = process.env.JWT_SECRET;
     if (!envSecret) {
@@ -63,8 +68,8 @@ export async function decrypt(input: string): Promise<any> {
             algorithms: ["HS256"],
         });
         return payload;
-    } catch (err) {
-        console.error("decrypt: Verification failed", err);
+    } catch {
+        // Token is expired, tampered, or invalid — silent failure is correct here
         return null;
     }
 }

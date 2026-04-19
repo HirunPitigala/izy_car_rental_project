@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { vehicle, vehicleBrand, vehicleModel, serviceCategory, booking, notification, users } from "@/src/db/schema";
 import { eq, desc, and, ne, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { getSession } from "@/lib/auth";
 import { notifyAdmins, sendNotification } from "./notificationActions";
 
 import { SERVICE_CATEGORIES } from "@/lib/constants";
@@ -108,6 +109,9 @@ export async function createWeddingCarInquiry(data: {
     message?: string;
 }) {
     try {
+        const session = await getSession();
+        if (!session) return { success: false, error: "Authentication required" };
+
         // Check availability
         const eventDateObj = new Date(data.eventDate);
         const eventDateEnd = new Date(eventDateObj.getTime() + 24 * 60 * 60 * 1000 - 1000); // End of the day
@@ -154,6 +158,11 @@ export async function createWeddingCarInquiry(data: {
 
 export async function getWeddingCarInquiries() {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager")) {
+            return { success: false, error: "Unauthorized" };
+        }
+
         const results = await db.select({
             bookingId: booking.bookingId,
             customerName: booking.customerFullName,
@@ -187,6 +196,11 @@ export async function getWeddingCarInquiries() {
 
 export async function markWeddingInquiryContacted(bookingId: number) {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager")) {
+            return { success: false, error: "Unauthorized" };
+        }
+
         await db.update(booking)
             .set({ status: "WEDDING_CONTACTED" })
             .where(eq(booking.bookingId, bookingId));
@@ -207,6 +221,11 @@ export async function markWeddingInquiryContacted(bookingId: number) {
 
 export async function acceptWeddingInquiry(bookingId: number, employeeId: number) {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager")) {
+            return { success: false, error: "Unauthorized" };
+        }
+
         await db.update(booking)
             .set({ 
                 status: "ACCEPTED",
@@ -237,6 +256,11 @@ export async function acceptWeddingInquiry(bookingId: number, employeeId: number
 
 export async function getAssignedWeddingBookings(employeeId: number) {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager" && session.role !== "employee")) {
+            return { success: false, error: "Unauthorized" };
+        }
+
         const results = await db.select({
             bookingId: booking.bookingId,
             customerName: booking.customerFullName,
@@ -279,6 +303,11 @@ export async function getAssignedWeddingBookings(employeeId: number) {
 
 export async function addVehicleToWeddingCategory(vehicleId: number) {
     try {
+        const session = await getSession();
+        if (!session || session.role !== "admin") {
+            return { success: false, error: "Unauthorized" };
+        }
+
         const weddingCategoryId = await getWeddingCategoryId();
 
         await db.update(vehicle)
@@ -295,6 +324,11 @@ export async function addVehicleToWeddingCategory(vehicleId: number) {
 
 export async function removeVehicleFromWeddingCategory(vehicleId: number) {
     try {
+        const session = await getSession();
+        if (!session || session.role !== "admin") {
+            return { success: false, error: "Unauthorized" };
+        }
+
         // Get or create "Rent a Car" as the default fallback category
         const [rentCategory] = await db.select().from(serviceCategory).where(eq(serviceCategory.categoryName, "Rent a Car"));
         const fallbackCategoryId = rentCategory ? rentCategory.categoryId : 1;
@@ -314,6 +348,11 @@ export async function removeVehicleFromWeddingCategory(vehicleId: number) {
 
 export async function getNonWeddingVehicles() {
     try {
+        const session = await getSession();
+        if (!session || session.role !== "admin") {
+            return { success: false, error: "Unauthorized" };
+        }
+
         const weddingCategoryId = await getWeddingCategoryId();
 
         const vehicles = await db.select({

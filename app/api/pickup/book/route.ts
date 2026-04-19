@@ -63,17 +63,14 @@ export async function POST(req: Request) {
             is_return_trip && return_datetime ? new Date(return_datetime) : null;
 
         // ── Distance & Fare calculation ───────────────────────
-        const distanceKm: number =
-            distance_km_raw > 0
-                ? distance_km_raw
-                : estimateDistance(pickup_location, drop_location);
-
-        const resolvedPricePerKm =
-            price_per_km > 0 ? price_per_km : 100; // LKR 100/km fallback
-        const price =
-            price_raw > 0
-                ? price_raw
-                : calculateFare(distanceKm, resolvedPricePerKm, is_return_trip);
+        // SECURITY FIX (A08): Never trust client-supplied distance or price.
+        // We force server-side estimation and calculation to prevent price manipulation.
+        const distanceKm = estimateDistance(pickup_location, drop_location);
+        
+        // Use the requested price_per_km if valid, otherwise fallback to standard rate
+        const resolvedPricePerKm = price_per_km > 0 ? price_per_km : 100; // LKR 100/km default fallback
+        
+        const price = calculateFare(distanceKm, resolvedPricePerKm, is_return_trip);
 
         // ── Build booking data ────────────────────────────────
         const bookingData = {
@@ -111,6 +108,6 @@ export async function POST(req: Request) {
         );
     } catch (error: any) {
         console.error("[/api/pickup/book] Error:", error);
-        return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+        return NextResponse.json({ error: error.message || "Internal server error." }, { status: 500 });
     }
 }

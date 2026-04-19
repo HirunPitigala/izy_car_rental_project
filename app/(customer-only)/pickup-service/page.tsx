@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
     MapPin, Navigation, Calendar, Clock, Users, Briefcase,
     RotateCcw, Search, ChevronRight, CheckCircle2, Loader2,
-    Truck, Fuel, Settings, X, Phone, User, ArrowRight
+    Truck, Fuel, Settings, X, Phone, User, ArrowRight, Lock
 } from "lucide-react";
 import { uploadFileToCloudinary } from "@/lib/utils/cloudinaryClient";
+import { lockVehicle, unlockVehicle } from "@/lib/actions/lockActions";
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -85,6 +86,31 @@ export default function PickupServicePage() {
     });
     const [paymentslip, setPaymentslip] = useState<File | null>(null);
 
+    // ── Lock state ──────────────────────────────────────────────
+    const [lockStatus, setLockStatus] = useState<"idle" | "locking" | "locked" | "failed">("idle");
+    const [lockError, setLockError] = useState<string | null>(null);
+    const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
+
+    // ── Lock countdown ────────────────────────────────────────
+    useEffect(() => {
+        if (lockStatus !== "locked") return;
+        if (timeLeft <= 0) {
+            if (selectedVehicle) unlockVehicle(selectedVehicle.vehicleId);
+            setLockStatus("failed");
+            setLockError("Your 10-minute hold has expired. Please select a vehicle again.");
+            setStep("results");
+            return;
+        }
+        const id = setInterval(() => setTimeLeft(t => t - 1), 1000);
+        return () => clearInterval(id);
+    }, [lockStatus, timeLeft, selectedVehicle]);
+
+    const formatTimeLeft = () => {
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        return `${m}:${s.toString().padStart(2, "0")}`;
+    };
+
     // ── Step 1: Search ─────────────────────────────────────────
 
     const handleSearch = async (e: React.FormEvent) => {
@@ -116,8 +142,9 @@ export default function PickupServicePage() {
 
     // ── Step 2: Select vehicle & pre-calc fare ─────────────────
 
-    const handleSelectVehicle = (v: Vehicle) => {
+    const handleSelectVehicle = async (v: Vehicle) => {
         setSelectedVehicle(v);
+        setLockError(null);
 
         // Client-side fare preview (same formula as server)
         const pricePerKm = parseFloat(v.pricePerKm ?? "100");
@@ -133,7 +160,18 @@ export default function PickupServicePage() {
 
         setEstimatedDistance(dist);
         setEstimatedPrice(total);
+
+        // Attempt to lock the vehicle before navigating to confirm step
+        setLockStatus("locking");
         setStep("confirm");
+        const res = await lockVehicle(v.vehicleId);
+        if (res.success) {
+            setLockStatus("locked");
+            setTimeLeft(600);
+        } else {
+            setLockStatus("failed");
+            setLockError(res.error || "Failed to hold vehicle. Please try another.");
+        }
     };
 
     // ── Step 3: Confirm & Book ─────────────────────────────────
@@ -188,6 +226,7 @@ export default function PickupServicePage() {
             setBookingId(data.bookingId);
             setEstimatedDistance(data.distanceKm ?? estimatedDistance);
             setEstimatedPrice(data.price ?? estimatedPrice);
+            setLockStatus("idle"); // server already released the lock
             setStep("success");
         } catch (err: any) {
             setError(err.message);
@@ -497,7 +536,11 @@ export default function PickupServicePage() {
                         <div className="flex items-center gap-3">
                             <button
                                 type="button"
-                                onClick={() => setStep("results")}
+                                onClick={() => {
+                                    if (selectedVehicle) unlockVehicle(selectedVehicle.vehicleId);
+                                    setLockStatus("idle");
+                                    setStep("results");
+                                }}
                                 className="p-3 rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-gray-900 shadow-sm transition-all"
                             >
                                 <X className="h-5 w-5" />
@@ -507,6 +550,28 @@ export default function PickupServicePage() {
                                 <p className="text-gray-400 text-sm">Review details and enter your contact info.</p>
                             </div>
                         </div>
+
+                        {/* Lock status banners */}
+                        {lockStatus === "locking" && (
+                            <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 py-2 px-4 rounded-full max-w-max">
+                                <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                                <span className="text-xs font-bold text-blue-700">Securing your vehicle hold...</span>
+                            </div>
+                        )}
+                        {lockStatus === "locked" && (
+                            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 py-2 px-4 rounded-full max-w-max">
+                                <Clock className="w-4 h-4 text-emerald-600 animate-pulse" />
+                                <span className="text-xs font-bold text-emerald-700">
+                                    Vehicle held for <span className="font-mono text-sm tracking-widest">{formatTimeLeft()}</span>
+                                </span>
+                            </div>
+                        )}
+                        {lockStatus === "failed" && lockError && (
+                            <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 py-2 px-4 rounded-xl">
+                                <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                                <span className="text-xs font-bold text-amber-800">{lockError}</span>
+                            </div>
+                        )}
 
                         {/* Summary card */}
                         <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 space-y-4">
@@ -647,7 +712,7 @@ export default function PickupServicePage() {
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || lockStatus !== "locked"}
                             className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl transition-all shadow-xl shadow-emerald-200 flex items-center justify-center gap-3 text-lg active:scale-[0.98] disabled:opacity-60"
                         >
                             {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <CheckCircle2 className="w-6 h-6" />}

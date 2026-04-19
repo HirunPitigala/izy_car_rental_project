@@ -3,6 +3,7 @@
 import { db } from "@/src/db";
 import { item, inspection, inspectionItems, damageReports, employee, booking } from "@/src/db/schema";
 import { eq, and } from "drizzle-orm";
+import { getSession } from "@/lib/auth";
 
 const DEFAULT_ITEMS = [
     "Wiper Blades 3",
@@ -36,6 +37,11 @@ const DEFAULT_ITEMS = [
 
 export async function getOrSeedChecklistItems() {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager" && session.role !== "employee")) {
+            return [];
+        }
+
         const existingItems = await db.select().from(item);
 
         if (existingItems.length === 0) {
@@ -75,6 +81,11 @@ export interface InspectionSubmissionData {
 
 export async function saveInspection(data: InspectionSubmissionData) {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager" && session.role !== "employee")) {
+            return { success: false, error: "Unauthorized" };
+        }
+
         // Check if one already exists
         const existing = await db.select().from(inspection).where(
             and(
@@ -138,6 +149,11 @@ export async function saveInspection(data: InspectionSubmissionData) {
 
 export async function getInspection(bookingId: number, type: "BEFORE" | "AFTER") {
     try {
+        const session = await getSession();
+        if (!session || (session.role !== "admin" && session.role !== "manager" && session.role !== "employee")) {
+            return { success: false, error: "Unauthorized" };
+        }
+
         const [insp] = await db.select().from(inspection).where(
             and(
                 eq(inspection.bookingId, bookingId),

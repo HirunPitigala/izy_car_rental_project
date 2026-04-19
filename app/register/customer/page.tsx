@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { ArrowLeft, UserPlus, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, UserPlus, AlertCircle, Eye, EyeOff, Mail } from "lucide-react";
 
 export default function PublicCustomerRegistrationPage() {
     const [email, setEmail] = useState("");
@@ -13,32 +13,72 @@ export default function PublicCustomerRegistrationPage() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError("");
 
-        const res = await fetch("/api/register/customer", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                email,
-                password,
-                confirmPassword,
-            }),
-        });
+        try {
+            const res = await fetch("/api/register/customer", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email,
+                    password,
+                    confirmPassword,
+                }),
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        if (!res.ok) {
-            setError(data.error || "Registration failed");
+            if (!res.ok) {
+                setError(data.error || "Registration failed");
+                setLoading(false);
+                return;
+            }
+
+            setShowSuccess(true);
             setLoading(false);
-            return;
+        } catch (err) {
+            console.error(err);
+            setError("Something went wrong. Please try again.");
+            setLoading(false);
         }
-
-        window.location.href = "/login";
     };
+
+    if (showSuccess) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-[#fcfcfc] p-4 font-sans text-[#0f0f0f]">
+                <div className="w-full max-w-[480px] rounded-[32px] bg-white p-12 shadow-premium border border-gray-100 text-center animate-in fade-in zoom-in duration-500">
+                    <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-green-50 text-green-600 mx-auto shadow-sm">
+                        <Mail className="h-10 w-10 animate-bounce" />
+                    </div>
+                    <h1 className="text-2xl font-black mb-3">Check your email!</h1>
+                    <p className="text-gray-500 mb-8 leading-relaxed">
+                        We've sent a verification link to <br />
+                        <span className="font-bold text-[#0f0f0f]">{email}</span>. <br />
+                        Please click the link in the email to activate your account.
+                    </p>
+                    <div className="space-y-4">
+                        <Link 
+                            href="/login"
+                            className="w-full h-12 flex items-center justify-center rounded-xl bg-[#dc2626] text-sm font-bold text-white shadow-xl shadow-red-600/10 transition-all hover:bg-[#b91c1c] active:scale-[0.98]"
+                        >
+                            Go to Login
+                        </Link>
+                        <button 
+                            onClick={() => setShowSuccess(false)}
+                            className="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            Back to registration
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-[#fcfcfc] p-4 font-sans text-[#0f0f0f]">
